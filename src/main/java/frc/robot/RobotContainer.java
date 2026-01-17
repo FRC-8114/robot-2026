@@ -18,13 +18,15 @@ public class RobotContainer {
 
     public RobotContainer() {
         switch (Constants.ROBOT_MODE) {
-            case REAL:
+            case REAL: {
                 vision = Vision.fromCameraConstants(poseEstimation -> {
-                    drive.addVisionMeasurement(poseEstimation.pose().toPose2d(), poseEstimation.timestamp(), null);
+                    drive.addVisionMeasurement(poseEstimation.pose().toPose2d(), poseEstimation.timestamp(), poseEstimation.stddev());
                 });
                 drive = new Drive(new GyroIOPigeon2(), new ModuleIOTalonFX(TunerConstants.FrontLeft),
                         new ModuleIOTalonFX(TunerConstants.FrontRight), new ModuleIOTalonFX(TunerConstants.BackLeft),
                         new ModuleIOTalonFX(TunerConstants.BackRight));
+                break;
+            }
             case SIMULATION: {
                 // TODO: sim
                 

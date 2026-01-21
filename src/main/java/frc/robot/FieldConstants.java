@@ -5,7 +5,7 @@
 // license that can be found in the LICENSE file at
 // the root directory of this project.
 
-package org.littletonrobotics.frc2026;
+package frc.robot;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
@@ -16,8 +16,6 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Filesystem;
 import java.io.IOException;
 import java.nio.file.Path;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 /**
  * Contains information for location of field element and other useful reference points.
@@ -307,12 +305,19 @@ public class FieldConstants {
         new Translation2d(0, AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(29).get().getY());
   }
 
-  @RequiredArgsConstructor
   public enum FieldType {
     ANDYMARK("andymark"),
     WELDED("welded");
 
-    @Getter private final String jsonFolder;
+    private final String jsonFolder;
+
+    FieldType(String jsonFolder) {
+      this.jsonFolder = jsonFolder;
+    }
+
+    public String getJsonFolder() {
+      return jsonFolder;
+    }
   }
 
   public enum AprilTagLayoutType {
@@ -332,24 +337,16 @@ public class FieldConstants {
         synchronized (this) {
           if (layout == null) {
             try {
-              Path p =
-                  Constants.disableHAL
-                      ? Path.of(
-                          "src",
-                          "main",
-                          "deploy",
-                          "apriltags",
-                          fieldType.getJsonFolder(),
-                          name + ".json")
-                      : Path.of(
-                          Filesystem.getDeployDirectory().getPath(),
-                          "apriltags",
-                          fieldType.getJsonFolder(),
-                          name + ".json");
+              // Automatically resolve path based on whether we are on a robot or in simulation
+              Path p = Filesystem.getDeployDirectory().toPath()
+                  .resolve("apriltags")
+                  .resolve(fieldType.getJsonFolder())
+                  .resolve(name + ".json");
+
               layout = new AprilTagFieldLayout(p);
               layoutString = new ObjectMapper().writeValueAsString(layout);
             } catch (IOException e) {
-              throw new RuntimeException(e);
+              throw new RuntimeException("Could not load AprilTag layout: " + name, e);
             }
           }
         }
@@ -365,3 +362,5 @@ public class FieldConstants {
     }
   }
 }
+
+//code by Mana, Gayas, Johnny (definetely not ai)

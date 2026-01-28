@@ -1,5 +1,5 @@
+// Copyright (c) 2026 FRC Team 8114
 // Copyright (c) 2021-2026 Littleton Robotics
-// http://github.com/Mechanical-Advantage
 //
 // Use of this source code is governed by a BSD
 // license that can be found in the LICENSE file
@@ -96,6 +96,9 @@ public class Drive extends SubsystemBase {
     private SwerveDrivePoseEstimator poseEstimator = new SwerveDrivePoseEstimator(kinematics, rawGyroRotation,
             lastModulePositions, Pose2d.kZero);
 
+    private AtomicReference<Pose2d> ppTargetPose = new AtomicReference<>(Pose2d.kZero);
+    private AtomicReference<Pose2d[]> ppActivePath = new AtomicReference<>(new Pose2d[] {});
+
     public Drive(
             GyroIO gyroIO,
             ModuleIO flModuleIO,
@@ -121,20 +124,23 @@ public class Drive extends SubsystemBase {
                 this::getChassisSpeeds,
                 this::runVelocity,
                 new PPHolonomicDriveController(
-                        new PIDConstants(5.0, 0.0, 0.0), new PIDConstants(5.0, 0.0, 0.0)),
+                        new PIDConstants(HOLONOMIC_DRIVE_KP, HOLONOMIC_DRIVE_KI, HOLONOMIC_DRIVE_KD),
+                        new PIDConstants(HOLONOMIC_TURN_KP, HOLONOMIC_TURN_KI, HOLONOMIC_TURN_KD)),
                 PP_CONFIG,
                 () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
                 this);
-        Pathfinding.setPathfinder(new LocalADStarAK());
-        PathPlannerLogging.setLogActivePathCallback(
-                (activePath) -> {
-                    Logger.recordOutput("Odometry/Trajectory", activePath.toArray(new Pose2d[0]));
-                });
-        PathPlannerLogging.setLogTargetPoseCallback(
-                (targetPose) -> {
-                    Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
-                });
 
+        Pathfinding.setPathfinder(new LocalADStarAK());
+        PathPlannerLogging.setLogActivePathCallback(activePath -> {
+            ppActivePath.set(activePath.toArray(new Pose2d[0]));
+            Logger.recordOutput("Auto/PP/ActivePath", ppActivePath);
+        });
+
+        PathPlannerLogging.setLogTargetPoseCallback(targetPose -> {
+            ppTargetPose.set(targetPose);
+            Logger.recordOutput("Auto/PP/TargetPose", ppTargetPose);
+        });
+        
         // Configure SysId
         sysId = new SysIdRoutine(
                 new SysIdRoutine.Config(
@@ -169,6 +175,14 @@ public class Drive extends SubsystemBase {
             Logger.recordOutput("SwerveStates/SetpointsOptimized", new SwerveModuleState[] {});
         }
 
+        Pose2d pose = getPose();
+        Logger.recordOutput("Auto/PP/PoseError",
+        Pose2d targetPose = ppTargetPose;
+        Logger.recordOutput("Auto/PP/PoseError",
+                new Pose2d(
+                        targetPose.getX() - pose.getX(),
+                        targetPose.getY() - pose.getY(),
+                        targetPose.getRotation().minus(pose.getRotation())));
         // Update odometry
         double[] sampleTimestamps = modules[0].getOdometryTimestamps(); // All signals are sampled together
         int sampleCount = sampleTimestamps.length;
@@ -293,7 +307,7 @@ public class Drive extends SubsystemBase {
 
     /** Returns the measured chassis speeds of the robot. */
     @AutoLogOutput(key = "SwerveChassisSpeeds/Measured")
-    private ChassisSpeeds getChassisSpeeds() {
+    public ChassisSpeeds getChassisSpeeds() {
         return kinematics.toChassisSpeeds(getModuleStates());
     }
 

@@ -176,7 +176,6 @@ public class Drive extends SubsystemBase {
         }
 
         Pose2d pose = getPose();
-        Logger.recordOutput("Auto/PP/PoseError",
         Pose2d targetPose = ppTargetPose;
         Logger.recordOutput("Auto/PP/PoseError",
                 new Pose2d(

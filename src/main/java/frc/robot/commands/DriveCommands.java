@@ -284,16 +284,6 @@ public class DriveCommands {
     }
 
     /**
-     * Creates a command to follow a PathPlanner path.
-     * 
-     * @param pathName The name of the path file (without extension)
-     * @return The follow path command
-     */
-    public static Command followPath(String pathName) {
-        return AutoBuilder.followPath(pathName);
-    }
-
-    /**
      * Creates a command to follow a preloaded PathPlanner path.
      *
      * @param path The preloaded path object

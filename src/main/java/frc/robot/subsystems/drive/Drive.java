@@ -43,10 +43,13 @@ import frc.robot.Constants;
 import frc.robot.Constants.RobotMode;
 import frc.robot.generated.TunerConstants;
 import frc.robot.util.LocalADStarAK;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
+
+import static frc.robot.subsystems.drive.DriveConstants.*;
 
 public class Drive extends SubsystemBase {
     // TunerConstants doesn't include these constants, so they are declared locally
@@ -97,7 +100,7 @@ public class Drive extends SubsystemBase {
             lastModulePositions, Pose2d.kZero);
 
     private AtomicReference<Pose2d> ppTargetPose = new AtomicReference<>(Pose2d.kZero);
-    private AtomicReference<Pose2d[]> ppActivePath = new AtomicReference<>(new Pose2d[] {});
+    private AtomicReference<Pose2d[]> ppActivePath = new AtomicReference<>(new Pose2d[0]);
 
     public Drive(
             GyroIO gyroIO,
@@ -133,12 +136,12 @@ public class Drive extends SubsystemBase {
         Pathfinding.setPathfinder(new LocalADStarAK());
         PathPlannerLogging.setLogActivePathCallback(activePath -> {
             ppActivePath.set(activePath.toArray(new Pose2d[0]));
-            Logger.recordOutput("Auto/PP/ActivePath", ppActivePath);
+            Logger.recordOutput("Auto/PP/ActivePath", ppActivePath.get());
         });
 
         PathPlannerLogging.setLogTargetPoseCallback(targetPose -> {
             ppTargetPose.set(targetPose);
-            Logger.recordOutput("Auto/PP/TargetPose", ppTargetPose);
+            Logger.recordOutput("Auto/PP/TargetPose", ppTargetPose.get());
         });
         
         // Configure SysId
@@ -176,7 +179,7 @@ public class Drive extends SubsystemBase {
         }
 
         Pose2d pose = getPose();
-        Pose2d targetPose = ppTargetPose;
+        Pose2d targetPose = ppTargetPose.get();
         Logger.recordOutput("Auto/PP/PoseError",
                 new Pose2d(
                         targetPose.getX() - pose.getX(),

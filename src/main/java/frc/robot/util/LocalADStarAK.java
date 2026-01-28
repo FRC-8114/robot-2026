@@ -1,4 +1,4 @@
-// Copyrfrc.robot.util026 Littleton Robotics
+// Copyright (c) 2026 Littleton Robotics
 // http://github.com/Mechanical-Advantage
 //
 // Use of this source code is governed by a BSD

@@ -4,23 +4,35 @@
 
 package frc.robot;
 
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+
+import com.pathplanner.lib.auto.AutoBuilder;
+
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
+import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.vision.Vision;
 
 public class RobotContainer {
     Drive drive;
     Vision vision;
+    private final CommandXboxController controller = new CommandXboxController(0);
 
     public RobotContainer() {
         switch (Constants.ROBOT_MODE) {
             case REAL: {
                 vision = Vision.fromCameraConstants(poseEstimation -> {
-                    drive.addVisionMeasurement(poseEstimation.pose().toPose2d(), poseEstimation.timestamp(), poseEstimation.stddev());
+                    drive.addVisionMeasurement(poseEstimation.pose().toPose2d(), poseEstimation.timestamp(),
+                            poseEstimation.stddev());
                 });
                 drive = new Drive(new GyroIOPigeon2(), new ModuleIOTalonFX(TunerConstants.FrontLeft),
                         new ModuleIOTalonFX(TunerConstants.FrontRight), new ModuleIOTalonFX(TunerConstants.BackLeft),
@@ -35,20 +47,76 @@ public class RobotContainer {
                 // new VisionIOPhotonVisionSim(VisionConstants.camera0Name, robotToCamera0,
                 // drive::getPose),
                 // new VisionIOPhotonVisionSim(camera1Name, robotToCamera1, drive::getPose));
-
+                drive = new Drive(new GyroIOPigeon2(), new ModuleIOSim(TunerConstants.FrontLeft),
+                        new ModuleIOSim(TunerConstants.FrontRight), new ModuleIOSim(TunerConstants.BackLeft),
+                        new ModuleIOSim(TunerConstants.BackRight));
                 break;
             }
             case REPLAY: {
                 break;
             }
         }
-        configureBindings();
+        
+        configureButtonBindings();
+        setupAutoChoices();
     }
 
-    private void configureBindings() {
+    private LoggedDashboardChooser<Command> autoChooser;
+
+    private void setupAutoChoices() {
+        autoChooser = new LoggedDashboardChooser<>("Auto Choices",
+                AutoBuilder.buildAutoChooser());
+
+        autoChooser.addOption(
+                "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
+        autoChooser.addOption(
+                "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
+        autoChooser.addOption(
+                "Drive SysId (Quasistatic Forward)",
+                drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+        autoChooser.addOption(
+                "Drive SysId (Quasistatic Reverse)",
+                drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+        autoChooser.addOption(
+                "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
+        autoChooser.addOption(
+                "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+    }
+
+    private void configureButtonBindings() {
+        // Default command, normal field-relative drive
+        drive.setDefaultCommand(
+                DriveCommands.joystickDrive(
+                        drive,
+                        () -> -controller.getLeftY(),
+                        () -> -controller.getLeftX(),
+                        () -> -controller.getRightX()));
+
+        // Lock to 0° when A button is held
+        controller
+                .a()
+                .whileTrue(
+                        DriveCommands.joystickDriveAtAngle(
+                                drive,
+                                () -> -controller.getLeftY(),
+                                () -> -controller.getLeftX(),
+                                () -> Rotation2d.kZero));
+
+        // Switch to X pattern when X button is pressed
+        controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
+
+        // Reset gyro to 0° when B button is pressed
+        controller
+                .b()
+                .onTrue(
+                        Commands.runOnce(
+                                () -> drive.setPose(
+                                        new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
+                                drive)
+                                .ignoringDisable(true));
     }
 
     public Command getAutonomousCommand() {
-        return Commands.print("No autonomous command configured");
+        return autoChooser.get();
     }
 }

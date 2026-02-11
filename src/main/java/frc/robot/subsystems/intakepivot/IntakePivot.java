@@ -7,13 +7,13 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import static frc.robot.subsystems.intakepivot.IntakePivotConstants.*;
 
 import com.ctre.phoenix6.CANBus;
-import com.ctre.phoenix6.controls.PositionVoltage;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 
 public class IntakePivot extends SubsystemBase {
     private final TalonFX pivotMotor = new TalonFX(pivotMotorID, new CANBus("canivore"));
 
-    private PositionVoltage pos = new PositionVoltage(0);
+    private final MotionMagicVoltage control = new MotionMagicVoltage(0).withEnableFOC(true);
 
     IntakePivot() {
         pivotMotor.getConfigurator().apply(pivotMotorCfg);
@@ -21,6 +21,6 @@ public class IntakePivot extends SubsystemBase {
 
     // Ex. setAngle(IntakePivotConstants.INIT_ANGLE)
     public Command setAngle(Angle angle) {
-        return run(() -> pivotMotor.setControl(pos.withPosition(angle)));
+        return run(() -> pivotMotor.setControl(control.withPosition(angle)));
     }
 }

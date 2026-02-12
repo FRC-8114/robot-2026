@@ -2,6 +2,8 @@ package frc.robot.subsystems.intakepivot;
 
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.RotationsPerSecondPerSecond;
 
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
@@ -16,6 +18,8 @@ public class IntakePivotConstants {
 
     public static final Angle INIT_ANGLE = Degrees.of(120);
     public static final Angle DEPLOY_ANGLE = Degrees.of(0);
+
+    public static final Angle angleTolerance = Degrees.of(1);
 
     private static final Slot0Configs pivotMotorPIDs = new Slot0Configs()
         .withGravityType(GravityTypeValue.Arm_Cosine)

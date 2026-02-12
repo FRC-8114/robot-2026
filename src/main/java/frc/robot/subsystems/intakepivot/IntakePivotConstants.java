@@ -28,8 +28,8 @@ public class IntakePivotConstants {
         .withStatorCurrentLimit(Amps.of(80))
         .withSupplyCurrentLimit(Amps.of(60));
     private static final MotionMagicConfigs pivotMotorMM = new MotionMagicConfigs()
-        .withMotionMagicAcceleration(0)
-        .withMotionMagicCruiseVelocity(0);
+        .withMotionMagicCruiseVelocity(RotationsPerSecond.of(10)) // 20
+        .withMotionMagicAcceleration(RotationsPerSecondPerSecond.of(45)); // 90
     public static final TalonFXConfiguration pivotMotorCfg = new TalonFXConfiguration()
         .withMotionMagic(pivotMotorMM)
         .withCurrentLimits(pivotMotorCurrentLimits)

@@ -45,7 +45,7 @@
   in {
     devShells = forAllSystems ({pkgs, ...} @ args: {
       default = pkgs.mkShell {
-        buildInputs = [(vscodeForSystem args) pkgs.jdk21];
+        buildInputs = [(vscodeForSystem args) pkgs.jdk21 pkgs.elastic-dashboard pkgs.advantagescope];
       };
     });
 

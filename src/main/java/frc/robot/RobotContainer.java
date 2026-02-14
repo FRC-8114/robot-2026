@@ -20,28 +20,34 @@ import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.turret.Turret;
+import frc.robot.subsystems.turret.pitch.TurretPitch;
+import frc.robot.subsystems.turret.pitch.TurretPitchIOReal;
+import frc.robot.subsystems.turret.pivot.TurretPivot;
+import frc.robot.subsystems.turret.pivot.TurretPivotIOReal;
 import frc.robot.subsystems.vision.Vision;
 
 public class RobotContainer {
-    Drive drive;
-    Vision vision;
+    private final Drive drive;
+    private final Vision vision;
+    private final Turret turret;
+
     private final CommandXboxController controller = new CommandXboxController(0);
 
     public RobotContainer() {
         switch (Constants.ROBOT_MODE) {
             case REAL: {
+                drive = new Drive(new GyroIOPigeon2(), new ModuleIOTalonFX(TunerConstants.FrontLeft),
+                        new ModuleIOTalonFX(TunerConstants.FrontRight), new ModuleIOTalonFX(TunerConstants.BackLeft),
+                        new ModuleIOTalonFX(TunerConstants.BackRight));
+
                 vision = Vision.fromCameraConstants(poseEstimation -> {
                     drive.addVisionMeasurement(poseEstimation.pose().toPose2d(), poseEstimation.timestamp(),
                             poseEstimation.stddev());
                 });
-                drive = new Drive(new GyroIOPigeon2(), new ModuleIOTalonFX(TunerConstants.FrontLeft),
-                        new ModuleIOTalonFX(TunerConstants.FrontRight), new ModuleIOTalonFX(TunerConstants.BackLeft),
-                        new ModuleIOTalonFX(TunerConstants.BackRight));
                 break;
             }
             case SIMULATION: {
-                // TODO: sim
-                
                 // vision = new Vision(
                 // drive::addVisionMeasurement,
                 // new VisionIOPhotonVisionSim(VisionConstants.camera0Name, robotToCamera0,
@@ -50,13 +56,18 @@ public class RobotContainer {
                 drive = new Drive(new GyroIOPigeon2(), new ModuleIOSim(TunerConstants.FrontLeft),
                         new ModuleIOSim(TunerConstants.FrontRight), new ModuleIOSim(TunerConstants.BackLeft),
                         new ModuleIOSim(TunerConstants.BackRight));
+                vision = null; // TODO: sim
                 break;
             }
             case REPLAY: {
-                break;
+                throw new UnsupportedOperationException("No replay mode implemented");
             }
+            default:
+                throw new IllegalStateException("Unexpected value: " + Constants.ROBOT_MODE);
         }
-        
+
+        turret = new Turret(new TurretPivot(new TurretPivotIOReal()), new TurretPitch(new TurretPitchIOReal()));
+
         configureButtonBindings();
         setupAutoChoices();
     }

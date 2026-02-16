@@ -15,7 +15,6 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.subsystems.intake.IntakeIO.IntakeInputs;
@@ -59,22 +58,23 @@ public class Intake extends SubsystemBase {
                 new SysIdRoutine.Mechanism(
                         (voltage) -> io.setRollerVoltage(voltage.in(Volts)), null, this));
 
-        LoggedMechanismRoot2d root = mechanism.getRoot("intake", 1.5, 1.0);
+        LoggedMechanismRoot2d root = mechanism.getRoot("intake", 1.881, 0.0);
         armLigament = root.append(
-                new LoggedMechanismLigament2d("arm", 0.2919984, 0, 6, new Color8Bit(Color.kOrange)));
+                new LoggedMechanismLigament2d("arm", 0.2921, 90, 6, new Color8Bit(Color.kOrange)));
         rollerLigament = armLigament.append(
-                new LoggedMechanismLigament2d("roller", 0.69596, 90, 4, new Color8Bit(Color.kGreen)));
+                new LoggedMechanismLigament2d("roller", 0.0508, 90, 4, new Color8Bit(Color.kGreen)));
     }
 
-    /** Deploy the intake and run rollers inward. */
     public Command intake() {
-        return Commands.parallel(
-                deploy(),
-                runRollers(Constants.intakeVelocity))
+        return runEnd(
+                () -> {
+                    io.setDeployTarget(Constants.deployedAngle);
+                    io.setRollerVelocity(Constants.intakeVelocity);
+                },
+                () -> io.stopRollers())
                 .withName("Intake");
     }
 
-    /** Stow the intake and stop rollers. */
     public Command stow() {
         return runOnce(() -> {
             io.setDeployTarget(Constants.stowedAngle);
@@ -82,20 +82,10 @@ public class Intake extends SubsystemBase {
         }).withName("Stow");
     }
 
-    /** Deploy the intake and run rollers outward to eject. */
-    public Command eject() {
-        return Commands.parallel(
-                deploy(),
-                runRollers(Constants.ejectVelocity))
-                .withName("Eject");
-    }
-
-    /** Flip the intake to deployed position. */
     public Command deploy() {
         return runOnce(() -> io.setDeployTarget(Constants.deployedAngle)).withName("Deploy");
     }
 
-    /** Run rollers at the given velocity until interrupted. */
     public Command runRollers(AngularVelocity velocity) {
         return runEnd(
                 () -> io.setRollerVelocity(velocity),
@@ -144,7 +134,7 @@ public class Intake extends SubsystemBase {
     public void periodic() {
         io.updateInputs(inputs);
 
-        armLigament.setAngle(Math.toDegrees(inputs.deployPositionRads));
+        armLigament.setAngle(180 - Math.toDegrees(inputs.deployPositionRads));
         rollerLigament.setColor(inputs.rollerRPMs > 0
                 ? new Color8Bit(Color.kGreen)
                 : inputs.rollerRPMs < 0

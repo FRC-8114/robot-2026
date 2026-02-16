@@ -260,6 +260,9 @@ public class RobotContainer {
                                         new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
                                 drive)
                                 .ignoringDisable(true));
+
+        controller.leftBumper().onTrue(intake.intake());
+        controller.rightBumper().onTrue(intake.stow());
     }
 
     public void simulationPeriodic() {

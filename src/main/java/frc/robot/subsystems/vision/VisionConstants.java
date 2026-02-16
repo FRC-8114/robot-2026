@@ -3,6 +3,9 @@ package frc.robot.subsystems.vision;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation3d;
 import limelight.networktables.LimelightPoseEstimator.EstimationMode;
 
 public class VisionConstants {
@@ -11,15 +14,18 @@ public class VisionConstants {
     public interface CameraConfiguration {
         String name();
         double stdDeviation();
+        Transform3d robotToCamera();
     }
 
     public static class LimelightCameraConfiguration implements CameraConfiguration {
         private final String camera;
         private final double stdDeviation;
+        private final Transform3d robotToCamera;
 
-        public LimelightCameraConfiguration(String cameraName, double stdDeviation) {
+        public LimelightCameraConfiguration(String cameraName, double stdDeviation, Transform3d robotToCamera) {
             this.camera = cameraName;
             this.stdDeviation = stdDeviation;
+            this.robotToCamera = robotToCamera;
         }
 
         @Override
@@ -31,15 +37,28 @@ public class VisionConstants {
         public String name() {
             return camera;
         }
+
+        @Override
+        public Transform3d robotToCamera() {
+            return robotToCamera;
+        }
     }
 
     // AprilTag layout
     public static AprilTagFieldLayout aprilTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
 
-    // Transforms are not used in limelights, these are used for photonvision sim
+    // TODO: measure actual camera positions on robot
+    private static final Transform3d ROBOT_TO_CAMERA_0 = new Transform3d(
+            new Translation3d(0.3, 0.0, 0.25),
+            new Rotation3d(0, Math.toRadians(-15), 0));
+
+    private static final Transform3d ROBOT_TO_CAMERA_1 = new Transform3d(
+            new Translation3d(-0.3, 0.0, 0.25),
+            new Rotation3d(0, Math.toRadians(-15), Math.toRadians(180)));
+
     public static final CameraConfiguration[] cameras = {
-            new LimelightCameraConfiguration("camera_0", 1.0),
-            new LimelightCameraConfiguration("camera_1", 1.0)
+            new LimelightCameraConfiguration("camera_0", 1.0, ROBOT_TO_CAMERA_0),
+            new LimelightCameraConfiguration("camera_1", 1.0, ROBOT_TO_CAMERA_1)
     };
 
     // Basic filtering thresholds

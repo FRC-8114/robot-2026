@@ -61,15 +61,22 @@ public class Vision extends SubsystemBase {
 
     @Override
     public void periodic() {
+        allPoses.clear();
+        allRejectedPoses.clear();
+
         for (var pair : ioList) {
             var io = pair.getFirst();
             var inputs = pair.getSecond();
 
             io.updateInputs(inputs);
-            Logger.processInputs("Vision/" + io.getClass().getSimpleName(), inputs);
+            Logger.processInputs("Vision/" + io.getConfiguration().name(), inputs);
 
             if (inputs.poseEstimationCount > 0) {
-                tagObservations.addAll(List.of(inputs.poseEstimations));
+                for (PoseEstimation est : inputs.poseEstimations) {
+                    if (est != null) {
+                        tagObservations.add(est);
+                    }
+                }
                 inputs.clearEstimates();
             }
         }
@@ -79,6 +86,8 @@ public class Vision extends SubsystemBase {
 
         Logger.recordOutput("Vision/AllPoses", allPoses.toArray(new Pose3d[0]));
         Logger.recordOutput("Vision/AllRejectedPoses", allRejectedPoses.toArray(new Pose3d[0]));
+        Logger.recordOutput("Vision/AcceptedCount", allPoses.size());
+        Logger.recordOutput("Vision/RejectedCount", allRejectedPoses.size());
     }
 
 }

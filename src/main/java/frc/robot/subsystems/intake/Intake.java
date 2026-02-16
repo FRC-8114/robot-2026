@@ -61,9 +61,9 @@ public class Intake extends SubsystemBase {
 
         LoggedMechanismRoot2d root = mechanism.getRoot("intake", 1.5, 1.0);
         armLigament = root.append(
-                new LoggedMechanismLigament2d("arm", 0.8, 0, 6, new Color8Bit(Color.kOrange)));
+                new LoggedMechanismLigament2d("arm", 0.2919984, 0, 6, new Color8Bit(Color.kOrange)));
         rollerLigament = armLigament.append(
-                new LoggedMechanismLigament2d("roller", 0.3, 90, 4, new Color8Bit(Color.kGreen)));
+                new LoggedMechanismLigament2d("roller", 0.69596, 90, 4, new Color8Bit(Color.kGreen)));
     }
 
     /** Deploy the intake and run rollers inward. */

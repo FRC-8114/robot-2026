@@ -1,11 +1,11 @@
 package frc.robot.subsystems.vision;
 
-import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.vision.VisionConstants.CameraConfiguration;
 import frc.robot.subsystems.vision.VisionConstants.LimelightCameraConfiguration;
 import frc.robot.subsystems.vision.VisionIO.PoseEstimation;
+import frc.robot.subsystems.vision.VisionIO.PoseEstimationBuffer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +14,8 @@ import java.util.function.Consumer;
 import org.littletonrobotics.junction.Logger;
 
 public class Vision extends SubsystemBase {
-    private final List<Pair<VisionIO, VisionIOInputsAutoLogged>> ioList;
+    private record IOBundle(VisionIO io, VisionIOInputsAutoLogged inputs, PoseEstimationBuffer buffer) {}
+    private final List<IOBundle> ioList;
     private final ArrayList<PoseEstimation> tagObservations = new ArrayList<PoseEstimation>();
     private final Consumer<PoseEstimation> poseConsumer;
 
@@ -23,7 +24,7 @@ public class Vision extends SubsystemBase {
 
     public Vision(Consumer<PoseEstimation> consumer, List<VisionIO> visionIOs) {
         ioList = visionIOs.stream()
-                .map(io -> new Pair<>(io, new VisionIOInputsAutoLogged()))
+                .map(io -> new IOBundle(io, new VisionIOInputsAutoLogged(), new PoseEstimationBuffer()))
                 .toList();
 
         poseConsumer = consumer;
@@ -64,20 +65,17 @@ public class Vision extends SubsystemBase {
         allPoses.clear();
         allRejectedPoses.clear();
 
-        for (var pair : ioList) {
-            var io = pair.getFirst();
-            var inputs = pair.getSecond();
+        for (var bundle : ioList) {
+            bundle.io().updateInputs(bundle.inputs(), bundle.buffer());
+            Logger.processInputs("Vision/" + bundle.io().getConfiguration().name(), bundle.inputs());
 
-            io.updateInputs(inputs);
-            Logger.processInputs("Vision/" + io.getConfiguration().name(), inputs);
-
-            if (inputs.poseEstimationCount > 0) {
-                for (PoseEstimation est : inputs.poseEstimations) {
+            if (bundle.buffer().count > 0) {
+                for (PoseEstimation est : bundle.buffer().poseEstimations) {
                     if (est != null) {
                         tagObservations.add(est);
                     }
                 }
-                inputs.clearEstimates();
+                bundle.buffer().clear();
             }
         }
 

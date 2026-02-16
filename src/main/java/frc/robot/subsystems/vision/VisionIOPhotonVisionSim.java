@@ -56,7 +56,7 @@ public class VisionIOPhotonVisionSim implements VisionIO {
     }
 
     @Override
-    public void updateInputs(VisionIOInputs inputs) {
+    public void updateInputs(VisionIOInputs inputs, PoseEstimationBuffer buffer) {
         double now = Timer.getFPGATimestamp();
         if (now - lastSimUpdateTimeSec > 0.005) {
             visionSim.update(poseSupplier.get());
@@ -96,7 +96,7 @@ public class VisionIOPhotonVisionSim implements VisionIO {
 
             Matrix<N3, N1> stddev = new Matrix<>(VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev));
 
-            inputs.pushEstimate(new PoseEstimation(
+            buffer.pushEstimate(new PoseEstimation(
                     pose.estimatedPose,
                     pose.timestampSeconds,
                     avgAmbiguity,

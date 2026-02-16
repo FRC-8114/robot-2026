@@ -1,12 +1,12 @@
-package frc.robot.subsystems.turret.pitch;
+package frc.robot.subsystems.shooterpitch;
 
 import org.littletonrobotics.junction.AutoLog;
 
 import edu.wpi.first.units.measure.Angle;
 
-public interface TurretPitchIO {
+public interface ShooterPitchIO {
     @AutoLog
-    public static class TurretPitchInputs {
+    public static class ShooterPitchInputs {
         public double pitchPosition = 0;
         public double velocityRadsPerSec = 0;
         public double appliedVoltage = 0;
@@ -14,5 +14,7 @@ public interface TurretPitchIO {
 
     abstract void setTarget(Angle angle);
 
-    abstract void updateInputs(TurretPitchInputs inputs);
+    abstract void setVoltage(double volts);
+
+    abstract void updateInputs(ShooterPitchInputs inputs);
 }

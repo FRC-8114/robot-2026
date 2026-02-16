@@ -1,46 +1,58 @@
 package frc.robot.subsystems.turret;
 
-import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.Volts;
 
 import java.util.function.Supplier;
 
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Transform2d;
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.subsystems.turret.pitch.TurretPitch;
-import frc.robot.subsystems.turret.pivot.TurretPivot;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 public class Turret extends SubsystemBase {
-    private static class Constants {
-        public final static Transform2d turretOffset = new Transform2d();
+    private final TurretIO pivotMotor;
+    private final TurretIOInputsAutoLogged inputs = new TurretIOInputsAutoLogged();
+    private final SysIdRoutine sysId;
+
+    public Turret(TurretIO pivotMotor) {
+        this.pivotMotor = pivotMotor;
+
+        sysId = new SysIdRoutine(
+                new SysIdRoutine.Config(
+                        null, null, null,
+                        (state) -> Logger.recordOutput("Turret/SysIdState", state.toString())),
+                new SysIdRoutine.Mechanism(
+                        (voltage) -> pivotMotor.setVoltage(voltage.in(Volts)), null, this));
     }
 
-    private final TurretPivot pivot;
-    private final TurretPitch pitch;
-
-    public Turret(TurretPivot pivot, TurretPitch pitch) {
-        this.pivot = pivot;
-        this.pitch = pitch;
+    public double getTurretPositionRads() {
+        return inputs.turretMotorPosition;
     }
 
-    // TODO: exact logic for handling different shoot circumstances (cross field, into hub, etc)
+    @Override
+    public void periodic() {
+        pivotMotor.updateInputs(inputs);
+    }
 
-    // retained temporarily, this isnt that useful here
-    private Command pivotToFieldCentric(Supplier<Pose2d> robotPose, Pose2d goalPose) {
-        Supplier<Angle> pointTowardGoal = () -> {
-            Pose2d turretPose = robotPose.get().transformBy(Constants.turretOffset);
+    public Command setAngle(Angle angle) {
+        return run(() -> pivotMotor.setTarget(angle));
+    }
 
-            Angle angleToGoal = Radians.of(Math.atan2(
-                    goalPose.getY() - turretPose.getY(),
-                    goalPose.getX() - turretPose.getX()));
+    public Command followAngle(Supplier<Angle> angle) {
+        return run(() -> pivotMotor.setTarget(angle.get()));
+    }
 
-            return Radians
-                    .of(MathUtil.angleModulus(angleToGoal.minus(turretPose.getRotation().getMeasure()).in(Radians)));
-        };
+    public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
+        return run(() -> pivotMotor.setVoltage(0.0))
+                .withTimeout(1.0)
+                .andThen(sysId.quasistatic(direction));
+    }
 
-        return pivot.followAngle(pointTowardGoal);
+    public Command sysIdDynamic(SysIdRoutine.Direction direction) {
+        return run(() -> pivotMotor.setVoltage(0.0))
+                .withTimeout(1.0)
+                .andThen(sysId.dynamic(direction));
     }
 }

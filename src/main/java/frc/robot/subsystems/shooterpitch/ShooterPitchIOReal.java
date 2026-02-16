@@ -1,36 +1,23 @@
-package frc.robot.subsystems.turret.pitch;
+package frc.robot.subsystems.shooterpitch;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
-import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
-import com.ctre.phoenix6.configs.MagnetSensorConfigs;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
-import com.ctre.phoenix6.hardware.CANcoder;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
-import com.ctre.phoenix6.signals.SensorDirectionValue;
 
 import edu.wpi.first.units.measure.Angle;
 
-public class TurretPitchIOReal implements TurretPitchIO {
+public class ShooterPitchIOReal implements ShooterPitchIO {
     private static class Constants {
-        public static final int turretPitchMotorId = 0;
-        public static final int turretPitchEncoderId = 0;
+        public static final int turretPitchMotorId = 31;
 
         public static final double turretPitchRatio = 1.2;
-        private static final double pitchEncoderOffset = 0.0;
-
-        private static final MagnetSensorConfigs pitchEncoderMagnetConfigs = new MagnetSensorConfigs()
-                .withMagnetOffset(pitchEncoderOffset)
-                .withSensorDirection(SensorDirectionValue.CounterClockwise_Positive);
-
-        public static final CANcoderConfiguration pitchEncoderCfg = new CANcoderConfiguration()
-                .withMagnetSensor(pitchEncoderMagnetConfigs);
 
         private static final Slot0Configs pitchMotorPIDs = new Slot0Configs()
                 .withKS(0.001)
@@ -45,8 +32,6 @@ public class TurretPitchIOReal implements TurretPitchIO {
                 .withMotionMagicCruiseVelocity(2);
 
         private static final FeedbackConfigs pitchFeedbackConfigs = new FeedbackConfigs()
-                .withFeedbackRemoteSensorID(turretPitchEncoderId)
-                .withFeedbackSensorSource(FeedbackSensorSourceValue.FusedCANcoder)
                 .withSensorToMechanismRatio(turretPitchRatio);
 
         public static final TalonFXConfiguration pitchMotorCfg = new TalonFXConfiguration()
@@ -55,12 +40,11 @@ public class TurretPitchIOReal implements TurretPitchIO {
                 .withFeedback(pitchFeedbackConfigs);
     }
 
-    private final CANcoder turretPitchEncoder = new CANcoder(Constants.turretPitchEncoderId);
     private final TalonFX turretPitchMotor = new TalonFX(Constants.turretPitchMotorId);
     private final MotionMagicVoltage control = new MotionMagicVoltage(0);
+    private final VoltageOut voltageControl = new VoltageOut(0);
 
-    public TurretPitchIOReal() {
-        turretPitchEncoder.getConfigurator().apply(Constants.pitchEncoderCfg);
+    public ShooterPitchIOReal() {
         turretPitchMotor.getConfigurator().apply(Constants.pitchMotorCfg);
     }
 
@@ -70,7 +54,12 @@ public class TurretPitchIOReal implements TurretPitchIO {
     }
 
     @Override
-    public void updateInputs(TurretPitchInputs inputs) {
+    public void setVoltage(double volts) {
+        turretPitchMotor.setControl(voltageControl.withOutput(volts));
+    }
+
+    @Override
+    public void updateInputs(ShooterPitchInputs inputs) {
         inputs.pitchPosition = turretPitchMotor.getPosition().getValue().in(Degrees);
         inputs.velocityRadsPerSec = turretPitchMotor.getVelocity().getValue().in(RadiansPerSecond);
         inputs.appliedVoltage = turretPitchMotor.getMotorVoltage().getValueAsDouble();

@@ -10,14 +10,16 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
 public class Indexer extends SubsystemBase {
     private static class Constants {
         static final double reverseFrequency = 3.0;
         static final double reverseBurstTime = 0.2;
 
-        static final AngularVelocity hopperLaneVelocity = RPM.of(1000);
-        static final AngularVelocity turretLaneVelocity = RPM.of(1000);
+        static final AngularVelocity hopperLaneVelocity = RPM.of(250);
+        static final AngularVelocity turretLaneVelocity = RPM.of(1500);
 
+        static final AngularVelocity turretLaneVelocityTolerance = RPM.of(100);
     };
 
     private final IndexerIO io;
@@ -29,16 +31,9 @@ public class Indexer extends SubsystemBase {
         setDefaultCommand(periodicReverse());
     }
 
-    public Command waitUntilHopperLaneVelocity(AngularVelocity velocity) {
-        double inRPM = velocity.in(RPM);
-
-        return Commands.waitUntil(() -> Math.abs(inputs.hopperLanesRPMs - inRPM) <= 1); // within 1 RPM
-    }
-
-    public Command waitUntilTurretLaneVelocity(AngularVelocity velocity) {
-        double inRPM = velocity.in(RPM);
-
-        return Commands.waitUntil(() -> Math.abs(inputs.turretLaneRPMs - inRPM) <= 1); // within 1 RPM
+    public boolean isTurretLaneAtSpeed() {
+        return RPM.of(inputs.turretLaneRPMs).isNear(Constants.turretLaneVelocity,
+                Constants.turretLaneVelocityTolerance);
     }
 
     public Command runHopperLanes() {

@@ -26,7 +26,8 @@ public class ShooterSupersystem {
     public boolean isReadyToFire(Angle turretAngle, Angle pitchAngle) {
         return turretPivot.isAtAngle(turretAngle)
                 && turretPitch.isAtAngle(pitchAngle)
-                && shooter.isAtSpeed();
+                && shooter.isAtSpeed()
+                && indexer.isTurretLaneAtSpeed();
     }
 
     public Command shootWhenReady(Angle turretAngle, Angle pitchAngle, BooleanSupplier fireTrigger) {

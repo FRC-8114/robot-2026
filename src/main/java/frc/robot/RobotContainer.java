@@ -101,7 +101,7 @@ public class RobotContainer {
                 // FuelSim setup
                 var fuelSim = new FuelSim();
                 fuelSim.registerRobot(
-                        0.7, 0.7, 0.15,
+                        0.67945, 0.634619, 0.1143,
                         drive::getPose,
                         () -> {
                             var cs = drive.getChassisSpeeds();
@@ -120,7 +120,7 @@ public class RobotContainer {
                         fuelSim, indexer, shooter, turretPitch, turretPivot, drive);
 
                 fuelSim.registerIntake(
-                        0.2, 0.5, -0.2, 0.2,
+                        -0.336, 0.336, -0.2, 0.2,
                         () -> intake.getRollerRPMs() > 500,
                         () -> gamePieceTracker.onIntake());
 

@@ -48,17 +48,14 @@ public class ShooterPitchIOReal implements ShooterPitchIO {
         turretPitchMotor.getConfigurator().apply(Constants.pitchMotorCfg);
     }
 
-    @Override
     public void setTarget(Angle angle) {
         turretPitchMotor.setControl(control.withPosition(angle));
     }
 
-    @Override
     public void setVoltage(double volts) {
         turretPitchMotor.setControl(voltageControl.withOutput(volts));
     }
 
-    @Override
     public void updateInputs(ShooterPitchInputs inputs) {
         inputs.pitchPosition = turretPitchMotor.getPosition().getValue().in(Degrees);
         inputs.velocityRadsPerSec = turretPitchMotor.getVelocity().getValue().in(RadiansPerSecond);

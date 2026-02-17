@@ -109,17 +109,14 @@ public class TurretIOReal implements TurretIO {
         pivotMotor.setPosition(angle);
     }
 
-    @Override
     public void setTarget(Angle angle) {
         pivotMotor.setControl(control.withPosition(angle));
     }
 
-    @Override
     public void setVoltage(double volts) {
         pivotMotor.setControl(voltageControl.withOutput(volts));
     }
 
-    @Override
     public void updateInputs(TurretIOInputs inputs) {
         double position = pivotMotor.getPosition().getValue().in(Radians);
         Optional<Angle> positionCrt = getTurretAngle();

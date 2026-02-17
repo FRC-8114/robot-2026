@@ -43,37 +43,31 @@ public class IntakeIOSim implements IntakeIO {
                 ROLLER_GEARBOX);
     }
 
-    @Override
     public void setDeployTarget(Angle angle) {
         deployClosedLoop = true;
         deployController.setSetpoint(angle.in(Radians));
     }
 
-    @Override
     public void setDeployVoltage(double volts) {
         deployClosedLoop = false;
         deployAppliedVolts = volts;
     }
 
-    @Override
     public void setRollerVelocity(AngularVelocity velocity) {
         rollerClosedLoop = true;
         rollerController.setSetpoint(velocity.in(RPM) / 60.0 * 2.0 * Math.PI); // convert to rad/s
     }
 
-    @Override
     public void setRollerVoltage(double volts) {
         rollerClosedLoop = false;
         rollerAppliedVolts = volts;
     }
 
-    @Override
     public void stopRollers() {
         rollerClosedLoop = false;
         rollerAppliedVolts = 0.0;
     }
 
-    @Override
     public void updateInputs(IntakeInputs inputs) {
         if (deployClosedLoop) {
             deployAppliedVolts = deployController.calculate(deploySim.getAngularPositionRad());

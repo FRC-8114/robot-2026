@@ -50,23 +50,19 @@ public class ShooterIOReal implements ShooterIO {
         rightFlywheel.setControl(new Follower(Constants.leftFlywheelMotorId, MotorAlignmentValue.Opposed));
     }
 
-    @Override
     public void setFlywheelVelocity(AngularVelocity velocity) {
         leftFlywheel.setControl(velocityControl.withVelocity(velocity));
     }
 
-    @Override
     public void setVoltage(double volts) {
         leftFlywheel.setControl(voltageControl.withOutput(volts));
     }
 
-    @Override
     public void stopFlywheels() {
         leftFlywheel.stopMotor();
         rightFlywheel.stopMotor();
     }
 
-    @Override
     public void updateInputs(ShooterInputs inputs) {
         inputs.leftFlywheelRPMs = leftFlywheel.getVelocity().getValue().in(RPM);
         inputs.leftCurrentAmps = leftFlywheel.getTorqueCurrent().getValueAsDouble();

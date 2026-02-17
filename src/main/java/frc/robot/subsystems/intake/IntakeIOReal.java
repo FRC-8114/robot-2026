@@ -65,32 +65,26 @@ public class IntakeIOReal implements IntakeIO {
         rollerMotor.getConfigurator().apply(Constants.rollerMotorCfg);
     }
 
-    @Override
     public void setDeployTarget(Angle angle) {
         deployMotor.setControl(deployControl.withPosition(angle));
     }
 
-    @Override
     public void setDeployVoltage(double volts) {
         deployMotor.setControl(deployVoltageControl.withOutput(volts));
     }
 
-    @Override
     public void setRollerVelocity(AngularVelocity velocity) {
         rollerMotor.setControl(rollerControl.withVelocity(velocity));
     }
 
-    @Override
     public void setRollerVoltage(double volts) {
         rollerMotor.setControl(rollerVoltageControl.withOutput(volts));
     }
 
-    @Override
     public void stopRollers() {
         rollerMotor.stopMotor();
     }
 
-    @Override
     public void updateInputs(IntakeInputs inputs) {
         inputs.deployPositionRads = deployMotor.getPosition().getValue().in(Radians);
         inputs.deployVelocityRadsPerSec = deployMotor.getVelocity().getValue().in(RadiansPerSecond);

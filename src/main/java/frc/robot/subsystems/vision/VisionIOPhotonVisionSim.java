@@ -50,12 +50,10 @@ public class VisionIOPhotonVisionSim implements VisionIO {
                 config.robotToCamera());
     }
 
-    @Override
     public CameraConfiguration getConfiguration() {
         return config;
     }
 
-    @Override
     public void updateInputs(VisionIOInputs inputs, PoseEstimationBuffer buffer) {
         double now = Timer.getFPGATimestamp();
         if (now - lastSimUpdateTimeSec > 0.005) {

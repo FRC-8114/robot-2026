@@ -24,12 +24,10 @@ public class VisionIOLimelight implements VisionIO {
         config = camera;
     }
 
-    @Override
     public CameraConfiguration getConfiguration() {
         return config;
     }
 
-    @Override
     public void updateInputs(VisionIOInputs inputs, PoseEstimationBuffer buffer) {
         inputs.connected = Limelight.isAvailable(config.name());
 

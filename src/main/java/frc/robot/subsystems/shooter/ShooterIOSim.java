@@ -35,7 +35,6 @@ public class ShooterIOSim implements ShooterIO {
                 MOTOR_GEARBOX);
     }
 
-    @Override
     public void setFlywheelVelocity(AngularVelocity velocity) {
         closedLoop = true;
         double setpointRadPerSec = velocity.in(RPM) / 60.0 * 2.0 * Math.PI;
@@ -43,21 +42,18 @@ public class ShooterIOSim implements ShooterIO {
         rightController.setSetpoint(setpointRadPerSec);
     }
 
-    @Override
     public void setVoltage(double volts) {
         closedLoop = false;
         leftVolts = volts;
         rightVolts = volts;
     }
 
-    @Override
     public void stopFlywheels() {
         closedLoop = false;
         leftVolts = 0.0;
         rightVolts = 0.0;
     }
 
-    @Override
     public void updateInputs(ShooterInputs inputs) {
         if (closedLoop) {
             leftVolts = leftController.calculate(leftSim.getAngularVelocityRadPerSec());

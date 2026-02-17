@@ -30,19 +30,16 @@ public class TurretIOSim implements TurretIO {
         controller.enableContinuousInput(-Math.PI, Math.PI);
     }
 
-    @Override
     public void setTarget(Angle angle) {
         closedLoop = true;
         controller.setSetpoint(angle.in(Radians));
     }
 
-    @Override
     public void setVoltage(double volts) {
         closedLoop = false;
         appliedVolts = volts;
     }
 
-    @Override
     public void updateInputs(TurretIOInputs inputs) {
         if (closedLoop) {
             appliedVolts = controller.calculate(sim.getAngularPositionRad());

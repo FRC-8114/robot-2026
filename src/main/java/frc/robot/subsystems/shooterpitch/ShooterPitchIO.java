@@ -12,9 +12,9 @@ public interface ShooterPitchIO {
         public double appliedVoltage = 0;
     }
 
-    abstract void setTarget(Angle angle);
+    void setTarget(Angle angle);
 
-    abstract void setVoltage(double volts);
+    void setVoltage(double volts);
 
-    abstract void updateInputs(ShooterPitchInputs inputs);
+    void updateInputs(ShooterPitchInputs inputs);
 }

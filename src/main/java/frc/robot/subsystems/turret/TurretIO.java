@@ -15,9 +15,9 @@ public interface TurretIO {
         public double appliedVoltage = 0;
     }
 
-    abstract void updateInputs(TurretIOInputs inputs);
+    void updateInputs(TurretIOInputs inputs);
 
-    abstract void setTarget(Angle angle);
+    void setTarget(Angle angle);
 
-    abstract void setVoltage(double volts);
+    void setVoltage(double volts);
 }

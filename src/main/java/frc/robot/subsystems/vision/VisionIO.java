@@ -67,8 +67,7 @@ public interface VisionIO {
         }
     }
 
-    public CameraConfiguration getConfiguration();
+    CameraConfiguration getConfiguration();
 
-    public default void updateInputs(VisionIOInputs inputs, PoseEstimationBuffer buffer) {
-    }
+    void updateInputs(VisionIOInputs inputs, PoseEstimationBuffer buffer);
 }

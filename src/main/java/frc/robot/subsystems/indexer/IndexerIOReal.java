@@ -69,7 +69,6 @@ public class IndexerIOReal implements IndexerIO {
         }
     }
 
-    @Override
     public void updateInputs(IndexerInputs inputs) {
         inputs.hopperLanesRPMs = hopperLanesMotor.getVelocity().getValue().in(RPM);
         inputs.hopperLanesCurrentAmps = hopperLanesMotor.getTorqueCurrent().getValueAsDouble();

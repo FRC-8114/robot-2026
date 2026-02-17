@@ -38,20 +38,17 @@ public class IndexerIOSim implements IndexerIO {
                 MOTOR_GEARBOX);
     }
 
-    @Override
     public void setTurretLaneVelocity(AngularVelocity velocity) {
         turretLaneClosedLoop = true;
         turretLaneController.setSetpoint(velocity.in(RPM) / 60.0 * 2.0 * Math.PI);
     }
 
-    @Override
     public void setHopperLaneVelocity(AngularVelocity velocity) {
         hopperLanesClosedLoop = true;
         hopperReverse = false;
         hopperLanesController.setSetpoint(velocity.in(RPM) / 60.0 * 2.0 * Math.PI);
     }
 
-    @Override
     public void setHopperReverse(boolean runReverse) {
         hopperReverse = runReverse;
         if (runReverse) {
@@ -62,7 +59,6 @@ public class IndexerIOSim implements IndexerIO {
         }
     }
 
-    @Override
     public void updateInputs(IndexerInputs inputs) {
         if (turretLaneClosedLoop) {
             turretLaneVolts = turretLaneController.calculate(turretLaneSim.getAngularVelocityRadPerSec());

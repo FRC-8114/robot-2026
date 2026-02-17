@@ -34,7 +34,6 @@ public class GyroIOPigeon2 implements GyroIO {
         yawPositionQueue = PhoenixOdometryThread.getInstance().registerSignal(yaw.clone());
     }
 
-    @Override
     public void updateInputs(GyroIOInputs inputs) {
         inputs.connected = BaseStatusSignal.refreshAll(yaw, yawVelocity).equals(StatusCode.OK);
         inputs.yawPosition = Rotation2d.fromDegrees(yaw.getValueAsDouble());

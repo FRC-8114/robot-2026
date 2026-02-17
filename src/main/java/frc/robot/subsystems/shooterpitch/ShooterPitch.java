@@ -1,10 +1,8 @@
-package frc.robot.subsystems.turret;
+package frc.robot.subsystems.shooterpitch;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Volts;
-
-import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
 
@@ -13,53 +11,49 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
-public class Turret extends SubsystemBase {
+public class ShooterPitch extends SubsystemBase {
     private static final Angle ANGLE_TOLERANCE = Degrees.of(1);
 
-    private final TurretIO pivotMotor;
-    private final TurretIOInputsAutoLogged inputs = new TurretIOInputsAutoLogged();
+    private final ShooterPitchIO pitchMotor;
+    private final ShooterPitchInputsAutoLogged inputs = new ShooterPitchInputsAutoLogged();
     private final SysIdRoutine sysId;
 
-    public Turret(TurretIO pivotMotor) {
-        this.pivotMotor = pivotMotor;
+    public ShooterPitch(ShooterPitchIO pitchMotor) {
+        this.pitchMotor = pitchMotor;
 
         sysId = new SysIdRoutine(
                 new SysIdRoutine.Config(
                         null, null, null,
-                        (state) -> Logger.recordOutput("Turret/SysIdState", state.toString())),
+                        (state) -> Logger.recordOutput("ShooterPitch/SysIdState", state.toString())),
                 new SysIdRoutine.Mechanism(
-                        (voltage) -> pivotMotor.setVoltage(voltage.in(Volts)), null, this));
+                        (voltage) -> pitchMotor.setVoltage(voltage.in(Volts)), null, this));
     }
 
-    public double getTurretPositionRads() {
-        return inputs.turretMotorPosition;
+    public double getPitchPositionRads() {
+        return inputs.pitchPosition;
     }
 
     @Override
     public void periodic() {
-        pivotMotor.updateInputs(inputs);
+        pitchMotor.updateInputs(inputs);
     }
 
     public boolean isAtAngle(Angle target) {
-        return target.isNear(Radians.of(inputs.turretMotorPosition), ANGLE_TOLERANCE);
+        return target.isNear(Radians.of(inputs.pitchPosition), ANGLE_TOLERANCE);
     }
 
-    public Command setAngle(Angle angle) {
-        return run(() -> pivotMotor.setTarget(angle));
-    }
-
-    public Command followAngle(Supplier<Angle> angle) {
-        return run(() -> pivotMotor.setTarget(angle.get()));
+    public Command setAngle(Angle pitchAngle) {
+        return run(() -> pitchMotor.setTarget(pitchAngle));
     }
 
     public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-        return run(() -> pivotMotor.setVoltage(0.0))
+        return run(() -> pitchMotor.setVoltage(0.0))
                 .withTimeout(1.0)
                 .andThen(sysId.quasistatic(direction));
     }
 
     public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-        return run(() -> pivotMotor.setVoltage(0.0))
+        return run(() -> pitchMotor.setVoltage(0.0))
                 .withTimeout(1.0)
                 .andThen(sysId.dynamic(direction));
     }

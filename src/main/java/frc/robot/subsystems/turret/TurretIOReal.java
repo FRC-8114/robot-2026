@@ -1,4 +1,4 @@
-package frc.robot.subsystems.turret.pivot;
+package frc.robot.subsystems.turret;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Radians;
@@ -13,6 +13,7 @@ import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
@@ -20,14 +21,14 @@ import com.ctre.phoenix6.signals.SensorDirectionValue;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.Angle;
 
-public class TurretPivotIOReal implements TurretPivotIO {
+public class TurretIOReal implements TurretIO {
     private static class Constants {
-        public static final int pivotMotorID = 10;
+        public static final int pivotMotorID = 32;
 
         // The turret encoder CANCoder which has the 19T gear
-        public static final int turretEncoder1ID = 11;
+        public static final int turretEncoder1ID = 33;
         // the turret encoder which has the 21T gear
-        public static final int turretEncoder2ID = 12;
+        public static final int turretEncoder2ID = 34;
 
         public static final double MAX_ROTATION = 200.0;
 
@@ -75,8 +76,9 @@ public class TurretPivotIOReal implements TurretPivotIO {
     private final CANcoder turretEncoder1 = new CANcoder(Constants.turretEncoder1ID);
     private final CANcoder turretEncoder2 = new CANcoder(Constants.turretEncoder2ID);
     private final MotionMagicVoltage control = new MotionMagicVoltage(0);
+    private final VoltageOut voltageControl = new VoltageOut(0);
 
-    public TurretPivotIOReal() {
+    public TurretIOReal() {
         turretEncoder1.getConfigurator().apply(Constants.encoder1Cfg);
         turretEncoder2.getConfigurator().apply(Constants.encoder2Cfg);
         pivotMotor.getConfigurator().apply(Constants.pivotMotorCfg);
@@ -113,14 +115,19 @@ public class TurretPivotIOReal implements TurretPivotIO {
     }
 
     @Override
-    public void updateInputs(TurretPivotIOInputs inputs) {
+    public void setVoltage(double volts) {
+        pivotMotor.setControl(voltageControl.withOutput(volts));
+    }
+
+    @Override
+    public void updateInputs(TurretIOInputs inputs) {
         double position = pivotMotor.getPosition().getValue().in(Radians);
         Optional<Angle> positionCrt = getTurretAngle();
 
         inputs.hasValidCRT = positionCrt.isPresent();
         inputs.turretMotorPosition = position;
         inputs.turretPositionCRT = positionCrt.orElse(Angle.ofRelativeUnits(0, Radians)).in(Radians);
-        
+
         if (positionCrt.isPresent() && Math
                 .abs(MathUtil.angleModulus(position - positionCrt.get().in(Radians))) > Constants.ERROR_THRESHOLD) {
             // valid CRT but motor disagrees

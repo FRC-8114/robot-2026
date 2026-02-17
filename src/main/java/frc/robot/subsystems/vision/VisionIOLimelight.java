@@ -30,7 +30,9 @@ public class VisionIOLimelight implements VisionIO {
     }
 
     @Override
-    public void updateInputs(VisionIOInputs inputs) {
+    public void updateInputs(VisionIOInputs inputs, PoseEstimationBuffer buffer) {
+        inputs.connected = Limelight.isAvailable(config.name());
+
         Optional<PoseEstimate> estimate = poseEstimator.getPoseEstimate();
 
         if (estimate.isEmpty()) {
@@ -55,6 +57,6 @@ public class VisionIOLimelight implements VisionIO {
             return;
         }
 
-        inputs.pushEstimate(VisionIO.PoseEstimation.fromLimelightEstimate(this, estimated));
+        buffer.pushEstimate(VisionIO.PoseEstimation.fromLimelightEstimate(this, estimated));
     }
 }

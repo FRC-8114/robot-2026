@@ -2,10 +2,11 @@ package frc.robot.subsystems.indexer;
 
 import static edu.wpi.first.units.Units.RPM;
 
+import java.util.function.BooleanSupplier;
+
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.RepeatCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.indexer.IndexerIO.IndexerInputs;
 
@@ -48,6 +49,34 @@ public class Indexer extends SubsystemBase {
     public Command runTurretLanes() {
         return runEnd(() -> io.setTurretLaneVelocity(Constants.turretLaneVelocity),
                 () -> io.setTurretLaneVelocity(RPM.zero()));
+    }
+
+    public Command feed() {
+        return runEnd(
+                () -> {
+                    io.setHopperLaneVelocity(Constants.hopperLaneVelocity);
+                    io.setTurretLaneVelocity(Constants.turretLaneVelocity);
+                },
+                () -> {
+                    io.setHopperLaneVelocity(RPM.zero());
+                    io.setTurretLaneVelocity(RPM.zero());
+                });
+    }
+
+    public Command prepareAndFeedWhen(BooleanSupplier shouldFeed) {
+        return runEnd(
+                () -> {
+                    io.setTurretLaneVelocity(Constants.turretLaneVelocity);
+                    if (shouldFeed.getAsBoolean()) {
+                        io.setHopperLaneVelocity(Constants.hopperLaneVelocity);
+                    } else {
+                        io.setHopperLaneVelocity(RPM.zero());
+                    }
+                },
+                () -> {
+                    io.setTurretLaneVelocity(RPM.zero());
+                    io.setHopperLaneVelocity(RPM.zero());
+                });
     }
 
     public Command reverse() {

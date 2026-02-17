@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 public class Shooter extends SubsystemBase {
     private static class Constants {
         static final double flywheelTargetRPM = 3000;
+        static final double flywheelToleranceRPM = 50;
     }
 
     private final ShooterIO io;
@@ -37,6 +38,10 @@ public class Shooter extends SubsystemBase {
     @Override
     public void periodic() {
         io.updateInputs(inputs);
+    }
+
+    public boolean isAtSpeed() {
+        return Math.abs(getAverageFlywheelRPMs() - Constants.flywheelTargetRPM) < Constants.flywheelToleranceRPM;
     }
 
     public Command runFlywheels() {

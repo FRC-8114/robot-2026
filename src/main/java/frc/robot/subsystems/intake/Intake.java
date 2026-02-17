@@ -2,6 +2,7 @@ package frc.robot.subsystems.intake;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Volts;
 
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -24,8 +25,7 @@ public class Intake extends SubsystemBase {
         static final Angle stowedAngle = Degrees.of(0);
         static final Angle deployedAngle = Degrees.of(180); // TODO: tune
 
-        static final double deploySysIdMinRads = Math.toRadians(5); // TODO: tune
-        static final double deploySysIdMaxRads = Math.toRadians(170); // TODO: tune
+        static final Angle deployTolerance = Degrees.of(3);
 
         static final AngularVelocity intakeVelocity = RPM.of(3000);
         static final AngularVelocity ejectVelocity = RPM.of(-1500);
@@ -93,16 +93,19 @@ public class Intake extends SubsystemBase {
                 .withName("RunRollers");
     }
 
-    private boolean deployWithinSysIdLimits() {
-        return inputs.deployPositionRads > Constants.deploySysIdMinRads
-                && inputs.deployPositionRads < Constants.deploySysIdMaxRads;
+    public boolean isDeployed() {
+        return Constants.deployedAngle.isNear(Radians.of(inputs.deployPositionRads), Constants.deployTolerance);
     }
 
+    public boolean isStowed() {
+        return Constants.stowedAngle.isNear(Radians.of(inputs.deployPositionRads), Constants.deployTolerance);
+    }
+    
     public Command deploySysIdQuasistatic(SysIdRoutine.Direction direction) {
         return run(() -> io.setDeployVoltage(0.0))
                 .withTimeout(1.0)
                 .andThen(deploySysId.quasistatic(direction)
-                        .until(() -> !deployWithinSysIdLimits()))
+                        .until(() -> isDeployed() || isStowed()))
                 .finallyDo(() -> io.setDeployVoltage(0.0));
     }
 
@@ -110,7 +113,7 @@ public class Intake extends SubsystemBase {
         return run(() -> io.setDeployVoltage(0.0))
                 .withTimeout(1.0)
                 .andThen(deploySysId.dynamic(direction)
-                        .until(() -> !deployWithinSysIdLimits()))
+                        .until(() -> isDeployed() || isStowed()))
                 .finallyDo(() -> io.setDeployVoltage(0.0));
     }
 

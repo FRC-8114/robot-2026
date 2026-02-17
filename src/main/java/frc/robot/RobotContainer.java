@@ -8,6 +8,8 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 
+import static edu.wpi.first.units.Units.Degrees;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -263,6 +265,15 @@ public class RobotContainer {
 
         controller.leftBumper().onTrue(intake.intake());
         controller.rightBumper().onTrue(intake.stow());
+
+        // TODO: the actual solving
+        var turretAngle = Degrees.of(0);
+        var pitchAngle = Degrees.of(50);
+
+        controller.leftTrigger().whileTrue(
+                shooterSupersystem.shootWhenReady(
+                        turretAngle, pitchAngle,
+                        () -> controller.getRightTriggerAxis() > 0.5));
     }
 
     public void simulationPeriodic() {

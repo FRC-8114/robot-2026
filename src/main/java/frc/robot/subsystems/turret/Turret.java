@@ -1,5 +1,7 @@
 package frc.robot.subsystems.turret;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Volts;
 
 import java.util.function.Supplier;
@@ -12,6 +14,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 public class Turret extends SubsystemBase {
+    private static final Angle ANGLE_TOLERANCE = Degrees.of(1);
+
     private final TurretIO pivotMotor;
     private final TurretIOInputsAutoLogged inputs = new TurretIOInputsAutoLogged();
     private final SysIdRoutine sysId;
@@ -34,6 +38,10 @@ public class Turret extends SubsystemBase {
     @Override
     public void periodic() {
         pivotMotor.updateInputs(inputs);
+    }
+
+    public boolean isAtAngle(Angle target) {
+        return target.isNear(Radians.of(inputs.turretMotorPosition), ANGLE_TOLERANCE);
     }
 
     public Command setAngle(Angle angle) {

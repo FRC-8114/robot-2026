@@ -1,5 +1,7 @@
 package frc.robot.subsystems.shooterpitch;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Volts;
 
 import org.littletonrobotics.junction.Logger;
@@ -10,6 +12,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 public class ShooterPitch extends SubsystemBase {
+    private static final Angle ANGLE_TOLERANCE = Degrees.of(1);
+
     private final ShooterPitchIO pitchMotor;
     private final ShooterPitchInputsAutoLogged inputs = new ShooterPitchInputsAutoLogged();
     private final SysIdRoutine sysId;
@@ -32,6 +36,10 @@ public class ShooterPitch extends SubsystemBase {
     @Override
     public void periodic() {
         pitchMotor.updateInputs(inputs);
+    }
+
+    public boolean isAtAngle(Angle target) {
+        return target.isNear(Radians.of(inputs.pitchPosition), ANGLE_TOLERANCE);
     }
 
     public Command setAngle(Angle pitchAngle) {

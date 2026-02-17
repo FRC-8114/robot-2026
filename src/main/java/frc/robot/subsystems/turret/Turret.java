@@ -38,6 +38,7 @@ public class Turret extends SubsystemBase {
     @Override
     public void periodic() {
         pivotMotor.updateInputs(inputs);
+        Logger.processInputs("Turret", inputs);
     }
 
     public boolean isAtAngle(Angle target) {

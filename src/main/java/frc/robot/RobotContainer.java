@@ -114,7 +114,6 @@ public class RobotContainer {
                                     cs.omegaRadiansPerSecond);
                         });
                 fuelSim.spawnStartingFuel();
-                fuelSim.start();
 
                 gamePieceTracker = new GamePieceTracker(
                         fuelSim, indexer, shooter, turretPitch, turretPivot, drive);
@@ -124,6 +123,9 @@ public class RobotContainer {
                         () -> intake.getRollerRPMs() > 500,
                         () -> gamePieceTracker.onIntake());
 
+                fuelSim.start();
+                fuelSim.enableAirResistance();
+                
                 break;
             }
             case REPLAY: {

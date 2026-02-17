@@ -18,8 +18,6 @@ import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.subsystems.intake.IntakeIO.IntakeInputs;
-
 public class Intake extends SubsystemBase {
     private static class Constants {
         static final Angle stowedAngle = Degrees.of(0);
@@ -32,7 +30,7 @@ public class Intake extends SubsystemBase {
     }
 
     private final IntakeIO io;
-    private final IntakeInputs inputs = new IntakeInputs();
+    private final IntakeInputsAutoLogged inputs = new IntakeInputsAutoLogged();
     private final SysIdRoutine deploySysId;
     private final SysIdRoutine rollerSysId;
 
@@ -136,6 +134,7 @@ public class Intake extends SubsystemBase {
     @Override
     public void periodic() {
         io.updateInputs(inputs);
+        Logger.processInputs("Intake", inputs);
 
         armLigament.setAngle(180 - Math.toDegrees(inputs.deployPositionRads));
         rollerLigament.setColor(inputs.rollerRPMs > 0

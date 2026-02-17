@@ -36,6 +36,7 @@ public class ShooterPitch extends SubsystemBase {
     @Override
     public void periodic() {
         pitchMotor.updateInputs(inputs);
+        Logger.processInputs("ShooterPitch", inputs);
     }
 
     public boolean isAtAngle(Angle target) {

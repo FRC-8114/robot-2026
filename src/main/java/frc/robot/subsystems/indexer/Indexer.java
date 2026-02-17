@@ -4,12 +4,12 @@ import static edu.wpi.first.units.Units.RPM;
 
 import java.util.function.BooleanSupplier;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.subsystems.indexer.IndexerIO.IndexerInputs;
-
 public class Indexer extends SubsystemBase {
     private static class Constants {
         static final double reverseFrequency = 3.0;
@@ -21,7 +21,7 @@ public class Indexer extends SubsystemBase {
     };
 
     private final IndexerIO io;
-    private final IndexerInputs inputs = new IndexerInputs();
+    private final IndexerInputsAutoLogged inputs = new IndexerInputsAutoLogged();
 
     public Indexer(IndexerIO io) {
         this.io = io;
@@ -99,5 +99,6 @@ public class Indexer extends SubsystemBase {
     @Override
     public void periodic() {
         io.updateInputs(inputs);
+        Logger.processInputs("Indexer", inputs);
     }
 }

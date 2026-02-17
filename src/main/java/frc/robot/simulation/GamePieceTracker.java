@@ -15,14 +15,6 @@ import frc.robot.subsystems.turret.Turret;
 import frc.robot.util.FuelSim;
 
 public class GamePieceTracker {
-    private enum State {
-        EMPTY,
-        INTAKE,
-        HOPPER,
-        TURRET_LANE,
-        READY_TO_FIRE
-    }
-
     private static final double INTAKE_DWELL = 0.3;
     private static final double HOPPER_DWELL = 0.4;
     private static final double TURRET_LANE_DWELL = 0.2;
@@ -37,9 +29,15 @@ public class GamePieceTracker {
     private final Turret turret;
     private final Drive drive;
 
-    private State state = State.EMPTY;
-    private final Timer dwellTimer = new Timer();
+    private int intakeCount = 0;
+    private int hopperCount = 0;
+    private int turretLaneCount = 0;
+    private int readyToFireCount = 0;
     private int shotCount = 0;
+
+    private final Timer intakeTimer = new Timer();
+    private final Timer hopperTimer = new Timer();
+    private final Timer turretLaneTimer = new Timer();
 
     public GamePieceTracker(FuelSim fuelSim, Indexer indexer, Shooter shooter,
             ShooterPitch shooterPitch, Turret turret, Drive drive) {
@@ -52,45 +50,56 @@ public class GamePieceTracker {
     }
 
     public void update() {
-        switch (state) {
-            case INTAKE:
-                if (dwellTimer.hasElapsed(INTAKE_DWELL)) {
-                    state = State.HOPPER;
-                    dwellTimer.restart();
-                }
-                break;
-            case HOPPER:
-                if (indexer.getHopperLanesRPMs() > RPM_THRESHOLD && dwellTimer.hasElapsed(HOPPER_DWELL)) {
-                    state = State.TURRET_LANE;
-                    dwellTimer.restart();
-                }
-                break;
-            case TURRET_LANE:
-                if (indexer.getTurretLaneRPMs() > RPM_THRESHOLD && dwellTimer.hasElapsed(TURRET_LANE_DWELL)) {
-                    state = State.READY_TO_FIRE;
-                    dwellTimer.stop();
-                }
-                break;
-            case READY_TO_FIRE:
-            case EMPTY:
-                break;
+        // Advance turret lane → ready to fire
+        if (turretLaneCount > 0
+                && indexer.getTurretLaneRPMs() > RPM_THRESHOLD
+                && turretLaneTimer.hasElapsed(TURRET_LANE_DWELL)) {
+            int transfer = turretLaneCount;
+            turretLaneCount = 0;
+            readyToFireCount += transfer;
+            turretLaneTimer.stop();
         }
 
-        Logger.recordOutput("GamePieceTracker/State", state.name());
-        Logger.recordOutput("GamePieceTracker/HasGamePiece", hasGamePiece());
+        // Advance hopper → turret lane
+        if (hopperCount > 0
+                && indexer.getHopperLanesRPMs() > RPM_THRESHOLD
+                && hopperTimer.hasElapsed(HOPPER_DWELL)) {
+            int transfer = hopperCount;
+            hopperCount = 0;
+            turretLaneCount += transfer;
+            turretLaneTimer.restart();
+        }
+
+        // Advance intake → hopper
+        if (intakeCount > 0 && intakeTimer.hasElapsed(INTAKE_DWELL)) {
+            int transfer = intakeCount;
+            intakeCount = 0;
+            hopperCount += transfer;
+            hopperTimer.restart();
+        }
+
+        Logger.recordOutput("GamePieceTracker/Intake", intakeCount);
+        Logger.recordOutput("GamePieceTracker/Hopper", hopperCount);
+        Logger.recordOutput("GamePieceTracker/TurretLane", turretLaneCount);
+        Logger.recordOutput("GamePieceTracker/ReadyToFire", readyToFireCount);
+        Logger.recordOutput("GamePieceTracker/Total", getPieceCount());
         Logger.recordOutput("GamePieceTracker/ShotCount", shotCount);
     }
 
+    public int getPieceCount() {
+        return intakeCount + hopperCount + turretLaneCount + readyToFireCount;
+    }
+
     public boolean hasGamePiece() {
-        return state != State.EMPTY;
+        return getPieceCount() > 0;
     }
 
     public boolean isReadyToFire() {
-        return state == State.READY_TO_FIRE;
+        return readyToFireCount > 0;
     }
 
     public boolean tryShoot() {
-        if (!isReadyToFire()) return false;
+        if (readyToFireCount <= 0) return false;
 
         double mps = shooter.getAverageFlywheelRPMs() * RPM_TO_MPS_FACTOR;
 
@@ -100,16 +109,16 @@ public class GamePieceTracker {
                 Radians.of(turret.getTurretPositionRads()),
                 Meters.of(LAUNCH_HEIGHT_METERS));
 
-        state = State.EMPTY;
+        readyToFireCount--;
         shotCount++;
         return true;
     }
 
     public void onIntake() {
-        if (state == State.EMPTY) {
-            state = State.INTAKE;
-            dwellTimer.restart();
+        if (intakeCount == 0) {
+            intakeTimer.restart();
         }
+        intakeCount++;
     }
 
     public void updateSim() {

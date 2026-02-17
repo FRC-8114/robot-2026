@@ -27,7 +27,7 @@ public class Shooter extends SubsystemBase {
                         null, null, null,
                         (state) -> Logger.recordOutput("Shooter/SysIdState", state.toString())),
                 new SysIdRoutine.Mechanism(
-                        (voltage) -> io.setFlywheelVelocity(RPM.of(voltage.in(Volts) / 12.0 * Constants.flywheelTargetRPM)),
+                        (voltage) -> io.setVoltage(voltage.in(Volts)),
                         null, this));
     }
 
@@ -42,7 +42,8 @@ public class Shooter extends SubsystemBase {
     }
 
     public boolean isAtSpeed() {
-        return Math.abs(getAverageFlywheelRPMs() - Constants.flywheelTargetRPM) < Constants.flywheelToleranceRPM;
+        return Math.abs(inputs.leftFlywheelRPMs - Constants.flywheelTargetRPM) < Constants.flywheelToleranceRPM
+                && Math.abs(inputs.rightFlywheelRPMs - Constants.flywheelTargetRPM) < Constants.flywheelToleranceRPM;
     }
 
     public Command runFlywheels() {

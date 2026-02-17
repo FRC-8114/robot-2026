@@ -44,6 +44,13 @@ public class ShooterIOSim implements ShooterIO {
     }
 
     @Override
+    public void setVoltage(double volts) {
+        closedLoop = false;
+        leftVolts = volts;
+        rightVolts = volts;
+    }
+
+    @Override
     public void stopFlywheels() {
         closedLoop = false;
         leftVolts = 0.0;

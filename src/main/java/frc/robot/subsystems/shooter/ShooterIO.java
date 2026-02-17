@@ -15,6 +15,8 @@ public interface ShooterIO {
 
     void setFlywheelVelocity(AngularVelocity velocity);
 
+    void setVoltage(double volts);
+
     void stopFlywheels();
 
     void updateInputs(ShooterInputs inputs);

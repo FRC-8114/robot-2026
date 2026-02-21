@@ -2,8 +2,6 @@ package frc.robot.subsystems.vision;
 
 import limelight.networktables.PoseEstimate;
 
-import java.util.ArrayList;
-
 import org.littletonrobotics.junction.AutoLog;
 
 import edu.wpi.first.math.Matrix;
@@ -18,20 +16,22 @@ public interface VisionIO {
     @AutoLog
     public static class VisionIOInputs {
         public boolean connected;
-        public int poseEstimationCount = 0;
-        // protected for the autolog class
-        protected int bufferPosition = 0;
+    }
+
+    public static class PoseEstimationBuffer {
+        public int count = 0;
+        private int bufferPosition = 0;
         public PoseEstimation[] poseEstimations = new PoseEstimation[POSE_ESTIMATION_BUFFER_SIZE];
 
         public void pushEstimate(PoseEstimation estimation) {
             bufferPosition = (bufferPosition + 1) % POSE_ESTIMATION_BUFFER_SIZE;
-            poseEstimationCount = Math.min(poseEstimationCount + 1 , POSE_ESTIMATION_BUFFER_SIZE);
+            count = Math.min(count + 1, POSE_ESTIMATION_BUFFER_SIZE);
 
             poseEstimations[bufferPosition] = estimation;
         }
 
-        public void clearEstimates() {
-            poseEstimationCount = 0;
+        public void clear() {
+            count = 0;
             bufferPosition = 0;
 
             for (int i = 0; i < POSE_ESTIMATION_BUFFER_SIZE; i++) {
@@ -67,8 +67,7 @@ public interface VisionIO {
         }
     }
 
-    public CameraConfiguration getConfiguration();
+    CameraConfiguration getConfiguration();
 
-    public default void updateInputs(VisionIOInputs inputs) {
-    }
+    void updateInputs(VisionIOInputs inputs, PoseEstimationBuffer buffer);
 }

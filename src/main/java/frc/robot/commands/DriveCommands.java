@@ -1,6 +1,7 @@
 package frc.robot.commands;
 
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -291,5 +292,9 @@ public class DriveCommands {
      */
     public static Command followPath(PathPlannerPath path) {
         return AutoBuilder.followPath(path);
+    }
+
+    public static Command pathfindToPose(Pose2d targetPose, PathConstraints constraint) {
+        return AutoBuilder.pathfindToPose(targetPose, constraint);
     }
 }

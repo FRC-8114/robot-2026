@@ -167,7 +167,6 @@ public class ModuleIOTalonFX implements ModuleIO {
         ParentDevice.optimizeBusUtilizationForAll(driveTalon, turnTalon);
     }
 
-    @Override
     public void updateInputs(ModuleIOInputs inputs) {
         // Refresh all signals
         var driveStatus = BaseStatusSignal.refreshAll(drivePosition, driveVelocity, driveAppliedVolts, driveCurrent);
@@ -203,7 +202,6 @@ public class ModuleIOTalonFX implements ModuleIO {
         turnPositionQueue.clear();
     }
 
-    @Override
     public void setDriveOpenLoop(double output) {
         driveTalon.setControl(
                 switch (constants.DriveMotorClosedLoopOutput) {
@@ -212,7 +210,6 @@ public class ModuleIOTalonFX implements ModuleIO {
                 });
     }
 
-    @Override
     public void setTurnOpenLoop(double output) {
         turnTalon.setControl(
                 switch (constants.SteerMotorClosedLoopOutput) {
@@ -221,7 +218,6 @@ public class ModuleIOTalonFX implements ModuleIO {
                 });
     }
 
-    @Override
     public void setDriveVelocity(double velocityRadPerSec) {
         double velocityRotPerSec = Units.radiansToRotations(velocityRadPerSec);
         driveTalon.setControl(
@@ -231,7 +227,6 @@ public class ModuleIOTalonFX implements ModuleIO {
                 });
     }
 
-    @Override
     public void setTurnPosition(Rotation2d rotation) {
         turnTalon.setControl(
                 switch (constants.SteerMotorClosedLoopOutput) {

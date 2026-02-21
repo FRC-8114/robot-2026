@@ -26,17 +26,17 @@ public interface ModuleIO {
   }
 
   /** Updates the set of loggable inputs. */
-  public default void updateInputs(ModuleIOInputs inputs) {}
+  public void updateInputs(ModuleIOInputs inputs);
 
   /** Run the drive motor at the specified open loop value. */
-  public default void setDriveOpenLoop(double output) {}
+  public void setDriveOpenLoop(double output);
 
   /** Run the turn motor at the specified open loop value. */
-  public default void setTurnOpenLoop(double output) {}
+  public void setTurnOpenLoop(double output);
 
   /** Run the drive motor at the specified velocity. */
-  public default void setDriveVelocity(double velocityRadPerSec) {}
+  public void setDriveVelocity(double velocityRadPerSec);
 
   /** Run the turn motor to the specified rotation. */
-  public default void setTurnPosition(Rotation2d rotation) {}
+  public void setTurnPosition(Rotation2d rotation);
 }

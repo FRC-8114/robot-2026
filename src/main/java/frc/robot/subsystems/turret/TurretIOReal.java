@@ -54,9 +54,9 @@ public class TurretIOReal implements TurretIO {
                 .withMagnetSensor(encoder2MagnetConfigs);
 
         private static final Slot0Configs pivotMotorPIDs = new Slot0Configs()
-                .withKS(0.001)
-                .withKV(0.032)
-                .withKA(0.01)
+                .withKS(0.3035)
+                .withKV(0.1034)
+                .withKA(0)
                 .withKP(9.78)
                 .withKI(0.0)
                 .withKD(0.0);

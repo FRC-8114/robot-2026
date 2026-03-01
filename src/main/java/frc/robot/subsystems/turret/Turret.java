@@ -57,7 +57,6 @@ public class Turret extends SubsystemBase {
 
     private Angle computeMotorTarget(Angle target) {
         double targetDeg = MathUtil.inputModulus(target.in(Degrees), -180, 180);
-        targetDeg = MathUtil.clamp(targetDeg, Constants.MIN_ANGLE.in(Degrees), Constants.MAX_ANGLE.in(Degrees));
 
         double currentDeg = Math.toDegrees(inputs.turretMotorPosition);
         double normalizedCurrentDeg = MathUtil.inputModulus(currentDeg, -180, 180);
@@ -74,15 +73,25 @@ public class Turret extends SubsystemBase {
         return run(() -> pivotMotor.setTarget(computeMotorTarget(angle.get())));
     }
 
+    private boolean isOutOfBounds() {
+        double currentDeg = Math.toDegrees(inputs.turretMotorPosition);
+        return currentDeg < Constants.MIN_ANGLE.in(Degrees)
+                || currentDeg > Constants.MAX_ANGLE.in(Degrees);
+    }
+
     public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
         return run(() -> pivotMotor.setVoltage(0.0))
                 .withTimeout(1.0)
-                .andThen(sysId.quasistatic(direction));
+                .andThen(sysId.quasistatic(direction)
+                        .until(this::isOutOfBounds)
+                        .finallyDo(() -> pivotMotor.setVoltage(0.0)));
     }
 
     public Command sysIdDynamic(SysIdRoutine.Direction direction) {
         return run(() -> pivotMotor.setVoltage(0.0))
                 .withTimeout(1.0)
-                .andThen(sysId.dynamic(direction));
+                .andThen(sysId.dynamic(direction)
+                        .until(this::isOutOfBounds)
+                        .finallyDo(() -> pivotMotor.setVoltage(0.0)));
     }
 }

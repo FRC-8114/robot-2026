@@ -4,6 +4,8 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Volts;
 
+import java.util.function.Supplier;
+
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.units.measure.Angle;
@@ -45,6 +47,10 @@ public class ShooterPitch extends SubsystemBase {
 
     public Command setAngle(Angle pitchAngle) {
         return run(() -> pitchMotor.setTarget(pitchAngle));
+    }
+
+    public Command followAngle(Supplier<Angle> pitchAngle) {
+        return run(() -> pitchMotor.setTarget(pitchAngle.get()));
     }
 
     public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {

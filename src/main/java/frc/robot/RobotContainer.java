@@ -8,8 +8,6 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 
-import static edu.wpi.first.units.Units.Degrees;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -80,7 +78,8 @@ public class RobotContainer {
                 break;
             }
             case SIMULATION: {
-                drive = new Drive(new GyroIOPigeon2(), new ModuleIOSim(TunerConstants.FrontLeft),
+                drive = new Drive(inputs -> {
+                }, new ModuleIOSim(TunerConstants.FrontLeft),
                         new ModuleIOSim(TunerConstants.FrontRight), new ModuleIOSim(TunerConstants.BackLeft),
                         new ModuleIOSim(TunerConstants.BackRight));
                 var simVisionIOs = new ArrayList<frc.robot.subsystems.vision.VisionIO>();
@@ -125,7 +124,7 @@ public class RobotContainer {
 
                 fuelSim.start();
                 fuelSim.enableAirResistance();
-                
+
                 break;
             }
             case REPLAY: {

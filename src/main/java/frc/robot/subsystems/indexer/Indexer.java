@@ -7,6 +7,7 @@ import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -16,8 +17,8 @@ public class Indexer extends SubsystemBase {
         static final double reverseFrequency = 3.0;
         static final double reverseBurstTime = 0.2;
 
-        static final AngularVelocity hopperLaneVelocity = RPM.of(250);
-        static final AngularVelocity turretLaneVelocity = RPM.of(1500);
+        static AngularVelocity hopperLaneVelocity = RPM.of(250);
+        static AngularVelocity turretLaneVelocity = RPM.of(1500);
 
         static final AngularVelocity turretLaneVelocityTolerance = RPM.of(100);
     };
@@ -27,6 +28,9 @@ public class Indexer extends SubsystemBase {
 
     public Indexer(IndexerIO io) {
         this.io = io;
+
+        SmartDashboard.putNumber("hopperLaneVelocity", 250);
+        SmartDashboard.putNumber("turretLaneVelocity", 1500);
 
         setDefaultCommand(periodicReverse());
     }
@@ -93,6 +97,9 @@ public class Indexer extends SubsystemBase {
 
     @Override
     public void periodic() {
+        Constants.hopperLaneVelocity = RPM.of(SmartDashboard.getNumber("hopperLaneVelocity", 250));
+        Constants.turretLaneVelocity = RPM.of(SmartDashboard.getNumber("turretLaneVelocity", 1500));
+
         io.updateInputs(inputs);
         Logger.processInputs("Indexer", inputs);
     }

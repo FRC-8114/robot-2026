@@ -1,6 +1,7 @@
 package frc.robot.supersystems;
 
 import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -38,6 +39,20 @@ public class ShooterSupersystem {
                 turretPivot.setAngle(turretAngle),
                 turretPitch.setAngle(pitchAngle),
                 shooter.runFlywheels(),
+                indexer.prepareAndFeedWhen(shouldFeed)
+        );
+    }
+
+    public Command shootWhenReady(Supplier<Angle> turretAngle, Supplier<Angle> pitchAngle,
+            Supplier<Double> rpm, BooleanSupplier fireTrigger) {
+        BooleanSupplier shouldFeed = () ->
+                fireTrigger.getAsBoolean()
+                        && isReadyToFire(turretAngle.get(), pitchAngle.get());
+
+        return Commands.parallel(
+                turretPivot.followAngle(turretAngle),
+                turretPitch.followAngle(pitchAngle),
+                shooter.runFlywheelsAtSpeed(rpm),
                 indexer.prepareAndFeedWhen(shouldFeed)
         );
     }

@@ -50,6 +50,13 @@ public class GamePieceTracker {
     }
 
     public void update() {
+        // Fire when ready: flywheels spinning and hopper feeding balls through
+        if (readyToFireCount > 0
+                && shooter.getAverageFlywheelRPMs() > RPM_THRESHOLD
+                && indexer.getHopperLanesRPMs() > RPM_THRESHOLD) {
+            tryShoot();
+        }
+
         // Advance turret lane → ready to fire
         if (turretLaneCount > 0
                 && indexer.getTurretLaneRPMs() > RPM_THRESHOLD

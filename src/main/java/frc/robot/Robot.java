@@ -21,7 +21,7 @@ public class Robot extends LoggedRobot {
   private final RobotContainer m_robotContainer;
 
   public Robot() {
-    switch (Constants.ROBOT_MODE) {
+    switch (RobotConstants.robotMode) {
       case REAL: {
         Logger.addDataReceiver(new WPILOGWriter());
         Logger.addDataReceiver(new NT4Publisher());

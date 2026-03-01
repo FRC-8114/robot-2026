@@ -14,6 +14,7 @@ import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 
 import edu.wpi.first.units.measure.Voltage;
+import frc.robot.RobotConstants;
 
 public class ClimberIOReal implements ClimberIO {
     private static class Constants {
@@ -34,7 +35,7 @@ public class ClimberIOReal implements ClimberIO {
                 .withFeedback(fusedEncoderCfg);
     }
 
-    private static final TalonFX climbMotor = new TalonFX(Constants.climbMotorID, new CANBus("canivore"));
+    private static final TalonFX climbMotor = new TalonFX(Constants.climbMotorID, RobotConstants.canBus);
 
     private static final MotionMagicVoltage control = new MotionMagicVoltage(0).withEnableFOC(true);
     private static final VoltageOut voltageOut = new VoltageOut(0);

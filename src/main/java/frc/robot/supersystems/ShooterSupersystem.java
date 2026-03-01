@@ -52,7 +52,7 @@ public class ShooterSupersystem {
         return Commands.parallel(
                 turretPivot.followAngle(turretAngle),
                 turretPitch.followAngle(pitchAngle),
-                shooter.runFlywheelsAtSpeed(rpm),
+                // shooter.runFlywheelsAtSpeed(rpm),
                 indexer.prepareAndFeedWhen(shouldFeed)
         );
     }

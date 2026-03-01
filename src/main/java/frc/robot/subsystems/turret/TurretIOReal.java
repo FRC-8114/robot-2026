@@ -20,6 +20,7 @@ import com.ctre.phoenix6.signals.SensorDirectionValue;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.Angle;
+import frc.robot.RobotConstants;
 
 public class TurretIOReal implements TurretIO {
     private static class Constants {
@@ -72,9 +73,9 @@ public class TurretIOReal implements TurretIO {
                                                                                     // rotation of the turret
     }
 
-    private final TalonFX pivotMotor = new TalonFX(Constants.pivotMotorID);
-    private final CANcoder turretEncoder1 = new CANcoder(Constants.turretEncoder1ID);
-    private final CANcoder turretEncoder2 = new CANcoder(Constants.turretEncoder2ID);
+    private final TalonFX pivotMotor = new TalonFX(Constants.pivotMotorID, RobotConstants.canBus);
+    private final CANcoder turretEncoder1 = new CANcoder(Constants.turretEncoder1ID, RobotConstants.canBus);
+    private final CANcoder turretEncoder2 = new CANcoder(Constants.turretEncoder2ID, RobotConstants.canBus);
     private final MotionMagicVoltage control = new MotionMagicVoltage(0);
     private final VoltageOut voltageControl = new VoltageOut(0);
 

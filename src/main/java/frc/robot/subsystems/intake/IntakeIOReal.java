@@ -15,6 +15,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import frc.robot.RobotConstants;
 
 public class IntakeIOReal implements IntakeIO {
     private static class Constants {
@@ -52,8 +53,8 @@ public class IntakeIOReal implements IntakeIO {
                 .withSlot0(rollerPIDs);
     }
 
-    private final TalonFX deployMotor = new TalonFX(Constants.deployMotorId);
-    private final TalonFX rollerMotor = new TalonFX(Constants.rollerMotorId);
+    private final TalonFX deployMotor = new TalonFX(Constants.deployMotorId, RobotConstants.canBus);
+    private final TalonFX rollerMotor = new TalonFX(Constants.rollerMotorId, RobotConstants.canBus);
 
     private final MotionMagicVoltage deployControl = new MotionMagicVoltage(0);
     private final VelocityTorqueCurrentFOC rollerControl = new VelocityTorqueCurrentFOC(0).withSlot(0);

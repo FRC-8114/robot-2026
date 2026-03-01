@@ -12,6 +12,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 
 import edu.wpi.first.units.measure.AngularVelocity;
+import frc.robot.RobotConstants;
 
 public class ShooterIOReal implements ShooterIO {
     private static class Constants {
@@ -37,8 +38,8 @@ public class ShooterIOReal implements ShooterIO {
                 .withCurrentLimits(currentLimits);
     }
 
-    private final TalonFX leftFlywheel = new TalonFX(Constants.leftFlywheelMotorId);
-    private final TalonFX rightFlywheel = new TalonFX(Constants.rightFlywheelMotorId);
+    private final TalonFX leftFlywheel = new TalonFX(Constants.leftFlywheelMotorId, RobotConstants.canBus);
+    private final TalonFX rightFlywheel = new TalonFX(Constants.rightFlywheelMotorId, RobotConstants.canBus);
 
     private final VelocityTorqueCurrentFOC velocityControl = new VelocityTorqueCurrentFOC(0).withSlot(0);
     private final VoltageOut voltageControl = new VoltageOut(0);

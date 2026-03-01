@@ -3,6 +3,7 @@ package frc.robot.subsystems.shooterpitch;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
+
 import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
@@ -12,6 +13,7 @@ import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 
 import edu.wpi.first.units.measure.Angle;
+import frc.robot.RobotConstants;
 
 public class ShooterPitchIOReal implements ShooterPitchIO {
     private static class Constants {
@@ -40,7 +42,7 @@ public class ShooterPitchIOReal implements ShooterPitchIO {
                 .withFeedback(pitchFeedbackConfigs);
     }
 
-    private final TalonFX turretPitchMotor = new TalonFX(Constants.turretPitchMotorId);
+    private final TalonFX turretPitchMotor = new TalonFX(Constants.turretPitchMotorId, RobotConstants.canBus);
     private final MotionMagicVoltage control = new MotionMagicVoltage(0);
     private final VoltageOut voltageControl = new VoltageOut(0);
 

@@ -48,248 +48,258 @@ import frc.robot.supersystems.ShooterSupersystem;
 import frc.robot.util.FuelSim;
 
 public class RobotContainer {
-    private final Drive drive;
-    private final Vision vision;
-    private final Turret turretPivot;
-    private final ShooterPitch turretPitch;
-    private final Indexer indexer;
-    private final Intake intake;
-    private final Shooter shooter;
-    private final ShooterSupersystem shooterSupersystem;
-    private GamePieceTracker gamePieceTracker;
+        private final Drive drive;
+        private final Vision vision;
+        private final Turret turretPivot;
+        private final ShooterPitch turretPitch;
+        private final Indexer indexer;
+        private final Intake intake;
+        private final Shooter shooter;
+        private final ShooterSupersystem shooterSupersystem;
+        private GamePieceTracker gamePieceTracker;
 
-    private final CommandXboxController controller = new CommandXboxController(0);
+        private final CommandXboxController controller = new CommandXboxController(0);
 
-    public RobotContainer() {
-        switch (Constants.ROBOT_MODE) {
-            case REAL: {
-                drive = new Drive(new GyroIOPigeon2(), new ModuleIOTalonFX(TunerConstants.FrontLeft),
-                        new ModuleIOTalonFX(TunerConstants.FrontRight), new ModuleIOTalonFX(TunerConstants.BackLeft),
-                        new ModuleIOTalonFX(TunerConstants.BackRight));
+        public RobotContainer() {
+                switch (RobotConstants.robotMode) {
+                        case REAL: {
+                                drive = new Drive(new GyroIOPigeon2(), new ModuleIOTalonFX(TunerConstants.FrontLeft),
+                                                new ModuleIOTalonFX(TunerConstants.FrontRight),
+                                                new ModuleIOTalonFX(TunerConstants.BackLeft),
+                                                new ModuleIOTalonFX(TunerConstants.BackRight));
 
-                vision = Vision.fromCameraConstants(poseEstimation -> {
-                    drive.addVisionMeasurement(poseEstimation.pose().toPose2d(), poseEstimation.timestamp(),
-                            poseEstimation.stddev());
-                });
+                                vision = null;
+                                // vision = Vision.fromCameraConstants(poseEstimation -> {
+                                // drive.addVisionMeasurement(poseEstimation.pose().toPose2d(),
+                                // poseEstimation.timestamp(),
+                                // poseEstimation.stddev());
+                                // });
 
-                turretPivot = new Turret(new TurretIOReal());
-                turretPitch = new ShooterPitch(new ShooterPitchIOReal());
-                indexer = new Indexer(new IndexerIOReal());
-                intake = new Intake(new IntakeIOReal());
-                shooter = new Shooter(new ShooterIOReal());
-                break;
-            }
-            case SIMULATION: {
-                drive = new Drive(inputs -> {
-                }, new ModuleIOSim(TunerConstants.FrontLeft),
-                        new ModuleIOSim(TunerConstants.FrontRight), new ModuleIOSim(TunerConstants.BackLeft),
-                        new ModuleIOSim(TunerConstants.BackRight));
-                var simVisionIOs = new ArrayList<frc.robot.subsystems.vision.VisionIO>();
-                for (var cam : VisionConstants.cameras) {
-                    simVisionIOs.add(new VisionIOPhotonVisionSim(cam, drive::getPose));
+                                turretPivot = new Turret(new TurretIOReal());
+                                turretPitch = new ShooterPitch(new ShooterPitchIOSim());
+                                indexer = new Indexer(new IndexerIOReal());
+                                intake = new Intake(new IntakeIOReal());
+                                shooter = new Shooter(new ShooterIOSim());
+                                break;
+                        }
+                        case SIMULATION: {
+                                drive = new Drive(inputs -> {
+                                }, new ModuleIOSim(TunerConstants.FrontLeft),
+                                                new ModuleIOSim(TunerConstants.FrontRight),
+                                                new ModuleIOSim(TunerConstants.BackLeft),
+                                                new ModuleIOSim(TunerConstants.BackRight));
+                                var simVisionIOs = new ArrayList<frc.robot.subsystems.vision.VisionIO>();
+                                for (var cam : VisionConstants.cameras) {
+                                        simVisionIOs.add(new VisionIOPhotonVisionSim(cam, drive::getPose));
+                                }
+                                vision = new Vision(poseEstimation -> {
+                                        drive.addVisionMeasurement(poseEstimation.pose().toPose2d(),
+                                                        poseEstimation.timestamp(),
+                                                        poseEstimation.stddev());
+                                }, simVisionIOs);
+
+                                turretPivot = new Turret(new TurretIOSim());
+                                turretPitch = new ShooterPitch(new ShooterPitchIOSim());
+                                indexer = new Indexer(new IndexerIOSim());
+                                intake = new Intake(new IntakeIOSim());
+                                shooter = new Shooter(new ShooterIOSim());
+
+                                // FuelSim setup
+                                var fuelSim = new FuelSim();
+                                fuelSim.registerRobot(
+                                                0.67945, 0.634619, 0.1143,
+                                                drive::getPose,
+                                                () -> {
+                                                        var cs = drive.getChassisSpeeds();
+                                                        var heading = drive.getPose().getRotation();
+                                                        return new ChassisSpeeds(
+                                                                        cs.vxMetersPerSecond * heading.getCos()
+                                                                                        - cs.vyMetersPerSecond * heading
+                                                                                                        .getSin(),
+                                                                        cs.vxMetersPerSecond * heading.getSin()
+                                                                                        + cs.vyMetersPerSecond * heading
+                                                                                                        .getCos(),
+                                                                        cs.omegaRadiansPerSecond);
+                                                });
+                                fuelSim.spawnStartingFuel();
+
+                                gamePieceTracker = new GamePieceTracker(
+                                                fuelSim, indexer, shooter, turretPitch, turretPivot, drive);
+
+                                fuelSim.registerIntake(
+                                                -0.336, 0.336, -0.2, 0.2,
+                                                () -> intake.getRollerRPMs() > 500,
+                                                () -> gamePieceTracker.onIntake());
+
+                                fuelSim.start();
+                                fuelSim.enableAirResistance();
+
+                                break;
+                        }
+                        case REPLAY: {
+                                throw new UnsupportedOperationException("No replay mode implemented");
+                        }
+                        default:
+                                throw new IllegalStateException("Unexpected value: " + RobotConstants.robotMode);
                 }
-                vision = new Vision(poseEstimation -> {
-                    drive.addVisionMeasurement(poseEstimation.pose().toPose2d(), poseEstimation.timestamp(),
-                            poseEstimation.stddev());
-                }, simVisionIOs);
 
-                turretPivot = new Turret(new TurretIOSim());
-                turretPitch = new ShooterPitch(new ShooterPitchIOSim());
-                indexer = new Indexer(new IndexerIOSim());
-                intake = new Intake(new IntakeIOSim());
-                shooter = new Shooter(new ShooterIOSim());
+                shooterSupersystem = new ShooterSupersystem(turretPivot, turretPitch, shooter, indexer);
 
-                // FuelSim setup
-                var fuelSim = new FuelSim();
-                fuelSim.registerRobot(
-                        0.67945, 0.634619, 0.1143,
-                        drive::getPose,
-                        () -> {
-                            var cs = drive.getChassisSpeeds();
-                            var heading = drive.getPose().getRotation();
-                            return new ChassisSpeeds(
-                                    cs.vxMetersPerSecond * heading.getCos()
-                                            - cs.vyMetersPerSecond * heading.getSin(),
-                                    cs.vxMetersPerSecond * heading.getSin()
-                                            + cs.vyMetersPerSecond * heading.getCos(),
-                                    cs.omegaRadiansPerSecond);
-                        });
-                fuelSim.spawnStartingFuel();
-
-                gamePieceTracker = new GamePieceTracker(
-                        fuelSim, indexer, shooter, turretPitch, turretPivot, drive);
-
-                fuelSim.registerIntake(
-                        -0.336, 0.336, -0.2, 0.2,
-                        () -> intake.getRollerRPMs() > 500,
-                        () -> gamePieceTracker.onIntake());
-
-                fuelSim.start();
-                fuelSim.enableAirResistance();
-
-                break;
-            }
-            case REPLAY: {
-                throw new UnsupportedOperationException("No replay mode implemented");
-            }
-            default:
-                throw new IllegalStateException("Unexpected value: " + Constants.ROBOT_MODE);
+                configureButtonBindings();
+                setupAutoChoices();
         }
 
-        shooterSupersystem = new ShooterSupersystem(turretPivot, turretPitch, shooter, indexer);
+        private LoggedDashboardChooser<Command> autoChooser;
 
-        configureButtonBindings();
-        setupAutoChoices();
-    }
+        private void setupAutoChoices() {
+                autoChooser = new LoggedDashboardChooser<>("Auto Choices",
+                                AutoBuilder.buildAutoChooser());
 
-    private LoggedDashboardChooser<Command> autoChooser;
+                autoChooser.addOption(
+                                "Drive Wheel Radius Characterization",
+                                DriveCommands.wheelRadiusCharacterization(drive));
+                autoChooser.addOption(
+                                "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
+                autoChooser.addOption(
+                                "Drive SysId (Quasistatic Forward)",
+                                drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+                autoChooser.addOption(
+                                "Drive SysId (Quasistatic Reverse)",
+                                drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+                autoChooser.addOption(
+                                "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
+                autoChooser.addOption(
+                                "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
-    private void setupAutoChoices() {
-        autoChooser = new LoggedDashboardChooser<>("Auto Choices",
-                AutoBuilder.buildAutoChooser());
+                // Turret Pivot SysId
+                autoChooser.addOption(
+                                "Turret Pivot SysId (Quasistatic Forward)",
+                                turretPivot.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+                autoChooser.addOption(
+                                "Turret Pivot SysId (Quasistatic Reverse)",
+                                turretPivot.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+                autoChooser.addOption(
+                                "Turret Pivot SysId (Dynamic Forward)",
+                                turretPivot.sysIdDynamic(SysIdRoutine.Direction.kForward));
+                autoChooser.addOption(
+                                "Turret Pivot SysId (Dynamic Reverse)",
+                                turretPivot.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
-        autoChooser.addOption(
-                "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
-        autoChooser.addOption(
-                "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
-        autoChooser.addOption(
-                "Drive SysId (Quasistatic Forward)",
-                drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-        autoChooser.addOption(
-                "Drive SysId (Quasistatic Reverse)",
-                drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-        autoChooser.addOption(
-                "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
-        autoChooser.addOption(
-                "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+                // Turret Pitch SysId
+                autoChooser.addOption(
+                                "Turret Pitch SysId (Quasistatic Forward)",
+                                turretPitch.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+                autoChooser.addOption(
+                                "Turret Pitch SysId (Quasistatic Reverse)",
+                                turretPitch.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+                autoChooser.addOption(
+                                "Turret Pitch SysId (Dynamic Forward)",
+                                turretPitch.sysIdDynamic(SysIdRoutine.Direction.kForward));
+                autoChooser.addOption(
+                                "Turret Pitch SysId (Dynamic Reverse)",
+                                turretPitch.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
-        // Turret Pivot SysId
-        autoChooser.addOption(
-                "Turret Pivot SysId (Quasistatic Forward)",
-                turretPivot.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-        autoChooser.addOption(
-                "Turret Pivot SysId (Quasistatic Reverse)",
-                turretPivot.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-        autoChooser.addOption(
-                "Turret Pivot SysId (Dynamic Forward)",
-                turretPivot.sysIdDynamic(SysIdRoutine.Direction.kForward));
-        autoChooser.addOption(
-                "Turret Pivot SysId (Dynamic Reverse)",
-                turretPivot.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+                // Intake Deploy SysId
+                autoChooser.addOption(
+                                "Intake Deploy SysId (Quasistatic Forward)",
+                                intake.deploySysIdQuasistatic(SysIdRoutine.Direction.kForward));
+                autoChooser.addOption(
+                                "Intake Deploy SysId (Quasistatic Reverse)",
+                                intake.deploySysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+                autoChooser.addOption(
+                                "Intake Deploy SysId (Dynamic Forward)",
+                                intake.deploySysIdDynamic(SysIdRoutine.Direction.kForward));
+                autoChooser.addOption(
+                                "Intake Deploy SysId (Dynamic Reverse)",
+                                intake.deploySysIdDynamic(SysIdRoutine.Direction.kReverse));
 
-        // Turret Pitch SysId
-        autoChooser.addOption(
-                "Turret Pitch SysId (Quasistatic Forward)",
-                turretPitch.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-        autoChooser.addOption(
-                "Turret Pitch SysId (Quasistatic Reverse)",
-                turretPitch.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-        autoChooser.addOption(
-                "Turret Pitch SysId (Dynamic Forward)",
-                turretPitch.sysIdDynamic(SysIdRoutine.Direction.kForward));
-        autoChooser.addOption(
-                "Turret Pitch SysId (Dynamic Reverse)",
-                turretPitch.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+                // Intake Roller SysId
+                autoChooser.addOption(
+                                "Intake Roller SysId (Quasistatic Forward)",
+                                intake.rollerSysIdQuasistatic(SysIdRoutine.Direction.kForward));
+                autoChooser.addOption(
+                                "Intake Roller SysId (Quasistatic Reverse)",
+                                intake.rollerSysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+                autoChooser.addOption(
+                                "Intake Roller SysId (Dynamic Forward)",
+                                intake.rollerSysIdDynamic(SysIdRoutine.Direction.kForward));
+                autoChooser.addOption(
+                                "Intake Roller SysId (Dynamic Reverse)",
+                                intake.rollerSysIdDynamic(SysIdRoutine.Direction.kReverse));
 
-        // Intake Deploy SysId
-        autoChooser.addOption(
-                "Intake Deploy SysId (Quasistatic Forward)",
-                intake.deploySysIdQuasistatic(SysIdRoutine.Direction.kForward));
-        autoChooser.addOption(
-                "Intake Deploy SysId (Quasistatic Reverse)",
-                intake.deploySysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-        autoChooser.addOption(
-                "Intake Deploy SysId (Dynamic Forward)",
-                intake.deploySysIdDynamic(SysIdRoutine.Direction.kForward));
-        autoChooser.addOption(
-                "Intake Deploy SysId (Dynamic Reverse)",
-                intake.deploySysIdDynamic(SysIdRoutine.Direction.kReverse));
-
-        // Intake Roller SysId
-        autoChooser.addOption(
-                "Intake Roller SysId (Quasistatic Forward)",
-                intake.rollerSysIdQuasistatic(SysIdRoutine.Direction.kForward));
-        autoChooser.addOption(
-                "Intake Roller SysId (Quasistatic Reverse)",
-                intake.rollerSysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-        autoChooser.addOption(
-                "Intake Roller SysId (Dynamic Forward)",
-                intake.rollerSysIdDynamic(SysIdRoutine.Direction.kForward));
-        autoChooser.addOption(
-                "Intake Roller SysId (Dynamic Reverse)",
-                intake.rollerSysIdDynamic(SysIdRoutine.Direction.kReverse));
-
-        // Shooter SysId
-        autoChooser.addOption(
-                "Shooter SysId (Quasistatic Forward)",
-                shooter.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-        autoChooser.addOption(
-                "Shooter SysId (Quasistatic Reverse)",
-                shooter.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-        autoChooser.addOption(
-                "Shooter SysId (Dynamic Forward)",
-                shooter.sysIdDynamic(SysIdRoutine.Direction.kForward));
-        autoChooser.addOption(
-                "Shooter SysId (Dynamic Reverse)",
-                shooter.sysIdDynamic(SysIdRoutine.Direction.kReverse));
-    }
-
-    private void configureButtonBindings() {
-        // Default command, normal field-relative drive
-        drive.setDefaultCommand(
-                DriveCommands.joystickDrive(
-                        drive,
-                        () -> -controller.getLeftY(),
-                        () -> -controller.getLeftX(),
-                        () -> -controller.getRightX()));
-
-        // Lock to 0° when A button is held
-        controller
-                .a()
-                .whileTrue(
-                        DriveCommands.joystickDriveAtAngle(
-                                drive,
-                                () -> -controller.getLeftY(),
-                                () -> -controller.getLeftX(),
-                                () -> Rotation2d.kZero));
-
-        // Switch to X pattern when X button is pressed
-        controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
-
-        // Reset gyro to 0° when B button is pressed
-        controller
-                .b()
-                .onTrue(
-                        Commands.runOnce(
-                                () -> drive.setPose(
-                                        new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
-                                drive)
-                                .ignoringDisable(true));
-
-        controller.leftBumper().onTrue(intake.intake());
-        controller.rightBumper().onTrue(intake.stow());
-
-        // TODO: the actual solving
-        var turretAngle = Degrees.of(0);
-        var pitchAngle = Degrees.of(50);
-
-        controller.leftTrigger().whileTrue(
-                shooterSupersystem.shootWhenReady(
-                        turretAngle, pitchAngle,
-                        () -> controller.getRightTriggerAxis() > 0.5));
-    }
-
-    public void simulationPeriodic() {
-        if (gamePieceTracker != null) {
-            gamePieceTracker.updateSim();
+                // Shooter SysId
+                autoChooser.addOption(
+                                "Shooter SysId (Quasistatic Forward)",
+                                shooter.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+                autoChooser.addOption(
+                                "Shooter SysId (Quasistatic Reverse)",
+                                shooter.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+                autoChooser.addOption(
+                                "Shooter SysId (Dynamic Forward)",
+                                shooter.sysIdDynamic(SysIdRoutine.Direction.kForward));
+                autoChooser.addOption(
+                                "Shooter SysId (Dynamic Reverse)",
+                                shooter.sysIdDynamic(SysIdRoutine.Direction.kReverse));
         }
-    }
 
-    public GamePieceTracker getGamePieceTracker() {
-        return gamePieceTracker;
-    }
+        private void configureButtonBindings() {
+                // Default command, normal field-relative drive
+                drive.setDefaultCommand(
+                                DriveCommands.joystickDrive(
+                                                drive,
+                                                () -> -controller.getLeftY(),
+                                                () -> -controller.getLeftX(),
+                                                () -> -controller.getRightX()));
 
-    public Command getAutonomousCommand() {
-        return autoChooser.get();
-    }
+                // Lock to 0° when A button is held
+                controller
+                                .a()
+                                .whileTrue(
+                                                DriveCommands.joystickDriveAtAngle(
+                                                                drive,
+                                                                () -> -controller.getLeftY(),
+                                                                () -> -controller.getLeftX(),
+                                                                () -> Rotation2d.kZero));
+
+                // Switch to X pattern when X button is pressed
+                controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
+
+                // Reset gyro to 0° when B button is pressed
+                controller
+                                .b()
+                                .onTrue(
+                                                Commands.runOnce(
+                                                                () -> drive.setPose(
+                                                                                new Pose2d(drive.getPose()
+                                                                                                .getTranslation(),
+                                                                                                Rotation2d.kZero)),
+                                                                drive)
+                                                                .ignoringDisable(true));
+
+                controller.leftBumper().onTrue(intake.intake());
+                controller.rightBumper().onTrue(intake.stow());
+
+                // TODO: the actual solving
+                var turretAngle = Degrees.of(0);
+                var pitchAngle = Degrees.of(50);
+
+                controller.leftTrigger().whileTrue(
+                                shooterSupersystem.shootWhenReady(
+                                                turretAngle, pitchAngle,
+                                                () -> controller.getRightTriggerAxis() > 0.5));
+        }
+
+        public void simulationPeriodic() {
+                if (gamePieceTracker != null) {
+                        gamePieceTracker.updateSim();
+                }
+        }
+
+        public GamePieceTracker getGamePieceTracker() {
+                return gamePieceTracker;
+        }
+
+        public Command getAutonomousCommand() {
+                return autoChooser.get();
+        }
 }

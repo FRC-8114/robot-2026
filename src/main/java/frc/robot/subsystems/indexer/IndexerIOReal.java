@@ -10,6 +10,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 
 import edu.wpi.first.units.measure.AngularVelocity;
+import frc.robot.RobotConstants;
 
 public class IndexerIOReal implements IndexerIO {
     private static class Constants {
@@ -42,8 +43,8 @@ public class IndexerIOReal implements IndexerIO {
 
     };
 
-    private final TalonFX turretLaneMotor = new TalonFX(Constants.turretLaneMotorId);
-    private final TalonFX hopperLanesMotor = new TalonFX(Constants.hopperLanesMotorId);
+    private final TalonFX turretLaneMotor = new TalonFX(Constants.turretLaneMotorId, RobotConstants.canBus);
+    private final TalonFX hopperLanesMotor = new TalonFX(Constants.hopperLanesMotorId, RobotConstants.canBus);
 
     private final VelocityTorqueCurrentFOC turretLaneControl = new VelocityTorqueCurrentFOC(0).withSlot(0);
     private final VelocityTorqueCurrentFOC hopperLaneControl = new VelocityTorqueCurrentFOC(0).withSlot(0);

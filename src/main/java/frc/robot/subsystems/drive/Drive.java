@@ -83,7 +83,9 @@ public class Drive extends SubsystemBase {
     private final GyroIO gyroIO;
     private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
     private final Module[] modules = new Module[4]; // FL, FR, BL, BR
-    private final SysIdRoutine sysId;
+    private final SysIdRoutine translationSysId;
+    private final SysIdRoutine steerSysId;
+    private final SysIdRoutine rotationSysId;
     private final Alert gyroDisconnectedAlert = new Alert("Disconnected gyro, using kinematics as fallback.",
             AlertType.kError);
 
@@ -144,15 +146,37 @@ public class Drive extends SubsystemBase {
             Logger.recordOutput("Auto/PP/TargetPose", ppTargetPose.get());
         });
         
-        // Configure SysId
-        sysId = new SysIdRoutine(
+        // Configure drive translation SysId
+        translationSysId = new SysIdRoutine(
                 new SysIdRoutine.Config(
                         null,
                         null,
                         null,
-                        (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())),
+                        (state) -> Logger.recordOutput("Drive/SysIdTranslationState", state.toString())),
                 new SysIdRoutine.Mechanism(
                         (voltage) -> runCharacterization(voltage.in(Volts)), null, this));
+
+        // Configure steer SysId
+        steerSysId = new SysIdRoutine(
+                new SysIdRoutine.Config(
+                        null,
+                        null,
+                        null,
+                        (state) -> Logger.recordOutput("Drive/SysIdSteerState", state.toString())),
+                new SysIdRoutine.Mechanism(
+                        (voltage) -> runSteerCharacterization(voltage.in(Volts)), null, this));
+
+        // Configure rotational SysId.
+        // The "voltage" value from SysId is intentionally interpreted as rotational rate
+        // request in rad/s to match CTRE's swerve rotation characterization workflow.
+        rotationSysId = new SysIdRoutine(
+                new SysIdRoutine.Config(
+                        null,
+                        null,
+                        null,
+                        (state) -> Logger.recordOutput("Drive/SysIdRotationState", state.toString())),
+                new SysIdRoutine.Mechanism(
+                        (voltage) -> runRotationCharacterization(voltage.in(Volts)), null, this));
     }
 
     @Override
@@ -250,6 +274,31 @@ public class Drive extends SubsystemBase {
         }
     }
 
+    /** Runs steer characterization by applying open-loop output to turn motors. */
+    public void runSteerCharacterization(double output) {
+        for (int i = 0; i < 4; i++) {
+            modules[i].runSteerCharacterization(output);
+        }
+    }
+
+    /**
+     * Runs rotational characterization.
+     * The request value is treated as desired rotational rate in rad/s.
+     */
+    public void runRotationCharacterization(double rotationalRateRadPerSec) {
+        Logger.recordOutput(
+                "Drive/RotationCharacterization/RequestedRateRadPerSec",
+                rotationalRateRadPerSec);
+
+        Translation2d[] moduleTranslations = getModuleTranslations();
+        for (int i = 0; i < 4; i++) {
+            double speedMps = rotationalRateRadPerSec * moduleTranslations[i].getNorm();
+            double driveVolts = speedMps / getMaxLinearSpeedMetersPerSec() * 12.0;
+            Rotation2d angle = moduleTranslations[i].getAngle().plus(Rotation2d.kCCW_90deg);
+            modules[i].runCharacterization(driveVolts, angle);
+        }
+    }
+
     /** Stops the drive. */
     public void stop() {
         runVelocity(new ChassisSpeeds());
@@ -274,12 +323,47 @@ public class Drive extends SubsystemBase {
     public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
         return run(() -> runCharacterization(0.0))
                 .withTimeout(1.0)
-                .andThen(sysId.quasistatic(direction));
+                .andThen(translationSysId.quasistatic(direction));
     }
 
     /** Returns a command to run a dynamic test in the specified direction. */
     public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-        return run(() -> runCharacterization(0.0)).withTimeout(1.0).andThen(sysId.dynamic(direction));
+        return run(() -> runCharacterization(0.0)).withTimeout(1.0).andThen(translationSysId.dynamic(direction));
+    }
+
+    /** Returns a command to run a steer quasistatic test in the specified direction. */
+    public Command sysIdSteerQuasistatic(SysIdRoutine.Direction direction) {
+        return run(() -> runSteerCharacterization(0.0))
+                .withTimeout(1.0)
+                .andThen(steerSysId.quasistatic(direction));
+    }
+
+    /** Returns a command to run a steer dynamic test in the specified direction. */
+    public Command sysIdSteerDynamic(SysIdRoutine.Direction direction) {
+        return run(() -> runSteerCharacterization(0.0))
+                .withTimeout(1.0)
+                .andThen(steerSysId.dynamic(direction));
+    }
+
+    /**
+     * Returns a command to run a rotational quasistatic test in the specified
+     * direction.
+     * This dataset can be used for MOI estimation.
+     */
+    public Command sysIdRotationQuasistatic(SysIdRoutine.Direction direction) {
+        return run(() -> runRotationCharacterization(0.0))
+                .withTimeout(1.0)
+                .andThen(rotationSysId.quasistatic(direction));
+    }
+
+    /**
+     * Returns a command to run a rotational dynamic test in the specified direction.
+     * This dataset can be used for MOI estimation.
+     */
+    public Command sysIdRotationDynamic(SysIdRoutine.Direction direction) {
+        return run(() -> runRotationCharacterization(0.0))
+                .withTimeout(1.0)
+                .andThen(rotationSysId.dynamic(direction));
     }
 
     /**

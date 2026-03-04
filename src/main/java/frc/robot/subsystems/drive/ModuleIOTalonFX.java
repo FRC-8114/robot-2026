@@ -79,10 +79,20 @@ public class ModuleIOTalonFX implements ModuleIO {
     private final Debouncer driveConnectedDebounce = new Debouncer(0.5, Debouncer.DebounceType.kFalling);
     private final Debouncer turnConnectedDebounce = new Debouncer(0.5, Debouncer.DebounceType.kFalling);
     private final Debouncer turnEncoderConnectedDebounce = new Debouncer(0.5, Debouncer.DebounceType.kFalling);
+    private final boolean driveOpenLoopIsTorqueCurrent;
+    private final boolean turnOpenLoopIsTorqueCurrent;
+    private boolean driveOpenLoopActive = false;
+    private boolean turnOpenLoopActive = false;
+    private double driveDesiredOpenLoopOutput = 0.0;
+    private double turnDesiredOpenLoopOutput = 0.0;
 
     public ModuleIOTalonFX(
             SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants) {
         this.constants = constants;
+        driveOpenLoopIsTorqueCurrent =
+                constants.DriveMotorClosedLoopOutput == SwerveModuleConstants.ClosedLoopOutputType.TorqueCurrentFOC;
+        turnOpenLoopIsTorqueCurrent =
+                constants.SteerMotorClosedLoopOutput == SwerveModuleConstants.ClosedLoopOutputType.TorqueCurrentFOC;
         driveTalon = new TalonFX(constants.DriveMotorId, TunerConstants.kCANBus);
         turnTalon = new TalonFX(constants.SteerMotorId, TunerConstants.kCANBus);
         cancoder = new CANcoder(constants.EncoderId, TunerConstants.kCANBus);
@@ -179,6 +189,9 @@ public class ModuleIOTalonFX implements ModuleIO {
         inputs.driveVelocityRadPerSec = Units.rotationsToRadians(driveVelocity.getValueAsDouble());
         inputs.driveAppliedVolts = driveAppliedVolts.getValueAsDouble();
         inputs.driveCurrentAmps = driveCurrent.getValueAsDouble();
+        inputs.driveOpenLoopActive = driveOpenLoopActive;
+        inputs.driveDesiredOpenLoopOutput = driveDesiredOpenLoopOutput;
+        inputs.driveDesiredOpenLoopIsTorqueCurrent = driveOpenLoopIsTorqueCurrent;
 
         // Update turn inputs
         inputs.turnConnected = turnConnectedDebounce.calculate(turnStatus.isOK());
@@ -188,6 +201,9 @@ public class ModuleIOTalonFX implements ModuleIO {
         inputs.turnVelocityRadPerSec = Units.rotationsToRadians(turnVelocity.getValueAsDouble());
         inputs.turnAppliedVolts = turnAppliedVolts.getValueAsDouble();
         inputs.turnCurrentAmps = turnCurrent.getValueAsDouble();
+        inputs.turnOpenLoopActive = turnOpenLoopActive;
+        inputs.turnDesiredOpenLoopOutput = turnDesiredOpenLoopOutput;
+        inputs.turnDesiredOpenLoopIsTorqueCurrent = turnOpenLoopIsTorqueCurrent;
 
         // Update odometry inputs
         inputs.odometryTimestamps = timestampQueue.stream().mapToDouble((Double value) -> value).toArray();
@@ -203,6 +219,8 @@ public class ModuleIOTalonFX implements ModuleIO {
     }
 
     public void setDriveOpenLoop(double output) {
+        driveOpenLoopActive = true;
+        driveDesiredOpenLoopOutput = output;
         driveTalon.setControl(
                 switch (constants.DriveMotorClosedLoopOutput) {
                     case Voltage -> voltageRequest.withOutput(output);
@@ -211,6 +229,8 @@ public class ModuleIOTalonFX implements ModuleIO {
     }
 
     public void setTurnOpenLoop(double output) {
+        turnOpenLoopActive = true;
+        turnDesiredOpenLoopOutput = output;
         turnTalon.setControl(
                 switch (constants.SteerMotorClosedLoopOutput) {
                     case Voltage -> voltageRequest.withOutput(output);
@@ -219,6 +239,8 @@ public class ModuleIOTalonFX implements ModuleIO {
     }
 
     public void setDriveVelocity(double velocityRadPerSec) {
+        driveOpenLoopActive = false;
+        driveDesiredOpenLoopOutput = 0.0;
         double velocityRotPerSec = Units.radiansToRotations(velocityRadPerSec);
         driveTalon.setControl(
                 switch (constants.DriveMotorClosedLoopOutput) {
@@ -228,6 +250,8 @@ public class ModuleIOTalonFX implements ModuleIO {
     }
 
     public void setTurnPosition(Rotation2d rotation) {
+        turnOpenLoopActive = false;
+        turnDesiredOpenLoopOutput = 0.0;
         turnTalon.setControl(
                 switch (constants.SteerMotorClosedLoopOutput) {
                     case Voltage -> positionVoltageRequest.withPosition(rotation.getRotations());

@@ -80,6 +80,16 @@ public class Module {
         io.setTurnPosition(Rotation2d.kZero);
     }
 
+    public void runCharacterization(double driveOutput, Rotation2d turnAngle) {
+        io.setDriveOpenLoop(driveOutput);
+        io.setTurnPosition(turnAngle);
+    }
+
+    public void runSteerCharacterization(double output) {
+        io.setDriveOpenLoop(0.0);
+        io.setTurnOpenLoop(output);
+    }
+
     /** Disables all outputs to motors. */
     public void stop() {
         io.setDriveOpenLoop(0.0);

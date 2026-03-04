@@ -170,6 +170,30 @@ public class RobotContainer {
                                 "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
                 autoChooser.addOption(
                                 "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+                autoChooser.addOption(
+                                "Drive Steer SysId (Quasistatic Forward)",
+                                drive.sysIdSteerQuasistatic(SysIdRoutine.Direction.kForward));
+                autoChooser.addOption(
+                                "Drive Steer SysId (Quasistatic Reverse)",
+                                drive.sysIdSteerQuasistatic(SysIdRoutine.Direction.kReverse));
+                autoChooser.addOption(
+                                "Drive Steer SysId (Dynamic Forward)",
+                                drive.sysIdSteerDynamic(SysIdRoutine.Direction.kForward));
+                autoChooser.addOption(
+                                "Drive Steer SysId (Dynamic Reverse)",
+                                drive.sysIdSteerDynamic(SysIdRoutine.Direction.kReverse));
+                autoChooser.addOption(
+                                "Drive Rotation SysId (Quasistatic Forward, MOI)",
+                                drive.sysIdRotationQuasistatic(SysIdRoutine.Direction.kForward));
+                autoChooser.addOption(
+                                "Drive Rotation SysId (Quasistatic Reverse, MOI)",
+                                drive.sysIdRotationQuasistatic(SysIdRoutine.Direction.kReverse));
+                autoChooser.addOption(
+                                "Drive Rotation SysId (Dynamic Forward, MOI)",
+                                drive.sysIdRotationDynamic(SysIdRoutine.Direction.kForward));
+                autoChooser.addOption(
+                                "Drive Rotation SysId (Dynamic Reverse, MOI)",
+                                drive.sysIdRotationDynamic(SysIdRoutine.Direction.kReverse));
 
                 // Turret Pivot SysId
                 autoChooser.addOption(

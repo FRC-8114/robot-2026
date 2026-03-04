@@ -11,6 +11,9 @@ public interface ModuleIO {
     public double driveVelocityRadPerSec = 0.0;
     public double driveAppliedVolts = 0.0;
     public double driveCurrentAmps = 0.0;
+    public boolean driveOpenLoopActive = false;
+    public double driveDesiredOpenLoopOutput = 0.0;
+    public boolean driveDesiredOpenLoopIsTorqueCurrent = false;
 
     public boolean turnConnected = false;
     public boolean turnEncoderConnected = false;
@@ -19,6 +22,9 @@ public interface ModuleIO {
     public double turnVelocityRadPerSec = 0.0;
     public double turnAppliedVolts = 0.0;
     public double turnCurrentAmps = 0.0;
+    public boolean turnOpenLoopActive = false;
+    public double turnDesiredOpenLoopOutput = 0.0;
+    public boolean turnDesiredOpenLoopIsTorqueCurrent = false;
 
     public double[] odometryTimestamps = new double[] {};
     public double[] odometryDrivePositionsRad = new double[] {};

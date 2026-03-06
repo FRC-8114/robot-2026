@@ -20,7 +20,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 public class Intake extends SubsystemBase {
     private static class Constants {
-        static final Angle stowedAngle = Degrees.of(130);
+        static final Angle stowedAngle = Degrees.of(120);
         static final Angle deployedAngle = Degrees.of(0);
 
         static final Angle deployTolerance = Degrees.of(3);

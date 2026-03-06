@@ -6,12 +6,15 @@ import static edu.wpi.first.units.Units.RotationsPerSecond;
 
 import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -22,7 +25,7 @@ public class IntakeIOReal implements IntakeIO {
         static final int deployMotorId = 51;
         static final int rollerMotorId = 52;
 
-        static final double deployGearRatio = 25.0;
+        static final double deployGearRatio = 11.8125;
 
         static final Slot0Configs deployPIDs = new Slot0Configs()
                 .withKS(0.001)
@@ -39,7 +42,12 @@ public class IntakeIOReal implements IntakeIO {
         static final TalonFXConfiguration deployMotorCfg = new TalonFXConfiguration()
                 .withSlot0(deployPIDs)
                 .withMotionMagic(deployMotionMagic)
+                .withMotorOutput(new MotorOutputConfigs()
+                .withNeutralMode(NeutralModeValue.Brake) // balls bouncing out
+                    .withInverted(InvertedValue.CounterClockwise_Positive)) // gear inverts output
                 .withFeedback(new FeedbackConfigs().withSensorToMechanismRatio(deployGearRatio));
+
+        static final double rollerGearRatio = 1.0;
 
         static final Slot0Configs rollerPIDs = new Slot0Configs()
                 .withKS(0.001)
@@ -50,7 +58,11 @@ public class IntakeIOReal implements IntakeIO {
                 .withKD(0.0);
 
         static final TalonFXConfiguration rollerMotorCfg = new TalonFXConfiguration()
-                .withSlot0(rollerPIDs);
+                .withSlot0(rollerPIDs)
+                .withFeedback(new FeedbackConfigs()
+                    .withSensorToMechanismRatio(rollerGearRatio))
+                .withMotorOutput(new MotorOutputConfigs()
+                    .withNeutralMode(NeutralModeValue.Coast));
     }
 
     private final TalonFX deployMotor = new TalonFX(Constants.deployMotorId, RobotConstants.canBus);

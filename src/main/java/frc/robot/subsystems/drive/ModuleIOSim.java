@@ -40,6 +40,10 @@ public class ModuleIOSim implements ModuleIO {
     private double driveFFVolts = 0.0;
     private double driveAppliedVolts = 0.0;
     private double turnAppliedVolts = 0.0;
+    private boolean driveOpenLoopActive = false;
+    private boolean turnOpenLoopActive = false;
+    private double driveDesiredOpenLoopOutput = 0.0;
+    private double turnDesiredOpenLoopOutput = 0.0;
 
     public ModuleIOSim(
             SwerveModuleConstants<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration> constants) {
@@ -82,6 +86,9 @@ public class ModuleIOSim implements ModuleIO {
         inputs.driveVelocityRadPerSec = driveSim.getAngularVelocityRadPerSec();
         inputs.driveAppliedVolts = driveAppliedVolts;
         inputs.driveCurrentAmps = Math.abs(driveSim.getCurrentDrawAmps());
+        inputs.driveOpenLoopActive = driveOpenLoopActive;
+        inputs.driveDesiredOpenLoopOutput = driveDesiredOpenLoopOutput;
+        inputs.driveDesiredOpenLoopIsTorqueCurrent = false;
 
         // Update turn inputs
         inputs.turnConnected = true;
@@ -91,6 +98,9 @@ public class ModuleIOSim implements ModuleIO {
         inputs.turnVelocityRadPerSec = turnSim.getAngularVelocityRadPerSec();
         inputs.turnAppliedVolts = turnAppliedVolts;
         inputs.turnCurrentAmps = Math.abs(turnSim.getCurrentDrawAmps());
+        inputs.turnOpenLoopActive = turnOpenLoopActive;
+        inputs.turnDesiredOpenLoopOutput = turnDesiredOpenLoopOutput;
+        inputs.turnDesiredOpenLoopIsTorqueCurrent = false;
 
         // Update odometry inputs (50Hz because high-frequency odometry in sim doesn't
         // matter)
@@ -101,22 +111,30 @@ public class ModuleIOSim implements ModuleIO {
 
     public void setDriveOpenLoop(double output) {
         driveClosedLoop = false;
+        driveOpenLoopActive = true;
+        driveDesiredOpenLoopOutput = output;
         driveAppliedVolts = output;
     }
 
     public void setTurnOpenLoop(double output) {
         turnClosedLoop = false;
+        turnOpenLoopActive = true;
+        turnDesiredOpenLoopOutput = output;
         turnAppliedVolts = output;
     }
 
     public void setDriveVelocity(double velocityRadPerSec) {
         driveClosedLoop = true;
+        driveOpenLoopActive = false;
+        driveDesiredOpenLoopOutput = 0.0;
         driveFFVolts = DRIVE_KS * Math.signum(velocityRadPerSec) + DRIVE_KV * velocityRadPerSec;
         driveController.setSetpoint(velocityRadPerSec);
     }
 
     public void setTurnPosition(Rotation2d rotation) {
         turnClosedLoop = true;
+        turnOpenLoopActive = false;
+        turnDesiredOpenLoopOutput = 0.0;
         turnController.setSetpoint(rotation.getRadians());
     }
 }

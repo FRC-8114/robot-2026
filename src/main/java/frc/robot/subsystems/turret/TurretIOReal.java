@@ -103,7 +103,7 @@ public class TurretIOReal implements TurretIO {
             return Optional.empty();
         }
 
-        return Optional.of(Angle.ofRelativeUnits(turretGearTeeth * (360.0 / 200.0), Degrees));
+        return Optional.of(Degrees.of(turretGearTeeth * (360.0 / 200.0)));
     }
 
     private void reseedPosition(Angle angle) {

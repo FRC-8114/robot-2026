@@ -4,6 +4,10 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Degrees;
+
+import java.util.ArrayList;
+
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -13,37 +17,29 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-
-import static edu.wpi.first.units.Units.Degrees;
-
-import java.util.ArrayList;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
+import frc.robot.simulation.GamePieceTracker;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.indexer.Indexer;
-import frc.robot.subsystems.indexer.IndexerIOReal;
 import frc.robot.subsystems.indexer.IndexerIOSim;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeIOReal;
 import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.shooter.Shooter;
-import frc.robot.subsystems.shooter.ShooterIOReal;
 import frc.robot.subsystems.shooter.ShooterIOSim;
 import frc.robot.subsystems.shooterpitch.ShooterPitch;
-import frc.robot.subsystems.shooterpitch.ShooterPitchIOReal;
 import frc.robot.subsystems.shooterpitch.ShooterPitchIOSim;
 import frc.robot.subsystems.turret.Turret;
-import frc.robot.subsystems.turret.TurretIOReal;
 import frc.robot.subsystems.turret.TurretIOSim;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
-import frc.robot.simulation.GamePieceTracker;
 import frc.robot.supersystems.ShooterSupersystem;
 import frc.robot.util.FuelSim;
 
@@ -172,6 +168,46 @@ public class RobotContainer {
                 "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
         autoChooser.addOption(
                 "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+
+        autoChooser.addOption(
+                "Drive Wheel Radius Characterization",
+                DriveCommands.wheelRadiusCharacterization(drive));
+        autoChooser.addOption(
+                "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
+        autoChooser.addOption(
+                "Drive SysId (Quasistatic Forward)",
+                drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+        autoChooser.addOption(
+                "Drive SysId (Quasistatic Reverse)",
+                drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+        autoChooser.addOption(
+                "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
+        autoChooser.addOption(
+                "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+        autoChooser.addOption(
+                "Drive Steer SysId (Quasistatic Forward)",
+                drive.sysIdSteerQuasistatic(SysIdRoutine.Direction.kForward));
+        autoChooser.addOption(
+                "Drive Steer SysId (Quasistatic Reverse)",
+                drive.sysIdSteerQuasistatic(SysIdRoutine.Direction.kReverse));
+        autoChooser.addOption(
+                "Drive Steer SysId (Dynamic Forward)",
+                drive.sysIdSteerDynamic(SysIdRoutine.Direction.kForward));
+        autoChooser.addOption(
+                "Drive Steer SysId (Dynamic Reverse)",
+                drive.sysIdSteerDynamic(SysIdRoutine.Direction.kReverse));
+        autoChooser.addOption(
+                "Drive Rotation SysId (Quasistatic Forward, MOI)",
+                drive.sysIdRotationQuasistatic(SysIdRoutine.Direction.kForward));
+        autoChooser.addOption(
+                "Drive Rotation SysId (Quasistatic Reverse, MOI)",
+                drive.sysIdRotationQuasistatic(SysIdRoutine.Direction.kReverse));
+        autoChooser.addOption(
+                "Drive Rotation SysId (Dynamic Forward, MOI)",
+                drive.sysIdRotationDynamic(SysIdRoutine.Direction.kForward));
+        autoChooser.addOption(
+                "Drive Rotation SysId (Dynamic Reverse, MOI)",
+                drive.sysIdRotationDynamic(SysIdRoutine.Direction.kReverse));
 
         // Turret Pivot SysId
         autoChooser.addOption(

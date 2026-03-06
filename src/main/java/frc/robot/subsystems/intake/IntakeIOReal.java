@@ -23,9 +23,7 @@ import frc.robot.RobotConstants;
 public class IntakeIOReal implements IntakeIO {
     private static class Constants {
         static final int deployMotorId = 51;
-        static final int rollerMotorId = 52;
-
-        static final double deployGearRatio = 11.8125;
+        static final double deployGearRatio = 25.0;
 
         static final Slot0Configs deployPIDs = new Slot0Configs()
                 .withKS(0.001)
@@ -34,7 +32,6 @@ public class IntakeIOReal implements IntakeIO {
                 .withKP(9.78)
                 .withKI(0.0)
                 .withKD(0.0);
-
         static final MotionMagicConfigs deployMotionMagic = new MotionMagicConfigs()
                 .withMotionMagicAcceleration(2)
                 .withMotionMagicCruiseVelocity(4);
@@ -42,10 +39,13 @@ public class IntakeIOReal implements IntakeIO {
         static final TalonFXConfiguration deployMotorCfg = new TalonFXConfiguration()
                 .withSlot0(deployPIDs)
                 .withMotionMagic(deployMotionMagic)
+                .withFeedback(new FeedbackConfigs()
+                    .withSensorToMechanismRatio(deployGearRatio))
                 .withMotorOutput(new MotorOutputConfigs()
-                .withNeutralMode(NeutralModeValue.Brake) // balls bouncing out
-                    .withInverted(InvertedValue.CounterClockwise_Positive)) // gear inverts output
-                .withFeedback(new FeedbackConfigs().withSensorToMechanismRatio(deployGearRatio));
+                    .withNeutralMode(NeutralModeValue.Brake)
+                    .withInverted(InvertedValue.CounterClockwise_Positive));
+
+        static final int rollerMotorId = 52;
 
         static final double rollerGearRatio = 1.0;
 
@@ -60,9 +60,7 @@ public class IntakeIOReal implements IntakeIO {
         static final TalonFXConfiguration rollerMotorCfg = new TalonFXConfiguration()
                 .withSlot0(rollerPIDs)
                 .withFeedback(new FeedbackConfigs()
-                    .withSensorToMechanismRatio(rollerGearRatio))
-                .withMotorOutput(new MotorOutputConfigs()
-                    .withNeutralMode(NeutralModeValue.Coast));
+                    .withSensorToMechanismRatio(rollerGearRatio));
     }
 
     private final TalonFX deployMotor = new TalonFX(Constants.deployMotorId, RobotConstants.canBus);

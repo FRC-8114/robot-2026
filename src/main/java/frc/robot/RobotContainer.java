@@ -55,6 +55,8 @@ public class RobotContainer {
     private final ShooterSupersystem shooterSupersystem;
     private GamePieceTracker gamePieceTracker;
 
+    private Autos autos;
+
     private final CommandXboxController controller = new CommandXboxController(0);
 
     public RobotContainer() {
@@ -79,6 +81,8 @@ public class RobotContainer {
                 turretPitch = new ShooterPitch(new ShooterPitchIOSim());
                 shooter = new Shooter(new ShooterIOSim());
 
+                autos = new Autos(intake);
+
                 break;
             }
             case SIMULATION: {
@@ -102,6 +106,8 @@ public class RobotContainer {
                 indexer = new Indexer(new IndexerIOSim());
                 intake = new Intake(new IntakeIOSim());
                 shooter = new Shooter(new ShooterIOSim());
+
+                autos = new Autos(intake);
 
                 // FuelSim setup
                 var fuelSim = new FuelSim();
@@ -153,6 +159,10 @@ public class RobotContainer {
     private void setupAutoChoices() {
         autoChooser = new LoggedDashboardChooser<>("Auto Choices",
                 AutoBuilder.buildAutoChooser());
+
+        // Real Autos
+        autoChooser.addOption("Same Side Trench (Depot Side)", autos.trenchSSDepot());
+        autoChooser.addOption("Same Side Trench (Outpost Side)", autos.trenchSSOutpost());
 
         autoChooser.addOption(
                 "Drive Wheel Radius Characterization",

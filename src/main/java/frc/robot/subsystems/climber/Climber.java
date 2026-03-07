@@ -6,8 +6,9 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 public class Climber extends SubsystemBase {
     private static class Constants {
-        public static final double DEPLOY_ROTATIONS = 108.839;
-        public static final double CLIMB_ROTATIONS = 54.4195;
+        // drum diameter: 0.787in
+        public static final double DEPLOY_ROTATIONS = 3.023;
+        public static final double CLIMB_ROTATIONS = 1.511;
     }
 
     private final ClimberIO climber;

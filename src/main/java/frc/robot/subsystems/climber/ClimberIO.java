@@ -12,7 +12,7 @@ public interface ClimberIO {
         public double currentAmps = 0.0;
     }
 
-    void setVoltage(Voltage volts);
+    void runVolts(Voltage volts);
 
     void doRotations(double rotations);
 

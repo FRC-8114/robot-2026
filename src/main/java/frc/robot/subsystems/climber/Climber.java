@@ -1,5 +1,7 @@
 package frc.robot.subsystems.climber;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -21,10 +23,9 @@ public class Climber extends SubsystemBase {
         sysId = new SysIdRoutine(
                 new SysIdRoutine.Config(
                         null, null, null,
-                        (state) -> {
-                        }),
+                        (state) -> Logger.recordOutput("Climber/SysIdState", state.toString())),
                 new SysIdRoutine.Mechanism(
-                        (voltage) -> climber.setVoltage(voltage), null, this));
+                        (voltage) -> climber.runVolts(voltage), null, this));
     }
 
     private Command doRotationsCommand(double rotations) {
@@ -47,6 +48,24 @@ public class Climber extends SubsystemBase {
 
     public Command stow() {
         return doRotationsCommand(-Constants.CLIMB_ROTATIONS);
+    }
+
+    public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
+        return switch (direction) {
+            case kForward ->
+                sysId.quasistatic(direction).until(() -> inputs.rotations == Constants.CLIMB_ROTATIONS);
+            case kReverse ->
+                sysId.quasistatic(direction).until(() -> inputs.rotations == 0);
+        };
+    }
+
+    public Command sysIdDynamic(SysIdRoutine.Direction direction) {
+        return switch (direction) {
+            case kForward ->
+                sysId.dynamic(direction).until(() -> inputs.rotations == Constants.CLIMB_ROTATIONS);
+            case kReverse ->
+                sysId.dynamic(direction).until(() -> inputs.rotations == 0);
+        };
     }
 
     @Override

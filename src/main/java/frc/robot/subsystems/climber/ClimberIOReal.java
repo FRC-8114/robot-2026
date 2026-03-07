@@ -21,6 +21,8 @@ public class ClimberIOReal implements ClimberIO {
         public static final int climbMotorID = 60;
 
         private static final double gearRatio = 36.0;
+        private static final double motorOffset = 0.0;
+
         private static final Slot0Configs climbMotorPIDs = new Slot0Configs()
                 .withGravityType(GravityTypeValue.Elevator_Static)
                 .withKP(0)
@@ -28,6 +30,7 @@ public class ClimberIOReal implements ClimberIO {
                 .withKD(0);
         private static final FeedbackConfigs fusedEncoderCfg = new FeedbackConfigs()
                 .withFeedbackSensorSource(FeedbackSensorSourceValue.FusedCANcoder)
+                .withFeedbackRotorOffset(motorOffset)
                 .withRotorToSensorRatio(gearRatio);
         public static final TalonFXConfiguration climbMotorCfg = new TalonFXConfiguration()
                 .withSlot0(climbMotorPIDs)
@@ -44,7 +47,7 @@ public class ClimberIOReal implements ClimberIO {
         climbMotor.getConfigurator().apply(Constants.climbMotorCfg);
     }
 
-    public void setVoltage(Voltage volts) {
+    public void runVolts(Voltage volts) {
         climbMotor.setControl(voltageOut.withOutput(volts));
     }
 

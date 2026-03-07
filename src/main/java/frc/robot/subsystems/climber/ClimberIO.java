@@ -7,14 +7,14 @@ import edu.wpi.first.units.measure.Voltage;
 public interface ClimberIO {
     @AutoLog
     public static class ClimberIOInputs {
-        public double heightMeters = 0.0;
+        public double rotations = 0.0;
         public double velocityRPM = 0.0;
         public double currentAmps = 0.0;
     }
 
-    void setVoltage(Voltage volts);
+    void runVolts(Voltage volts);
 
-    void setTargetHeight(double heightMeters);
+    void doRotations(double rotations);
 
     void updateInputs(ClimberIOInputs inputs);
 }

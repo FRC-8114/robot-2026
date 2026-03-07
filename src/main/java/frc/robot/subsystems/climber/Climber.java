@@ -1,6 +1,6 @@
 package frc.robot.subsystems.climber;
 
-import static edu.wpi.first.units.Units.Volts;
+import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -8,9 +8,9 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 public class Climber extends SubsystemBase {
     private static class Constants {
-        public static final double DEPLOY_HEIGHT = 0;
-        public static final double CLIMB_HEIGHT = 0;
-        public static final double RETRACT_HEIGHT = 0;
+        // drum diameter: 0.787in
+        public static final double DEPLOY_ROTATIONS = 3.023;
+        public static final double CLIMB_ROTATIONS = 1.511;
     }
 
     private final ClimberIO climber;
@@ -23,52 +23,49 @@ public class Climber extends SubsystemBase {
         sysId = new SysIdRoutine(
                 new SysIdRoutine.Config(
                         null, null, null,
-                        (state) -> {
-                        }),
+                        (state) -> Logger.recordOutput("Climber/SysIdState", state.toString())),
                 new SysIdRoutine.Mechanism(
-                        (voltage) -> climber.setVoltage(voltage), null, this));
+                        (voltage) -> climber.runVolts(voltage), null, this));
     }
 
-    private Command goToHeightCommand(double height) {
-        return run(() -> climber.setTargetHeight(height));
-    }
-
-    public boolean isDeployed() {
-        return inputs.heightMeters > (Constants.DEPLOY_HEIGHT);
-    }
-
-    public boolean isClimbed() {
-        return inputs.heightMeters > (Constants.CLIMB_HEIGHT);
-    }
-
-    public boolean isRetracted() {
-        return inputs.heightMeters < (Constants.RETRACT_HEIGHT + 0.1);
+    private Command doRotationsCommand(double rotations) {
+        double startRotations = inputs.rotations;
+        return run(() -> climber.doRotations(rotations))
+            .until(() -> startRotations - inputs.rotations == rotations);
     }
 
     public Command deploy() {
-        return goToHeightCommand(Constants.DEPLOY_HEIGHT);
+        return doRotationsCommand(Constants.DEPLOY_ROTATIONS);
     }
 
     public Command climb() {
-        return goToHeightCommand(Constants.CLIMB_HEIGHT);
+        return doRotationsCommand(Constants.CLIMB_ROTATIONS);
     }
 
-    public Command retract() {
-        return goToHeightCommand(Constants.RETRACT_HEIGHT);
+    public Command unclimb() {
+        return doRotationsCommand(-Constants.CLIMB_ROTATIONS);
+    }
+
+    public Command stow() {
+        return doRotationsCommand(-Constants.CLIMB_ROTATIONS);
     }
 
     public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-        return run(() -> climber.setVoltage(Volts.of(0.0)))
-                .withTimeout(1.0)
-                .andThen(sysId.quasistatic(direction).until(() -> isDeployed() || isRetracted()))
-                .finallyDo(() -> climber.setVoltage(Volts.of(0.0)));
+        return switch (direction) {
+            case kForward ->
+                sysId.quasistatic(direction).until(() -> inputs.rotations == Constants.CLIMB_ROTATIONS);
+            case kReverse ->
+                sysId.quasistatic(direction).until(() -> inputs.rotations == 0);
+        };
     }
 
     public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-        return run(() -> climber.setVoltage(Volts.of(0.0)))
-                .withTimeout(1.0)
-                .andThen(sysId.dynamic(direction).until(() -> isDeployed() || isRetracted()))
-                .finallyDo(() -> climber.setVoltage(Volts.of(0.0)));
+        return switch (direction) {
+            case kForward ->
+                sysId.dynamic(direction).until(() -> inputs.rotations == Constants.CLIMB_ROTATIONS);
+            case kReverse ->
+                sysId.dynamic(direction).until(() -> inputs.rotations == 0);
+        };
     }
 
     @Override

@@ -23,7 +23,8 @@ import frc.robot.RobotConstants;
 public class IntakeIOReal implements IntakeIO {
     private static class Constants {
         static final int deployMotorId = 51;
-        static final double deployGearRatio = 25.0;
+
+        static final double deployGearRatio = 11.8125;
 
         static final Slot0Configs deployPIDs = new Slot0Configs()
                 .withKS(0.001)
@@ -33,17 +34,18 @@ public class IntakeIOReal implements IntakeIO {
                 .withKI(0.0)
                 .withKD(0.0);
         static final MotionMagicConfigs deployMotionMagic = new MotionMagicConfigs()
-                .withMotionMagicAcceleration(2)
-                .withMotionMagicCruiseVelocity(4);
+                .withMotionMagicCruiseVelocity(10)
+                .withMotionMagicAcceleration(45)
+                .withMotionMagicJerk(0);
 
         static final TalonFXConfiguration deployMotorCfg = new TalonFXConfiguration()
                 .withSlot0(deployPIDs)
                 .withMotionMagic(deployMotionMagic)
                 .withFeedback(new FeedbackConfigs()
-                    .withSensorToMechanismRatio(deployGearRatio))
+                        .withSensorToMechanismRatio(deployGearRatio))
                 .withMotorOutput(new MotorOutputConfigs()
-                    .withNeutralMode(NeutralModeValue.Brake)
-                    .withInverted(InvertedValue.CounterClockwise_Positive));
+                        .withNeutralMode(NeutralModeValue.Brake)
+                        .withInverted(InvertedValue.CounterClockwise_Positive));
 
         static final int rollerMotorId = 52;
 
@@ -60,7 +62,7 @@ public class IntakeIOReal implements IntakeIO {
         static final TalonFXConfiguration rollerMotorCfg = new TalonFXConfiguration()
                 .withSlot0(rollerPIDs)
                 .withFeedback(new FeedbackConfigs()
-                    .withSensorToMechanismRatio(rollerGearRatio));
+                        .withSensorToMechanismRatio(rollerGearRatio));
     }
 
     private final TalonFX deployMotor = new TalonFX(Constants.deployMotorId, RobotConstants.canBus);

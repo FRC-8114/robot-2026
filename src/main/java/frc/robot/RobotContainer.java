@@ -36,6 +36,7 @@ import frc.robot.subsystems.shooter.ShooterIOSim;
 import frc.robot.subsystems.shooterpitch.ShooterPitch;
 import frc.robot.subsystems.shooterpitch.ShooterPitchIOSim;
 import frc.robot.subsystems.turret.Turret;
+import frc.robot.subsystems.turret.TurretIOReal;
 import frc.robot.subsystems.turret.TurretIOSim;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
@@ -71,7 +72,7 @@ public class RobotContainer {
                 // poseEstimation.stddev());
                 // });
 
-                turretPivot = new Turret(new TurretIOSim());
+                turretPivot = new Turret(new TurretIOReal());
                 indexer = new Indexer(new IndexerIOSim());
                 intake = new Intake(new IntakeIOReal());
 

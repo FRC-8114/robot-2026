@@ -9,6 +9,7 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
 public class IntakeIOSim implements IntakeIO {
@@ -91,8 +92,14 @@ public class IntakeIOSim implements IntakeIO {
         inputs.deployAppliedVoltage = deployAppliedVolts;
         inputs.deployCurrentAmps = Math.abs(deploySim.getCurrentDrawAmps());
 
-        inputs.rollerRPMs = rollerSim.getAngularVelocityRadPerSec() / (2.0 * Math.PI) * 60.0;
+        inputs.rollerRPS = rollerSim.getAngularVelocityRadPerSec() / (2.0 * Math.PI);
         inputs.rollerAppliedVoltage = rollerAppliedVolts;
         inputs.rollerCurrentAmps = Math.abs(rollerSim.getCurrentDrawAmps());
+    }
+
+    @Override
+    public void setRollerCurrent(Current current) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setRollerCurrent'");
     }
 }

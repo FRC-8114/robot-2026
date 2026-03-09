@@ -13,7 +13,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.climber.Climber;
 import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.turret.Turret;
 import frc.robot.supersystems.ShooterSupersystem;
 
 public class Autos {
@@ -24,11 +23,19 @@ public class Autos {
     private static ArrayList<Command> makeSlicedPath(String choreoTraj, Integer num_slices) {
         ArrayList<Command> slices = new ArrayList<Command>();
 
-        for (int i = 0; i <= num_slices; i++) {
+        for (int i = 0; i < num_slices; i++) {
             try {
-                slices.add(AutoBuilder.followPath(PathPlannerPath.fromChoreoTrajectory(choreoTraj, i)));
+                PathPlannerPath path = PathPlannerPath.fromChoreoTrajectory(choreoTraj, i);
+                if (path != null) {
+                    slices.add(AutoBuilder.followPath(path));
+                } else {
+                    System.err.println("Warning: Path slice " + i + " for trajectory " + choreoTraj + " is null");
+                    slices.add(Commands.none());
+                }
             } catch (FileVersionException | IOException | org.json.simple.parser.ParseException e) {
+                System.err.println("Error loading path slice " + i + " for trajectory " + choreoTraj);
                 e.printStackTrace();
+                slices.add(Commands.none());
             }
         }
 
@@ -46,8 +53,9 @@ public class Autos {
         return climber.deploy();
     }
     
-    public Autos(Intake intake) {
+    public Autos(Intake intake, Climber climber) {
         this.intake = intake;
+        this.climber = climber;
     }
 
     // public Command depotShootAuto() {

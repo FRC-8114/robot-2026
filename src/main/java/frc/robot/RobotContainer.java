@@ -22,6 +22,9 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.simulation.GamePieceTracker;
+import frc.robot.subsystems.climber.Climber;
+import frc.robot.subsystems.climber.ClimberIOReal;
+import frc.robot.subsystems.climber.ClimberIOSim;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIOSim;
@@ -52,10 +55,11 @@ public class RobotContainer {
     private final Indexer indexer;
     private final Intake intake;
     private final Shooter shooter;
-    private final ShooterSupersystem shooterSupersystem;
+    private final Climber climber;
     private GamePieceTracker gamePieceTracker;
-
-    private Autos autos;
+    
+    private final ShooterSupersystem shooterSupersystem;
+    private final Autos autos;
 
     private final CommandXboxController controller = new CommandXboxController(0);
 
@@ -77,11 +81,10 @@ public class RobotContainer {
                 turretPivot = new Turret(new TurretIOReal());
                 indexer = new Indexer(new IndexerIOSim());
                 intake = new Intake(new IntakeIOReal());
+                climber = new Climber(new ClimberIOReal());
 
                 turretPitch = new ShooterPitch(new ShooterPitchIOSim());
                 shooter = new Shooter(new ShooterIOSim());
-
-                autos = new Autos(intake);
 
                 break;
             }
@@ -106,8 +109,7 @@ public class RobotContainer {
                 indexer = new Indexer(new IndexerIOSim());
                 intake = new Intake(new IntakeIOSim());
                 shooter = new Shooter(new ShooterIOSim());
-
-                autos = new Autos(intake);
+                climber = new Climber(new ClimberIOSim());
 
                 // FuelSim setup
                 var fuelSim = new FuelSim();
@@ -147,6 +149,8 @@ public class RobotContainer {
             default:
                 throw new IllegalStateException("Unexpected value: " + RobotConstants.robotMode);
         }
+
+        autos = new Autos(intake, climber);
 
         shooterSupersystem = new ShooterSupersystem(turretPivot, turretPitch, shooter, indexer);
 

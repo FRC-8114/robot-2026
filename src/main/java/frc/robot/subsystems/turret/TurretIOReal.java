@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
+import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs;
 import com.ctre.phoenix6.configs.MagnetSensorConfigs;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
@@ -66,9 +67,16 @@ public class TurretIOReal implements TurretIO {
                 .withMotionMagicAcceleration(1) // 1 rotation of the turret per second squared
                 .withMotionMagicCruiseVelocity(3); // 3 rotations of the turret per second
 
+        private static final SoftwareLimitSwitchConfigs softLimitCfg = new SoftwareLimitSwitchConfigs()
+                .withForwardSoftLimitEnable(true)
+                .withForwardSoftLimitThreshold(0.75) // 270 degrees = 0.75 rotations
+                .withReverseSoftLimitEnable(true)
+                .withReverseSoftLimitThreshold(0); // 0 degrees
+
         public static final TalonFXConfiguration pivotMotorCfg = new TalonFXConfiguration()
                 .withSlot0(pivotMotorPIDs)
                 .withMotionMagic(pivotMotionMagicConfigs)
+                .withSoftwareLimitSwitch(softLimitCfg)
                 .withFeedback(new FeedbackConfigs().withSensorToMechanismRatio(20));// 20 rotations of the motor for 1
                                                                                     // rotation of the turret
     }
@@ -90,7 +98,10 @@ public class TurretIOReal implements TurretIO {
             System.err.println("Turret encoders are messed up");
         }
 
-        reseedPosition(initialAngle.orElse(Angle.ofRelativeUnits(0, Degrees)));
+        // At startup, wrap CRT angle to [0, 360) to match the convention
+        double crtDeg = initialAngle.orElse(Angle.ofRelativeUnits(0, Degrees)).in(Degrees);
+        double wrappedDeg = MathUtil.inputModulus(crtDeg, 0, 360);
+        reseedPosition(Degrees.of(wrappedDeg));
     }
 
     // chinese remainder theorem is simple, actually
@@ -139,7 +150,10 @@ public class TurretIOReal implements TurretIO {
 
         // 4 degrees is the threshold for when to reseed
         if (Math.abs(inputs.motorPositionErrorCounter) > 4) {
-            reseedPosition(positionCrt.get());
+            // Adjust CRT angle to be closest equivalent to current motor position
+            double crtRads = positionCrt.get().in(Radians);
+            double adjusted = position + MathUtil.angleModulus(crtRads - position);
+            reseedPosition(Radians.of(adjusted));
             inputs.motorPositionErrorCounter = 0;
         }
     }

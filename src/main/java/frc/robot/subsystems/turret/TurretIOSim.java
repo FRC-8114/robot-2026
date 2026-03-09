@@ -27,7 +27,6 @@ public class TurretIOSim implements TurretIO {
         sim = new DCMotorSim(
                 LinearSystemId.createDCMotorSystem(GEARBOX, MOI, GEAR_RATIO),
                 GEARBOX);
-        controller.enableContinuousInput(-Math.PI, Math.PI);
     }
 
     public void setTarget(Angle angle) {

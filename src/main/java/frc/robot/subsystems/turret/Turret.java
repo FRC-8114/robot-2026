@@ -16,13 +16,15 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 public class Turret extends SubsystemBase {
     private static class Constants {
         private static final Angle ANGLE_TOLERANCE = Degrees.of(1);
-        private static final Angle MIN_ANGLE = Degrees.of(-250);
-        private static final Angle MAX_ANGLE = Degrees.of(250);
+        private static final Angle MIN_ANGLE = Degrees.of(0);
+        private static final Angle MAX_ANGLE = Degrees.of(270);
+        private static final double DEADZONE_MID_DEG = Degrees.of(360).minus(MAX_ANGLE).in(Degrees);
     }
 
     private final TurretIO pivotMotor;
     private final TurretIOInputsAutoLogged inputs = new TurretIOInputsAutoLogged();
     private final SysIdRoutine sysId;
+    private double normalizedPositionDeg;
 
     public Turret(TurretIO pivotMotor) {
         this.pivotMotor = pivotMotor;
@@ -36,33 +38,35 @@ public class Turret extends SubsystemBase {
     }
 
     public double getTurretPositionRads() {
-        return MathUtil.angleModulus(inputs.turretMotorPosition);
+        return Math.toRadians(normalizedPositionDeg);
     }
 
     @Override
     public void periodic() {
         pivotMotor.updateInputs(inputs);
         Logger.processInputs("Turret", inputs);
-        Logger.recordOutput("Turret/NormalizedPositionDeg",
-                Math.toDegrees(MathUtil.angleModulus(inputs.turretMotorPosition)));
+        normalizedPositionDeg = MathUtil.inputModulus(Math.toDegrees(inputs.turretMotorPosition), 0, 360);
+        Logger.recordOutput("Turret/NormalizedPositionDeg", normalizedPositionDeg);
     }
 
     public boolean isAtAngle(Angle target) {
-        double normalizedTarget = MathUtil.inputModulus(target.in(Degrees), -180, 180);
-        double normalizedCurrent = MathUtil.inputModulus(
-                Math.toDegrees(inputs.turretMotorPosition), -180, 180);
-        double error = MathUtil.inputModulus(normalizedTarget - normalizedCurrent, -180, 180);
+        double error = MathUtil.inputModulus(target.in(Degrees) - normalizedPositionDeg, -180, 180);
         return Math.abs(error) <= Constants.ANGLE_TOLERANCE.in(Degrees);
     }
 
     private Angle computeMotorTarget(Angle target) {
-        double targetDeg = MathUtil.inputModulus(target.in(Degrees), -180, 180);
+        double maxDeg = Constants.MAX_ANGLE.in(Degrees);
 
-        double currentDeg = Math.toDegrees(inputs.turretMotorPosition);
-        double normalizedCurrentDeg = MathUtil.inputModulus(currentDeg, -180, 180);
-        double delta = MathUtil.inputModulus(targetDeg - normalizedCurrentDeg, -180, 180);
+        // Wrap target into [0, 360)
+        double targetDeg = MathUtil.inputModulus(target.in(Degrees), 0, 360);
 
-        return Degrees.of(currentDeg + delta);
+        // If target is in the deadzone, snap to the nearest edge
+        if (targetDeg > maxDeg) {
+            double deadzoneCenter = maxDeg + Constants.DEADZONE_MID_DEG / 2;
+            targetDeg = targetDeg < deadzoneCenter ? maxDeg : 0;
+        }
+
+        return Degrees.of(targetDeg);
     }
 
     public Command setAngle(Angle angle) {
@@ -74,9 +78,8 @@ public class Turret extends SubsystemBase {
     }
 
     private boolean isOutOfBounds() {
-        double currentDeg = Math.toDegrees(inputs.turretMotorPosition);
-        return currentDeg < Constants.MIN_ANGLE.in(Degrees)
-                || currentDeg > Constants.MAX_ANGLE.in(Degrees);
+        return normalizedPositionDeg < Constants.MIN_ANGLE.in(Degrees)
+                || normalizedPositionDeg > Constants.MAX_ANGLE.in(Degrees);
     }
 
     public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {

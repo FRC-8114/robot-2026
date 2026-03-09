@@ -5,6 +5,7 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.RPM;
 
 import java.util.ArrayList;
 
@@ -22,6 +23,9 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.simulation.GamePieceTracker;
+import frc.robot.subsystems.climber.Climber;
+import frc.robot.subsystems.climber.ClimberIOReal;
+import frc.robot.subsystems.climber.ClimberIOSim;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIOSim;
@@ -36,6 +40,7 @@ import frc.robot.subsystems.shooter.ShooterIOSim;
 import frc.robot.subsystems.shooterpitch.ShooterPitch;
 import frc.robot.subsystems.shooterpitch.ShooterPitchIOSim;
 import frc.robot.subsystems.turret.Turret;
+import frc.robot.subsystems.turret.TurretIOReal;
 import frc.robot.subsystems.turret.TurretIOSim;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
@@ -51,8 +56,11 @@ public class RobotContainer {
     private final Indexer indexer;
     private final Intake intake;
     private final Shooter shooter;
-    private final ShooterSupersystem shooterSupersystem;
+    private final Climber climber;
     private GamePieceTracker gamePieceTracker;
+    
+    private final ShooterSupersystem shooterSupersystem;
+    private final Autos autos;
 
     private final CommandXboxController controller = new CommandXboxController(0);
 
@@ -71,9 +79,10 @@ public class RobotContainer {
                 // poseEstimation.stddev());
                 // });
 
-                turretPivot = new Turret(new TurretIOSim());
+                turretPivot = new Turret(new TurretIOReal());
                 indexer = new Indexer(new IndexerIOSim());
                 intake = new Intake(new IntakeIOReal());
+                climber = new Climber(new ClimberIOReal());
 
                 turretPitch = new ShooterPitch(new ShooterPitchIOSim());
                 shooter = new Shooter(new ShooterIOSim());
@@ -101,6 +110,7 @@ public class RobotContainer {
                 indexer = new Indexer(new IndexerIOSim());
                 intake = new Intake(new IntakeIOSim());
                 shooter = new Shooter(new ShooterIOSim());
+                climber = new Climber(new ClimberIOSim());
 
                 // FuelSim setup
                 var fuelSim = new FuelSim();
@@ -126,7 +136,7 @@ public class RobotContainer {
 
                 fuelSim.registerIntake(
                         -0.336, 0.336, -0.2, 0.2,
-                        () -> intake.getRollerRPMs() > 500,
+                        () -> intake.getRollerVelocity().gt(RPM.of(500)),
                         () -> gamePieceTracker.onIntake());
 
                 fuelSim.start();
@@ -141,6 +151,8 @@ public class RobotContainer {
                 throw new IllegalStateException("Unexpected value: " + RobotConstants.robotMode);
         }
 
+        autos = new Autos(intake, climber);
+
         shooterSupersystem = new ShooterSupersystem(turretPivot, turretPitch, shooter, indexer);
 
         configureButtonBindings();
@@ -152,6 +164,10 @@ public class RobotContainer {
     private void setupAutoChoices() {
         autoChooser = new LoggedDashboardChooser<>("Auto Choices",
                 AutoBuilder.buildAutoChooser());
+
+        // Real Autos
+        autoChooser.addOption("Same Side Trench (Depot Side)", autos.trenchSSDepot());
+        autoChooser.addOption("Same Side Trench (Outpost Side)", autos.trenchSSOutpost());
 
         autoChooser.addOption(
                 "Drive Wheel Radius Characterization",
@@ -314,8 +330,8 @@ public class RobotContainer {
                                 drive)
                                 .ignoringDisable(true));
 
-        controller.leftBumper().onTrue(intake.intake());
-        controller.rightBumper().onTrue(intake.stow());
+        controller.leftBumper().whileTrue(intake.intake());
+        controller.rightBumper().whileTrue(intake.stow());
 
         // TODO: the actual solving
         var turretAngle = Degrees.of(0);

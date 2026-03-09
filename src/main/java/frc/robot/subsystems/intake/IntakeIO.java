@@ -13,9 +13,10 @@ public interface IntakeIO {
         public double deployAppliedVoltage = 0;
         public double deployCurrentAmps = 0;
 
-        public double rollerRPMs = 0;
+        public double rollerVelocityRPM = 0;
         public double rollerAppliedVoltage = 0;
         public double rollerCurrentAmps = 0;
+        public double rollerPosition = 0;
     }
 
     void setDeployTarget(Angle angle);
@@ -23,7 +24,6 @@ public interface IntakeIO {
     void setDeployVoltage(double volts);
 
     void setRollerVelocity(AngularVelocity velocity);
-
     void setRollerVoltage(double volts);
 
     void stopRollers();

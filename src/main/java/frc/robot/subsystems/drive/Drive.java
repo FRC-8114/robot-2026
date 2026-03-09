@@ -9,6 +9,7 @@ package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.*;
 
+import com.ctre.phoenix6.SignalLogger;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.PIDConstants;
@@ -145,36 +146,37 @@ public class Drive extends SubsystemBase {
             ppTargetPose.set(targetPose);
             Logger.recordOutput("Auto/PP/TargetPose", ppTargetPose.get());
         });
-        
+
         // Configure drive translation SysId
         translationSysId = new SysIdRoutine(
                 new SysIdRoutine.Config(
+                        Volts.of(7).per(Second),
+                        Volts.of(20),
                         null,
-                        null,
-                        null,
-                        (state) -> Logger.recordOutput("Drive/SysIdTranslationState", state.toString())),
+                        (state) -> SignalLogger.writeString("Drive/SysIdTranslationState", state.toString())),
                 new SysIdRoutine.Mechanism(
                         (voltage) -> runCharacterization(voltage.in(Volts)), null, this));
 
         // Configure steer SysId
         steerSysId = new SysIdRoutine(
                 new SysIdRoutine.Config(
+                    null,
+                    null,
                         null,
-                        null,
-                        null,
-                        (state) -> Logger.recordOutput("Drive/SysIdSteerState", state.toString())),
+                        (state) -> SignalLogger.writeString("Drive/SysIdSteerState", state.toString())),
                 new SysIdRoutine.Mechanism(
                         (voltage) -> runSteerCharacterization(voltage.in(Volts)), null, this));
 
         // Configure rotational SysId.
-        // The "voltage" value from SysId is intentionally interpreted as rotational rate
+        // The "voltage" value from SysId is intentionally interpreted as rotational
+        // rate
         // request in rad/s to match CTRE's swerve rotation characterization workflow.
         rotationSysId = new SysIdRoutine(
                 new SysIdRoutine.Config(
+                        Volts.of(7).per(Second),
+                        Volts.of(40),
                         null,
-                        null,
-                        null,
-                        (state) -> Logger.recordOutput("Drive/SysIdRotationState", state.toString())),
+                        (state) -> SignalLogger.writeString("Drive/SysIdRotationState", state.toString())),
                 new SysIdRoutine.Mechanism(
                         (voltage) -> runRotationCharacterization(voltage.in(Volts)), null, this));
     }
@@ -331,7 +333,9 @@ public class Drive extends SubsystemBase {
         return run(() -> runCharacterization(0.0)).withTimeout(1.0).andThen(translationSysId.dynamic(direction));
     }
 
-    /** Returns a command to run a steer quasistatic test in the specified direction. */
+    /**
+     * Returns a command to run a steer quasistatic test in the specified direction.
+     */
     public Command sysIdSteerQuasistatic(SysIdRoutine.Direction direction) {
         return run(() -> runSteerCharacterization(0.0))
                 .withTimeout(1.0)
@@ -357,7 +361,8 @@ public class Drive extends SubsystemBase {
     }
 
     /**
-     * Returns a command to run a rotational dynamic test in the specified direction.
+     * Returns a command to run a rotational dynamic test in the specified
+     * direction.
      * This dataset can be used for MOI estimation.
      */
     public Command sysIdRotationDynamic(SysIdRoutine.Direction direction) {

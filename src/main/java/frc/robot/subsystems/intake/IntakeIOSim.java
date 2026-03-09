@@ -91,7 +91,7 @@ public class IntakeIOSim implements IntakeIO {
         inputs.deployAppliedVoltage = deployAppliedVolts;
         inputs.deployCurrentAmps = Math.abs(deploySim.getCurrentDrawAmps());
 
-        inputs.rollerRPMs = rollerSim.getAngularVelocityRadPerSec() / (2.0 * Math.PI) * 60.0;
+        inputs.rollerVelocityRPM = rollerSim.getAngularVelocityRadPerSec() / (2.0 * Math.PI);
         inputs.rollerAppliedVoltage = rollerAppliedVolts;
         inputs.rollerCurrentAmps = Math.abs(rollerSim.getCurrentDrawAmps());
     }

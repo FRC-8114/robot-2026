@@ -5,9 +5,9 @@ import static edu.wpi.first.units.Units.RPM;
 import java.util.function.BooleanSupplier;
 
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -17,44 +17,41 @@ public class Indexer extends SubsystemBase {
         static final double reverseFrequency = 3.0;
         static final double reverseBurstTime = 0.2;
 
-        static AngularVelocity hopperLaneVelocity = RPM.of(250);
-        static AngularVelocity turretLaneVelocity = RPM.of(1500);
-
         static final AngularVelocity turretLaneVelocityTolerance = RPM.of(100);
     };
 
     private final IndexerIO io;
     private final IndexerInputsAutoLogged inputs = new IndexerInputsAutoLogged();
 
+    private final LoggedNetworkNumber hopperLaneVelocity = new LoggedNetworkNumber("Tuning/TuneHopperLaneVelocity", 250);
+    private final LoggedNetworkNumber turretLaneVelocity = new LoggedNetworkNumber("Tuning/TuneTurretLaneVelocity", 1500);
+
     public Indexer(IndexerIO io) {
         this.io = io;
-
-        SmartDashboard.putNumber("hopperLaneVelocity", 250);
-        SmartDashboard.putNumber("turretLaneVelocity", 1500);
 
         setDefaultCommand(periodicReverse());
     }
 
     public boolean isTurretLaneAtSpeed() {
-        return RPM.of(inputs.turretLaneRPMs).isNear(Constants.turretLaneVelocity,
+        return RPM.of(inputs.turretLaneRPMs).isNear(RPM.of(turretLaneVelocity.get()),
                 Constants.turretLaneVelocityTolerance);
     }
 
     public Command runHopperLanes() {
-        return runEnd(() -> io.setHopperLaneVelocity(Constants.hopperLaneVelocity),
+        return runEnd(() -> io.setHopperLaneVelocity(RPM.of(hopperLaneVelocity.get())),
                 () -> io.setHopperLaneVelocity(RPM.zero()));
     }
 
     public Command runTurretLanes() {
-        return runEnd(() -> io.setTurretLaneVelocity(Constants.turretLaneVelocity),
-                () -> io.setTurretLaneVelocity(RPM.zero()));
+        return runEnd(() -> io.setTurretLaneVelocity(RPM.of(turretLaneVelocity.get())),
+                () -> io.setTurretLaneVelocity(RPM.of(hopperLaneVelocity.get())));
     }
 
     public Command feed() {
         return runEnd(
                 () -> {
-                    io.setHopperLaneVelocity(Constants.hopperLaneVelocity);
-                    io.setTurretLaneVelocity(Constants.turretLaneVelocity);
+                    io.setTurretLaneVelocity(RPM.of(turretLaneVelocity.get()));
+                    io.setHopperLaneVelocity(RPM.of(hopperLaneVelocity.get()));
                 },
                 () -> {
                     io.setHopperLaneVelocity(RPM.zero());
@@ -65,9 +62,9 @@ public class Indexer extends SubsystemBase {
     public Command prepareAndFeedWhen(BooleanSupplier shouldFeed) {
         return runEnd(
                 () -> {
-                    io.setTurretLaneVelocity(Constants.turretLaneVelocity);
+                    io.setTurretLaneVelocity(RPM.of(turretLaneVelocity.get()));
                     if (shouldFeed.getAsBoolean()) {
-                        io.setHopperLaneVelocity(Constants.hopperLaneVelocity);
+                        io.setHopperLaneVelocity(RPM.of(hopperLaneVelocity.get()));
                     } else {
                         io.setHopperLaneVelocity(RPM.zero());
                     }
@@ -97,9 +94,6 @@ public class Indexer extends SubsystemBase {
 
     @Override
     public void periodic() {
-        Constants.hopperLaneVelocity = RPM.of(SmartDashboard.getNumber("hopperLaneVelocity", 250));
-        Constants.turretLaneVelocity = RPM.of(SmartDashboard.getNumber("turretLaneVelocity", 1500));
-
         io.updateInputs(inputs);
         Logger.processInputs("Indexer", inputs);
     }

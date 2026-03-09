@@ -44,7 +44,7 @@ public class Intake extends SubsystemBase {
     public Intake(IntakeIO io) {
         this.io = io;
         
-        intakeVelocity = new LoggedNetworkNumber("Tuning/TuneRollerVelocity", 4500);
+        intakeVelocity = new LoggedNetworkNumber("Tuning/TuneRollerVelocity", 2400);
         
         deploySysId = new SysIdRoutine(
                 new SysIdRoutine.Config(

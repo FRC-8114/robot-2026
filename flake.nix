@@ -5,6 +5,10 @@
       url = "github:frc4451/frc-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    open-ds-jar = {
+      url = "https://github.com/Boomaa23/open-ds/releases/download/v0.3.1/open-ds-v0.3.1.jar";
+      flake = false;
+    };
   };
 
   outputs = inputs: let
@@ -42,15 +46,17 @@
             }
           ];
       };
+
+    opendsForSystem = {pkgs, ...}:
+      import ./nix/open-ds.nix {
+        inherit pkgs;
+        src = inputs.open-ds-jar;
+      };
   in {
     devShells = forAllSystems ({pkgs, ...} @ args: {
       default = pkgs.mkShell {
-        buildInputs = [(vscodeForSystem args) pkgs.jdk21 pkgs.elastic-dashboard pkgs.advantagescope pkgs.choreo];
+        buildInputs = [(vscodeForSystem args) (opendsForSystem args) pkgs.jdk21 pkgs.elastic-dashboard pkgs.advantagescope pkgs.choreo];
       };
-    });
-
-    packages = forAllSystems ({pkgs, ...} @ args: {
-      code = vscodeForSystem args;
     });
   };
 }

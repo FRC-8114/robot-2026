@@ -8,11 +8,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1768419665,
-        "narHash": "sha256-/Yjey1LRRrkufZcmOIbkkEWQStfvcIW4rbq9TF37wMo=",
+        "lastModified": 1772466293,
+        "narHash": "sha256-PkTTMvdDuF/sEW4pYu+UVfOxc1E3u07oIKwvDnhY4Yo=",
         "owner": "frc4451",
         "repo": "frc-nix",
-        "rev": "76188c0314bdf9d2c24fe863d12b483557aac447",
+        "rev": "4d0c836a7749037d8360463f55226a38a84f99c9",
         "type": "github"
       },
       "original": {
@@ -57,10 +57,23 @@
         "type": "github"
       }
     },
+    "open-ds-jar": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-xWVgWP2hZmGepR8Dd/NDdaow8KR81hgW6OU+edpM17E=",
+        "type": "file",
+        "url": "https://github.com/Boomaa23/open-ds/releases/download/v0.3.1/open-ds-v0.3.1.jar"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://github.com/Boomaa23/open-ds/releases/download/v0.3.1/open-ds-v0.3.1.jar"
+      }
+    },
     "root": {
       "inputs": {
         "frc-nix": "frc-nix",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "open-ds-jar": "open-ds-jar"
       }
     }
   },

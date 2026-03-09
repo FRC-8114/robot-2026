@@ -1,6 +1,5 @@
 package frc.robot.subsystems.intake;
 
-import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Radians;
@@ -12,32 +11,30 @@ import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.mechanism.LoggedMechanism2d;
 import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
 import org.littletonrobotics.junction.mechanism.LoggedMechanismRoot2d;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+
 public class Intake extends SubsystemBase {
     private static class Constants {
         static final Angle stowedAngle = Rotations.of(0);
-        static final Angle deployedAngle = Rotations.of(-0.328);
+        static final Angle deployedAngle = Radians.of(-0.0036019423636569235);
 
         static final Angle deployTolerance = Degrees.of(3);
-
-        static final AngularVelocity intakeVelocity = RPM.of(3000*1.5);
-        static final AngularVelocity ejectVelocity = RPM.of(-1500);
-
-        static final Current intakeCurrent = Amps.of(70);
     }
 
     private final IntakeIO io;
     private final IntakeInputsAutoLogged inputs = new IntakeInputsAutoLogged();
     private final SysIdRoutine deploySysId;
     private final SysIdRoutine rollerSysId;
+
+    private LoggedNetworkNumber intakeVelocity;
 
     @AutoLogOutput
     private final LoggedMechanism2d mechanism = new LoggedMechanism2d(3, 3);
@@ -46,7 +43,9 @@ public class Intake extends SubsystemBase {
 
     public Intake(IntakeIO io) {
         this.io = io;
-
+        
+        intakeVelocity = new LoggedNetworkNumber("Tuning/TuneRollerVelocity", 4500);
+        
         deploySysId = new SysIdRoutine(
                 new SysIdRoutine.Config(
                         null, null, null,
@@ -59,7 +58,7 @@ public class Intake extends SubsystemBase {
                         null, null, null,
                         (state) -> Logger.recordOutput("Intake/RollerSysIdState", state.toString())),
                 new SysIdRoutine.Mechanism(
-                        (voltage) -> io.setRollerCurrent(Amps.of(voltage.in(Volts))), null, this));
+                        (voltage) -> io.setRollerVoltage(voltage.in(Volts)), null, this));
 
         LoggedMechanismRoot2d root = mechanism.getRoot("intake", 1.881, 0.0);
         armLigament = root.append(
@@ -72,7 +71,7 @@ public class Intake extends SubsystemBase {
         return runEnd(
                 () -> {
                     io.setDeployTarget(Constants.deployedAngle);
-                    io.setRollerVelocity(Constants.intakeVelocity);
+                    io.setRollerVelocity(RPM.of(intakeVelocity.get()));
                 },
                 () -> io.stopRollers())
                 .withName("Intake");
@@ -88,18 +87,6 @@ public class Intake extends SubsystemBase {
     public Command deploy() {
         return runOnce(() -> io.setDeployTarget(Constants.deployedAngle)).withName("Deploy");
     }
-    
-    public Command runRollers() {
-        return runRollers(Constants.intakeCurrent);
-    }
-
-    public Command runRollers(Current current) {
-        return runEnd(
-                () -> io.setRollerCurrent(current),
-                () -> io.stopRollers())
-                .withName("RunRollers");
-    }
-
 
     public Command runRollers(AngularVelocity velocity) {
         return runEnd(
@@ -144,8 +131,8 @@ public class Intake extends SubsystemBase {
                 .andThen(rollerSysId.dynamic(direction));
     }
 
-    public double getRollerRPMs() {
-        return inputs.rollerRPS / 60.0;
+    public AngularVelocity getRollerVelocity() {
+        return RPM.of(inputs.rollerVelocityRPM);
     }
 
     @Override
@@ -154,9 +141,9 @@ public class Intake extends SubsystemBase {
         Logger.processInputs("Intake", inputs);
 
         armLigament.setAngle(180 - Math.toDegrees(inputs.deployPositionRads));
-        rollerLigament.setColor(inputs.rollerRPS > 0
+        rollerLigament.setColor(inputs.rollerVelocityRPM > 0
                 ? new Color8Bit(Color.kGreen)
-                : inputs.rollerRPS < 0
+                : inputs.rollerVelocityRPM < 0
                         ? new Color8Bit(Color.kRed)
                         : new Color8Bit(Color.kGray));
     }

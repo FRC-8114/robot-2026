@@ -1,16 +1,18 @@
 package frc.robot.subsystems.intake;
 
+import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.Volts;
 
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.MotionMagicVelocityVoltage;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
-import com.ctre.phoenix6.controls.TorqueCurrentFOC;
-import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -18,7 +20,6 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
 import frc.robot.RobotConstants;
 
 public class IntakeIOReal implements IntakeIO {
@@ -52,15 +53,21 @@ public class IntakeIOReal implements IntakeIO {
 
         static final double rollerGearRatio = 1.0;
 
+        static final MotionMagicConfigs rollerMMConfigs = new MotionMagicConfigs()
+            .withMotionMagicCruiseVelocity(2400)
+            .withMotionMagicExpo_kV(0.12)
+            .withMotionMagicExpo_kA(0.1);
         static final Slot0Configs rollerPIDs = new Slot0Configs()
                 .withKS(1.7081)
                 .withKV(0.099828)
                 .withKA(0.017114)
                 .withKP(0.15938)
                 .withKD(0.0);
-
         static final TalonFXConfiguration rollerMotorCfg = new TalonFXConfiguration()
                 .withSlot0(rollerPIDs)
+                .withCurrentLimits(new CurrentLimitsConfigs()
+                    .withStatorCurrentLimit(80))
+                .withMotionMagic(rollerMMConfigs)
                 .withFeedback(new FeedbackConfigs()
                         .withSensorToMechanismRatio(rollerGearRatio));
     }
@@ -69,9 +76,10 @@ public class IntakeIOReal implements IntakeIO {
     private final TalonFX rollerMotor = new TalonFX(Constants.rollerMotorId, RobotConstants.canBus);
 
     private final MotionMagicVoltage deployControl = new MotionMagicVoltage(0);
-    private final TorqueCurrentFOC rollerControl = new TorqueCurrentFOC(0);
     private final VoltageOut deployVoltageControl = new VoltageOut(0);
-    private final VoltageOut rollerVoltageControl = new VoltageOut(0);
+    
+    private final MotionMagicVelocityVoltage rollerVelocity = new MotionMagicVelocityVoltage(0).withEnableFOC(true);
+    private final VoltageOut rollerVoltage = new VoltageOut(0);
 
     public IntakeIOReal() {
         deployMotor.getConfigurator().apply(Constants.deployMotorCfg);
@@ -89,15 +97,11 @@ public class IntakeIOReal implements IntakeIO {
     }
 
     public void setRollerVelocity(AngularVelocity velocity) {
-        // rollerMotor.setControl(rollerControl.withVelocity(velocity));
-    }
-
-    public void setRollerCurrent(Current current) {
-        rollerMotor.setControl(rollerControl.withOutput(current));
+        rollerMotor.setControl(rollerVelocity.withVelocity(velocity));
     }
 
     public void setRollerVoltage(double volts) {
-        rollerMotor.setControl(rollerVoltageControl.withOutput(volts));
+        rollerMotor.setControl(rollerVoltage.withOutput(volts));
     }
 
     public void stopRollers() {
@@ -110,8 +114,8 @@ public class IntakeIOReal implements IntakeIO {
         inputs.deployAppliedVoltage = deployMotor.getMotorVoltage().getValueAsDouble();
         inputs.deployCurrentAmps = deployMotor.getTorqueCurrent().getValueAsDouble();
 
-        inputs.rollerRPS = rollerMotor.getVelocity().getValueAsDouble();
-        inputs.rollerAppliedVoltage = rollerMotor.getMotorVoltage().getValueAsDouble();
+        inputs.rollerVelocityRPM = rollerMotor.getVelocity().getValue().in(RPM);
+        inputs.rollerAppliedVoltage = rollerMotor.getMotorVoltage().getValue().in(Volts);
         inputs.rollerCurrentAmps = rollerMotor.getTorqueCurrent().getValueAsDouble();
         inputs.rollerPosition = rollerMotor.getPosition().getValueAsDouble();
     }

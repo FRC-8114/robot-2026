@@ -5,6 +5,7 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.RPM;
 
 import java.util.ArrayList;
 
@@ -135,7 +136,7 @@ public class RobotContainer {
 
                 fuelSim.registerIntake(
                         -0.336, 0.336, -0.2, 0.2,
-                        () -> intake.getRollerRPMs() > 500,
+                        () -> intake.getRollerVelocity().gt(RPM.of(500)),
                         () -> gamePieceTracker.onIntake());
 
                 fuelSim.start();
@@ -329,8 +330,8 @@ public class RobotContainer {
                                 drive)
                                 .ignoringDisable(true));
 
-        controller.leftBumper().onTrue(intake.intake());
-        controller.rightBumper().onTrue(intake.stow());
+        controller.leftBumper().whileTrue(intake.intake());
+        controller.rightBumper().whileTrue(intake.stow());
 
         // TODO: the actual solving
         var turretAngle = Degrees.of(0);

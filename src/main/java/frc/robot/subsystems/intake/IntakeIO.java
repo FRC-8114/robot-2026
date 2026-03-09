@@ -4,7 +4,6 @@ import org.littletonrobotics.junction.AutoLog;
 
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
 
 public interface IntakeIO {
     @AutoLog
@@ -14,7 +13,7 @@ public interface IntakeIO {
         public double deployAppliedVoltage = 0;
         public double deployCurrentAmps = 0;
 
-        public double rollerRPS = 0;
+        public double rollerVelocityRPM = 0;
         public double rollerAppliedVoltage = 0;
         public double rollerCurrentAmps = 0;
         public double rollerPosition = 0;
@@ -26,8 +25,6 @@ public interface IntakeIO {
 
     void setRollerVelocity(AngularVelocity velocity);
     void setRollerVoltage(double volts);
-
-    void setRollerCurrent(Current current);
 
     void stopRollers();
 

@@ -6,6 +6,7 @@ import static edu.wpi.first.units.Units.Volts;
 import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.Angle;
@@ -14,7 +15,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 public class Turret extends SubsystemBase {
-    private static class Constants {
+    public static class Constants {
         private static final Angle ANGLE_TOLERANCE = Degrees.of(1);
         private static final Angle MIN_ANGLE = Degrees.of(0);
         private static final Angle MAX_ANGLE = Degrees.of(270);
@@ -26,6 +27,8 @@ public class Turret extends SubsystemBase {
     private final SysIdRoutine sysId;
     private double normalizedPositionDeg;
 
+    private final LoggedNetworkNumber turretPosition = new LoggedNetworkNumber("Tuning/TurretPosition", 90);
+
     public Turret(TurretIO pivotMotor) {
         this.pivotMotor = pivotMotor;
 
@@ -35,6 +38,9 @@ public class Turret extends SubsystemBase {
                         (state) -> Logger.recordOutput("Turret/SysIdState", state.toString())),
                 new SysIdRoutine.Mechanism(
                         (voltage) -> pivotMotor.setVoltage(voltage.in(Volts)), null, this));
+
+        setDefaultCommand(followAngle(() -> Degrees.of(MathUtil.clamp(turretPosition.get(),
+                Constants.MIN_ANGLE.in(Degrees), Constants.MAX_ANGLE.in(Degrees)))));
     }
 
     public double getTurretPositionRads() {
@@ -54,27 +60,12 @@ public class Turret extends SubsystemBase {
         return Math.abs(error) <= Constants.ANGLE_TOLERANCE.in(Degrees);
     }
 
-    private Angle computeMotorTarget(Angle target) {
-        double maxDeg = Constants.MAX_ANGLE.in(Degrees);
-
-        // Wrap target into [0, 360)
-        double targetDeg = MathUtil.inputModulus(target.in(Degrees), 0, 360);
-
-        // If target is in the deadzone, snap to the nearest edge
-        if (targetDeg > maxDeg) {
-            double deadzoneCenter = maxDeg + Constants.DEADZONE_MID_DEG / 2;
-            targetDeg = targetDeg < deadzoneCenter ? maxDeg : 0;
-        }
-
-        return Degrees.of(targetDeg);
-    }
-
     public Command setAngle(Angle angle) {
-        return run(() -> pivotMotor.setTarget(computeMotorTarget(angle)));
+        return run(() -> pivotMotor.setTarget(angle));
     }
 
     public Command followAngle(Supplier<Angle> angle) {
-        return run(() -> pivotMotor.setTarget(computeMotorTarget(angle.get())));
+        return run(() -> pivotMotor.setTarget(angle.get()));
     }
 
     private boolean isOutOfBounds() {

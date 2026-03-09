@@ -17,9 +17,8 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 public class Turret extends SubsystemBase {
     public static class Constants {
         private static final Angle ANGLE_TOLERANCE = Degrees.of(1);
-        private static final Angle MIN_ANGLE = Degrees.of(0);
-        private static final Angle MAX_ANGLE = Degrees.of(270);
-        private static final double DEADZONE_MID_DEG = Degrees.of(360).minus(MAX_ANGLE).in(Degrees);
+        public static final Angle MIN_ANGLE = Degrees.of(0);
+        public static final Angle MAX_ANGLE = Degrees.of(270);
     }
 
     private final TurretIO pivotMotor;

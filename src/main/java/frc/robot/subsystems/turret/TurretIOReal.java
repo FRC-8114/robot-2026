@@ -4,19 +4,21 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
-import java.util.Optional;
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
+import com.ctre.phoenix6.configs.ClosedLoopGeneralConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
-import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs;
 import com.ctre.phoenix6.configs.MagnetSensorConfigs;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 
 import edu.wpi.first.math.MathUtil;
@@ -28,24 +30,22 @@ public class TurretIOReal implements TurretIO {
         public static final int pivotMotorID = 32;
 
         // The turret encoder CANCoder which has the 19T gear
-        public static final int turretEncoder1ID = 33;
+        public static final int encoder19TID = 33;
         // the turret encoder which has the 21T gear
-        public static final int turretEncoder2ID = 34;
+        public static final int encoder21TID = 34;
 
-        public static final double MAX_ROTATION = 200.0;
-
-        private static final double encoder1Offset = 0.0;
-        private static final double encoder2Offset = 0.0;
+        private static final double encoder19TOffset = -0.331298828125;
+        private static final double encoder21TOffset = -0.83935546875;
 
         public static final double ERROR_THRESHOLD = Math.toRadians(2);
 
         private static final MagnetSensorConfigs magnetConfig = new MagnetSensorConfigs()
-                .withMagnetOffset(encoder1Offset)
+                .withMagnetOffset(encoder19TOffset)
                 .withSensorDirection(SensorDirectionValue.CounterClockwise_Positive)
                 .withAbsoluteSensorDiscontinuityPoint(1);
 
         private static final MagnetSensorConfigs encoder2MagnetConfigs = new MagnetSensorConfigs()
-                .withMagnetOffset(encoder2Offset)
+                .withMagnetOffset(encoder21TOffset)
                 .withSensorDirection(SensorDirectionValue.CounterClockwise_Positive)
                 .withAbsoluteSensorDiscontinuityPoint(1);
 
@@ -56,7 +56,7 @@ public class TurretIOReal implements TurretIO {
                 .withMagnetSensor(encoder2MagnetConfigs);
 
         private static final Slot0Configs pivotMotorPIDs = new Slot0Configs()
-                .withKS(0.3035)
+                .withKS(1.1)
                 .withKV(0.1034)
                 .withKA(0)
                 .withKP(9.78)
@@ -64,57 +64,51 @@ public class TurretIOReal implements TurretIO {
                 .withKD(0.0);
 
         private static final MotionMagicConfigs pivotMotionMagicConfigs = new MotionMagicConfigs()
-                .withMotionMagicAcceleration(1) // 1 rotation of the turret per second squared
-                .withMotionMagicCruiseVelocity(3); // 3 rotations of the turret per second
+                .withMotionMagicAcceleration(0.5)
+                .withMotionMagicCruiseVelocity(1);
 
-        private static final SoftwareLimitSwitchConfigs softLimitCfg = new SoftwareLimitSwitchConfigs()
+        private static final SoftwareLimitSwitchConfigs softwareLimits = new SoftwareLimitSwitchConfigs()
+                .withForwardSoftLimitThreshold(Turret.Constants.MAX_ANGLE)
                 .withForwardSoftLimitEnable(true)
-                .withForwardSoftLimitThreshold(0.75) // 270 degrees = 0.75 rotations
-                .withReverseSoftLimitEnable(true)
-                .withReverseSoftLimitThreshold(0); // 0 degrees
+                .withReverseSoftLimitThreshold(Turret.Constants.MIN_ANGLE)
+                .withReverseSoftLimitEnable(true);
 
         public static final TalonFXConfiguration pivotMotorCfg = new TalonFXConfiguration()
                 .withSlot0(pivotMotorPIDs)
+                .withClosedLoopGeneral(new ClosedLoopGeneralConfigs().withContinuousWrap(false))
+                .withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive))
                 .withMotionMagic(pivotMotionMagicConfigs)
-                .withSoftwareLimitSwitch(softLimitCfg)
-                .withFeedback(new FeedbackConfigs().withSensorToMechanismRatio(20));// 20 rotations of the motor for 1
-                                                                                    // rotation of the turret
+                .withSoftwareLimitSwitch(softwareLimits)
+                .withFeedback(new FeedbackConfigs()
+                    .withSensorToMechanismRatio(10)); // 10 rotations of the motor for 1 rotation of the turret
     }
 
     private final TalonFX pivotMotor = new TalonFX(Constants.pivotMotorID, RobotConstants.canBus);
-    private final CANcoder turretEncoder1 = new CANcoder(Constants.turretEncoder1ID, RobotConstants.canBus);
-    private final CANcoder turretEncoder2 = new CANcoder(Constants.turretEncoder2ID, RobotConstants.canBus);
+    private final CANcoder turret19TEncoder = new CANcoder(Constants.encoder19TID, RobotConstants.canBus);
+    private final CANcoder turret21TEncoder = new CANcoder(Constants.encoder21TID, RobotConstants.canBus);
     private final MotionMagicVoltage control = new MotionMagicVoltage(0);
     private final VoltageOut voltageControl = new VoltageOut(0);
 
     public TurretIOReal() {
-        turretEncoder1.getConfigurator().apply(Constants.encoder1Cfg);
-        turretEncoder2.getConfigurator().apply(Constants.encoder2Cfg);
+        turret19TEncoder.getConfigurator().apply(Constants.encoder1Cfg);
+        turret21TEncoder.getConfigurator().apply(Constants.encoder2Cfg);
         pivotMotor.getConfigurator().apply(Constants.pivotMotorCfg);
 
-        Optional<Angle> initialAngle = getTurretAngle();
+        Angle initialAngle = getTurretAngle();
 
-        if (initialAngle.isEmpty()) {
-            System.err.println("Turret encoders are messed up");
-        }
-
-        // At startup, wrap CRT angle to [0, 360) to match the convention
-        double crtDeg = initialAngle.orElse(Angle.ofRelativeUnits(0, Degrees)).in(Degrees);
-        double wrappedDeg = MathUtil.inputModulus(crtDeg, 0, 360);
-        reseedPosition(Degrees.of(wrappedDeg));
+        reseedPosition(initialAngle);
     }
 
     // chinese remainder theorem is simple, actually
-    private Optional<Angle> getTurretAngle() {
-        double teeth1 = turretEncoder1.getAbsolutePosition().getValueAsDouble() * 19.0;
-        double teeth2 = turretEncoder2.getAbsolutePosition().getValueAsDouble() * 21.0;
-        double turretGearTeeth = (teeth1 * 21.0 * 10.0 + teeth2 * 19.0 * 10.0) % 399.0;
+    private Angle getTurretAngle() {
+        long teeth1 = Math.round(turret19TEncoder.getAbsolutePosition().getValueAsDouble() * 19.0) % 19l;
+        long teeth2 = Math.round(turret21TEncoder.getAbsolutePosition().getValueAsDouble() * 21.0) % 21l;
+        long coarse = (teeth1 * 21l * 10l + teeth2 * 19l * 10l) % 399l;
 
-        if (turretGearTeeth > Constants.MAX_ROTATION) {
-            return Optional.empty();
-        }
+        double fraction = teeth2 % 1;
+        double turretGearTeeth = coarse + fraction;
 
-        return Optional.of(Degrees.of(turretGearTeeth * (360.0 / 200.0)));
+        return Radians.of(MathUtil.inputModulus(turretGearTeeth * ((2 * Math.PI) / 200.0), 0, Math.PI * 2));
     }
 
     private void reseedPosition(Angle angle) {
@@ -131,14 +125,13 @@ public class TurretIOReal implements TurretIO {
 
     public void updateInputs(TurretIOInputs inputs) {
         double position = pivotMotor.getPosition().getValue().in(Radians);
-        Optional<Angle> positionCrt = getTurretAngle();
+        Angle positionCrt = getTurretAngle();
 
-        inputs.hasValidCRT = positionCrt.isPresent();
         inputs.turretMotorPosition = position;
-        inputs.turretPositionCRT = positionCrt.orElse(Angle.ofRelativeUnits(0, Radians)).in(Radians);
+        inputs.turretPositionCRT = positionCrt.in(Radians);
 
-        if (positionCrt.isPresent() && Math
-                .abs(MathUtil.angleModulus(position - positionCrt.get().in(Radians))) > Constants.ERROR_THRESHOLD) {
+        if (Math.abs(MathUtil.angleModulus(position - positionCrt.in(Radians)))
+            > Constants.ERROR_THRESHOLD) {
             // valid CRT but motor disagrees
             inputs.motorPositionErrorCounter += 1;
         } else {
@@ -148,12 +141,9 @@ public class TurretIOReal implements TurretIO {
         inputs.velocityRadsPerSec = pivotMotor.getVelocity().getValue().in(RadiansPerSecond);
         inputs.appliedVoltage = pivotMotor.getMotorVoltage().getValueAsDouble();
 
-        // 4 degrees is the threshold for when to reseed
-        if (Math.abs(inputs.motorPositionErrorCounter) > 4) {
-            // Adjust CRT angle to be closest equivalent to current motor position
-            double crtRads = positionCrt.get().in(Radians);
-            double adjusted = position + MathUtil.angleModulus(crtRads - position);
-            reseedPosition(Radians.of(adjusted));
+        // err
+        if (Math.abs(inputs.motorPositionErrorCounter) > 5) {
+            reseedPosition(positionCrt);
             inputs.motorPositionErrorCounter = 0;
         }
     }

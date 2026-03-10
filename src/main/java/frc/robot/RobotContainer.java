@@ -4,7 +4,6 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.RPM;
 
 import java.util.ArrayList;
@@ -152,7 +151,7 @@ public class RobotContainer {
 
         autos = new Autos(intake, climber);
 
-        shooterSupersystem = new ShooterSupersystem(turretPivot, turretPitch, shooter, indexer);
+        shooterSupersystem = new ShooterSupersystem(turretPivot, turretPitch, shooter, indexer, drive);
 
         configureButtonBindings();
         setupAutoChoices();
@@ -337,13 +336,8 @@ public class RobotContainer {
         controller.leftBumper().whileTrue(intake.intake());
         controller.rightBumper().whileTrue(intake.stow());
 
-        // TODO: the actual solving
-        var turretAngle = Degrees.of(0);
-        var pitchAngle = Degrees.of(50);
-
         controller.leftTrigger().whileTrue(
-                shooterSupersystem.shootWhenReady(
-                        turretAngle, pitchAngle,
+                shooterSupersystem.shootAtTarget(
                         () -> controller.getRightTriggerAxis() > 0.5));
     }
 

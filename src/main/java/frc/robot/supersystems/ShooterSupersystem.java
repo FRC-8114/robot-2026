@@ -1,32 +1,86 @@
 package frc.robot.supersystems;
 
+import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.Radians;
+
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
+import edu.wpi.first.math.InterpolatingMatrixTreeMap;
+import edu.wpi.first.math.Pair;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooterpitch.ShooterPitch;
 import frc.robot.subsystems.turret.Turret;
+import frc.robot.subsystems.drive.Drive;
 
 public class ShooterSupersystem {
     private final Turret turretPivot;
     private final ShooterPitch turretPitch;
     private final Shooter shooter;
     private final Indexer indexer;
+    private final Drive drive;
+
+    private final InterpolatingMatrixTreeMap<Double, N2, N1> distanceToPitchAndRPM = new InterpolatingMatrixTreeMap<Double, N2, N1>();
+
+    private Translation3d target = new Translation3d();
 
     public static class Constants {
+        public static final double turretXOffset = -6.5; // negative X is back
         public static final double turretYOffset = 6.875; // positive Y is left
-        public static final double turretXOffset = -6.5; // negative X is back  
+
+        public static final Transform2d turretOffset = new Transform2d(turretXOffset, turretYOffset, new Rotation2d());
     }
 
-    public ShooterSupersystem(Turret turretPivot, ShooterPitch turretPitch, Shooter shooter, Indexer indexer) {
+    public ShooterSupersystem(Turret turretPivot, ShooterPitch turretPitch, Shooter shooter, Indexer indexer,
+            Drive drive) {
+
+        // todo: distance to pitch and rpm
+
         this.turretPivot = turretPivot;
         this.turretPitch = turretPitch;
         this.shooter = shooter;
         this.indexer = indexer;
+        this.drive = drive;
+    }
+
+    private Pair<Double, Double> getRPMAndPitch(double distance) {
+        var mat = distanceToPitchAndRPM.get(distance).getData();
+
+        return Pair.of(mat[0], mat[1]);
+    }
+
+    private double estimateShotTravel(double distance) {
+        return distance * 0.2;
+    }
+
+    private Translation2d getTurretPosition() {
+        return drive.getPose().transformBy(Constants.turretOffset).getTranslation();
+    }
+
+    private Angle getLeadYaw() {
+        ChassisSpeeds speeds = drive.getChassisSpeeds();
+        Translation2d turretPosition = getTurretPosition();
+        double distance = target.getDistance(new Translation3d(turretPosition));
+
+        Transform3d velocityOffset = new Transform3d(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, 0, new Rotation3d(0, 0, speeds.omegaRadiansPerSecond)).times(estimateShotTravel(distance));
+        Translation3d offsetTarget = target.minus(velocityOffset.getTranslation());
+        Translation2d offsetFromTurret = offsetTarget.toTranslation2d().minus(turretPosition);
+
+        return Radians.of(Math.atan2(offsetFromTurret.getY(), offsetFromTurret.getX()));
     }
 
     public boolean isReadyToFire(Angle turretAngle, Angle pitchAngle) {
@@ -36,29 +90,38 @@ public class ShooterSupersystem {
                 && indexer.isTurretLaneAtSpeed();
     }
 
-    public Command shootWhenReady(Angle turretAngle, Angle pitchAngle, BooleanSupplier fireTrigger) {
-        BooleanSupplier shouldFeed = () ->
-                fireTrigger.getAsBoolean() && isReadyToFire(turretAngle, pitchAngle);
-
-        return Commands.parallel(
-                turretPivot.setAngle(turretAngle),
-                turretPitch.setAngle(pitchAngle),
-                shooter.runFlywheels(),
-                indexer.prepareAndFeedWhen(shouldFeed)
-        );
-    }
-
     public Command shootWhenReady(Supplier<Angle> turretAngle, Supplier<Angle> pitchAngle,
-            Supplier<Double> rpm, BooleanSupplier fireTrigger) {
-        BooleanSupplier shouldFeed = () ->
-                fireTrigger.getAsBoolean()
-                        && isReadyToFire(turretAngle.get(), pitchAngle.get());
+            Supplier<AngularVelocity> rpm, BooleanSupplier fireTrigger) {
+        BooleanSupplier shouldFeed = () -> fireTrigger.getAsBoolean()
+                && isReadyToFire(turretAngle.get(), pitchAngle.get());
 
         return Commands.parallel(
                 turretPivot.followAngle(turretAngle),
                 turretPitch.followAngle(pitchAngle),
-                // shooter.runFlywheelsAtSpeed(rpm),
-                indexer.prepareAndFeedWhen(shouldFeed)
-        );
+                shooter.runFlywheels(rpm),
+                indexer.prepareAndFeedWhen(shouldFeed));
+    }
+
+    private double getDistanceToTarget() {
+        Translation2d turretPosition = getTurretPosition();
+        return target.getDistance(new Translation3d(turretPosition));
+    }
+
+    private Angle getPitchAngle() {
+        double distance = getDistanceToTarget();
+        return Radians.of(getRPMAndPitch(distance).getSecond());
+    }
+
+    private AngularVelocity getShooterRPM() {
+        double distance = getDistanceToTarget();
+        return RPM.of(getRPMAndPitch(distance).getFirst());
+    }
+
+    public Command shootAtTarget(BooleanSupplier fireTrigger) {
+        Supplier<Angle> yaw = this::getLeadYaw;
+        Supplier<Angle> pitch = this::getPitchAngle;
+        Supplier<AngularVelocity> rpm = this::getShooterRPM;
+
+        return shootWhenReady(yaw, pitch, rpm, fireTrigger);
     }
 }

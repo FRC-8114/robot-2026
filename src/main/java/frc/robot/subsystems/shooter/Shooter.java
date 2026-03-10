@@ -3,21 +3,25 @@ package frc.robot.subsystems.shooter;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Volts;
 
+import java.util.function.Supplier;
+
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 public class Shooter extends SubsystemBase {
     private static class Constants {
-        static final double flywheelTargetRPM = 3000;
         static final double flywheelToleranceRPM = 50;
     }
 
     private final ShooterIO io;
     private final ShooterInputsAutoLogged inputs = new ShooterInputsAutoLogged();
     private final SysIdRoutine sysId;
+
+    private AngularVelocity targetVelocity;
 
     public Shooter(ShooterIO io) {
         this.io = io;
@@ -42,13 +46,24 @@ public class Shooter extends SubsystemBase {
     }
 
     public boolean isAtSpeed() {
-        return Math.abs(inputs.leftFlywheelRPMs - Constants.flywheelTargetRPM) < Constants.flywheelToleranceRPM
-                && Math.abs(inputs.rightFlywheelRPMs - Constants.flywheelTargetRPM) < Constants.flywheelToleranceRPM;
+        return RPM.of(inputs.leftFlywheelRPMs).minus(targetVelocity).magnitude() < Constants.flywheelToleranceRPM
+                && RPM.of(inputs.rightFlywheelRPMs).minus(targetVelocity).magnitude() < Constants.flywheelToleranceRPM;
     }
 
-    public Command runFlywheels() {
+    public Command runFlywheels(AngularVelocity target) {
+        targetVelocity = target;
+
         return runEnd(
-                () -> io.setFlywheelVelocity(RPM.of(Constants.flywheelTargetRPM)),
+                () -> io.setFlywheelVelocity(targetVelocity),
+                () -> io.stopFlywheels());
+    }
+
+    public Command runFlywheels(Supplier<AngularVelocity> target) {
+        return runEnd(
+                () -> {
+                    targetVelocity = target.get();
+                    io.setFlywheelVelocity(targetVelocity);
+                },
                 () -> io.stopFlywheels());
     }
 

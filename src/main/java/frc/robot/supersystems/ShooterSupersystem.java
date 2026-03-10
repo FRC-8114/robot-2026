@@ -20,13 +20,15 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooterpitch.ShooterPitch;
 import frc.robot.subsystems.turret.Turret;
+import frc.robot.FieldConstants;
 import frc.robot.subsystems.drive.Drive;
 
-public class ShooterSupersystem {
+public class ShooterSupersystem extends SubsystemBase {
     private final Turret turretPivot;
     private final ShooterPitch turretPitch;
     private final Shooter shooter;
@@ -56,6 +58,8 @@ public class ShooterSupersystem {
         this.shooter = shooter;
         this.indexer = indexer;
         this.drive = drive;
+
+        setDefaultCommand(defaultHoming());
     }
 
     private Pair<Double, Double> getRPMAndPitch(double distance) {
@@ -70,7 +74,7 @@ public class ShooterSupersystem {
         double pitchRad = rpmAndPitch.getSecond();
         double exitVelocity = rpm * 2.0 * Math.PI * Constants.FLYWHEEL_RADIUS_METERS / 60.0;
         double horizontalDist = target.toTranslation2d().getDistance(getTurretPosition());
-        
+
         return horizontalDist / (exitVelocity * Math.cos(pitchRad));
     }
 
@@ -86,7 +90,8 @@ public class ShooterSupersystem {
         Translation2d turretPosition = getTurretPosition();
         double distance = target.getDistance(new Translation3d(turretPosition));
 
-        Translation2d velocityOffset = new Translation2d(fieldSpeeds.vxMetersPerSecond, fieldSpeeds.vyMetersPerSecond).times(estimateTimeOfFlight(distance));
+        Translation2d velocityOffset = new Translation2d(fieldSpeeds.vxMetersPerSecond, fieldSpeeds.vyMetersPerSecond)
+                .times(estimateTimeOfFlight(distance));
         Translation2d offsetTarget = target.toTranslation2d().minus(velocityOffset);
         Translation2d offsetFromTurret = offsetTarget.minus(turretPosition);
 
@@ -136,5 +141,21 @@ public class ShooterSupersystem {
         Supplier<AngularVelocity> rpm = this::getShooterRPM;
 
         return shootWhenReady(yaw, pitch, rpm, fireTrigger);
+    }
+
+    private void updateTarget() {
+        if (drive.getPose().getX() > FieldConstants.LinesVertical.allianceZone) {
+            target = new Translation3d(); // TOOD: pass
+        } else {
+            target = FieldConstants.Hub.innerCenterPoint;
+        }
+    }
+
+    public Command defaultHoming() {
+        Supplier<Angle> yaw = this::getLeadYaw;
+        Supplier<Angle> pitch = this::getPitchAngle;
+
+        return Commands.parallel(turretPivot.followAngle(yaw),
+                turretPitch.followAngle(pitch), run(this::updateTarget));
     }
 }

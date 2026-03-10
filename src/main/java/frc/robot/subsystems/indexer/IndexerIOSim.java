@@ -83,4 +83,16 @@ public class IndexerIOSim implements IndexerIO {
         inputs.hopperLanesRPMs = hopperLanesSim.getAngularVelocityRadPerSec() / (2.0 * Math.PI) * 60.0;
         inputs.hopperLanesCurrentAmps = Math.abs(hopperLanesSim.getCurrentDrawAmps());
     }
+
+    @Override
+    public void stopTurretLane() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'stopTurretLane'");
+    }
+
+    @Override
+    public void stopHopperLane() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'stopHopperLane'");
+    }
 }

@@ -29,7 +29,7 @@ public class Indexer extends SubsystemBase {
     public Indexer(IndexerIO io) {
         this.io = io;
 
-        setDefaultCommand(periodicReverse());
+        // setDefaultCommand(periodicReverse());
     }
 
     public boolean isTurretLaneAtSpeed() {
@@ -54,8 +54,8 @@ public class Indexer extends SubsystemBase {
                     io.setHopperLaneVelocity(RPM.of(hopperLaneVelocity.get()));
                 },
                 () -> {
-                    io.setHopperLaneVelocity(RPM.zero());
-                    io.setTurretLaneVelocity(RPM.zero());
+                    io.stopHopperLane();
+                    io.stopTurretLane();
                 });
     }
 

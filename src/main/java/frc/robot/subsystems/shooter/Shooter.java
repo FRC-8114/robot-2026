@@ -6,6 +6,7 @@ import static edu.wpi.first.units.Units.Volts;
 import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
@@ -24,6 +25,8 @@ public class Shooter extends SubsystemBase {
 
     private AngularVelocity targetVelocity;
 
+    private LoggedNetworkNumber tuneVelocity;
+ 
     public Shooter(ShooterIO io) {
         this.io = io;
 
@@ -34,6 +37,8 @@ public class Shooter extends SubsystemBase {
                 new SysIdRoutine.Mechanism(
                         (voltage) -> io.setVoltage(voltage.in(Volts)),
                         null, this));
+        
+        tuneVelocity = new LoggedNetworkNumber("Tuning/TuneShooterVelocityRPM", 2000);
     }
 
     public double getAverageFlywheelRPMs() {
@@ -49,6 +54,10 @@ public class Shooter extends SubsystemBase {
     public boolean isAtSpeed() {
         return RPM.of(inputs.leftFlywheelRPMs).minus(targetVelocity).magnitude() < Constants.flywheelToleranceRPM
                 && RPM.of(inputs.rightFlywheelRPMs).minus(targetVelocity).magnitude() < Constants.flywheelToleranceRPM;
+    }
+
+    public Command runFlywheelsTunableVelocity() {
+        return run(() -> io.setFlywheelVelocity(RPM.of(tuneVelocity.get())));
     }
 
     public Command runFlywheels(AngularVelocity target) {
@@ -69,7 +78,7 @@ public class Shooter extends SubsystemBase {
     }
 
     public Command runFlywheelsVolts(Voltage volts) {
-        return run(() -> io.setVoltage(volts.in(Volts)));
+        return runEnd(() -> io.setVoltage(volts.in(Volts)), () -> io.stopFlywheels());
     }
 
     public Command stopFlywheels() {

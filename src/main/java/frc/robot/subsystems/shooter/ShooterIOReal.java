@@ -5,12 +5,14 @@ import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -37,6 +39,7 @@ public class ShooterIOReal implements ShooterIO {
 
         static final TalonFXConfiguration flywheelMotorConfig = new TalonFXConfiguration()
                 .withSlot0(flywheelSlot0)
+                .withMotorOutput(new MotorOutputConfigs() .withInverted(InvertedValue.Clockwise_Positive))
                 .withCurrentLimits(currentLimits);
     }
 

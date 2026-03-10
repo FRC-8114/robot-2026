@@ -82,7 +82,7 @@ public class RobotContainer {
                     drive.addVisionMeasurement(poseEstimation.pose().toPose2d(),
                             poseEstimation.timestamp(),
                             poseEstimation.stddev());
-                }, drive::getRawGyroYaw);
+                }, drive::getRawGyroRotation3d, drive::getRawGyroVelocityRadPerSec);
 
                 turretPivot = new Turret(new TurretIOReal());
                 indexer = new Indexer(new IndexerIOSim());
@@ -110,7 +110,7 @@ public class RobotContainer {
                     drive.addVisionMeasurement(poseEstimation.pose().toPose2d(),
                             poseEstimation.timestamp(),
                             poseEstimation.stddev());
-                }, drive::getRawGyroYaw, simVisionIOs);
+                }, drive::getRawGyroRotation3d, drive::getRawGyroVelocityRadPerSec, simVisionIOs);
 
                 turretPivot = new Turret(new TurretIOSim());
                 turretPitch = new ShooterPitch(new ShooterPitchIOSim());
@@ -332,16 +332,20 @@ public class RobotContainer {
                 .b()
                 .onTrue(
                         Commands.runOnce(
-                                () -> {
-                                    drive.setPose(
-                                            new Pose2d(drive.getPose()
-                                                    .getTranslation(),
-                                                    Rotation2d.kZero));
-                                    if (vision != null) {
-                                        vision.seedImu();
-                                    }
-                                },
+                                () -> drive.setPose(
+                                        new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
                                 drive)
+                                .ignoringDisable(true));
+
+        controller
+                .start()
+                .onTrue(
+                        Commands.runOnce(
+                                () -> {
+                                    if (vision != null) {
+                                        vision.seedPoseFromVision();
+                                    }
+                                })
                                 .ignoringDisable(true));
 
         controller.leftBumper().whileTrue(intakeRollers.intake());

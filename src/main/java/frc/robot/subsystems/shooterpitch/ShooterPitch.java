@@ -1,5 +1,6 @@
 package frc.robot.subsystems.shooterpitch;
 
+import static edu.wpi.first.units.Units.Degree;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Volts;
@@ -7,6 +8,7 @@ import static edu.wpi.first.units.Units.Volts;
 import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -14,11 +16,18 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 public class ShooterPitch extends SubsystemBase {
+    public static class Constants {
+        public static final Angle MAX_ANGLE = Degree.of(34.5);
+        public static final Angle MIN_ANGLE = Degree.of(10.5);
+    }
+
     private static final Angle ANGLE_TOLERANCE = Degrees.of(1);
 
     private final ShooterPitchIO pitchMotor;
     private final ShooterPitchInputsAutoLogged inputs = new ShooterPitchInputsAutoLogged();
     private final SysIdRoutine sysId;
+
+    private final LoggedNetworkNumber angle = new LoggedNetworkNumber("Tuning/ShooterPitch", Constants.MIN_ANGLE.in(Degrees));
 
     public ShooterPitch(ShooterPitchIO pitchMotor) {
         this.pitchMotor = pitchMotor;
@@ -29,6 +38,8 @@ public class ShooterPitch extends SubsystemBase {
                         (state) -> Logger.recordOutput("ShooterPitch/SysIdState", state.toString())),
                 new SysIdRoutine.Mechanism(
                         (voltage) -> pitchMotor.setVoltage(voltage.in(Volts)), null, this));
+
+        setDefaultCommand(followAngle(() -> Degrees.of(angle.get())));
     }
 
     public double getPitchPositionRads() {

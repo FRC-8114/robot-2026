@@ -1,6 +1,8 @@
 package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
@@ -67,8 +69,12 @@ public class ShooterIOReal implements ShooterIO {
     public void updateInputs(ShooterInputs inputs) {
         inputs.leftFlywheelRPMs = leftFlywheel.getVelocity().getValue().in(RPM);
         inputs.leftCurrentAmps = leftFlywheel.getTorqueCurrent().getValueAsDouble();
+        inputs.leftAppliedVoltage = leftFlywheel.getMotorVoltage().getValue().in(Volts);
+        inputs.leftPositionRads = leftFlywheel.getPosition().getValue().in(Radians);
 
         inputs.rightFlywheelRPMs = rightFlywheel.getVelocity().getValue().in(RPM);
         inputs.rightCurrentAmps = rightFlywheel.getTorqueCurrent().getValueAsDouble();
+        inputs.leftAppliedVoltage = rightFlywheel.getMotorVoltage().getValue().in(Volts);
+        inputs.leftPositionRads = rightFlywheel.getPosition().getValue().in(Radians);
     }
 }

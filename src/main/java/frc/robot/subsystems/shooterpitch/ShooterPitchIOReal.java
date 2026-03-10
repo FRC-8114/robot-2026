@@ -1,12 +1,13 @@
 package frc.robot.subsystems.shooterpitch;
 
+import static edu.wpi.first.units.Units.Degree;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
-
 
 import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -17,7 +18,7 @@ import frc.robot.RobotConstants;
 
 public class ShooterPitchIOReal implements ShooterPitchIO {
     private static class Constants {
-        public static final int turretPitchMotorId = 31;
+        public static final int turretPitchMotorId = 38;
 
         public static final double turretPitchRatio = 1.2;
 
@@ -36,8 +37,15 @@ public class ShooterPitchIOReal implements ShooterPitchIO {
         private static final FeedbackConfigs pitchFeedbackConfigs = new FeedbackConfigs()
                 .withSensorToMechanismRatio(turretPitchRatio);
 
+        private static final SoftwareLimitSwitchConfigs limits = new SoftwareLimitSwitchConfigs()
+                .withForwardSoftLimitEnable(true)
+                .withForwardSoftLimitThreshold(ShooterPitch.Constants.MAX_ANGLE)
+                .withReverseSoftLimitEnable(true)
+                .withReverseSoftLimitThreshold(ShooterPitch.Constants.MIN_ANGLE);
+
         public static final TalonFXConfiguration pitchMotorCfg = new TalonFXConfiguration()
                 .withSlot0(pitchMotorPIDs)
+                .withSoftwareLimitSwitch(limits)
                 .withMotionMagic(pitchMotionMagicConfigs)
                 .withFeedback(pitchFeedbackConfigs);
     }
@@ -48,6 +56,8 @@ public class ShooterPitchIOReal implements ShooterPitchIO {
 
     public ShooterPitchIOReal() {
         turretPitchMotor.getConfigurator().apply(Constants.pitchMotorCfg);
+
+        turretPitchMotor.setPosition(ShooterPitch.Constants.MIN_ANGLE);
     }
 
     public void setTarget(Angle angle) {

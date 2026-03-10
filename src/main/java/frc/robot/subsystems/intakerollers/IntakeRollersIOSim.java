@@ -31,17 +31,10 @@ public class IntakeRollersIOSim implements IntakeRollersIO {
                 ROLLER_GEARBOX);
     }
 
-    @Override
-    public void setVelocity(AngularVelocity velocity) {
-        rollerClosedLoop = true;
-        rollerController.setSetpoint(velocity.in(RadiansPerSecond));
-    }
-
     public void runVolts(Voltage volts) {
         rollerClosedLoop = false;
         rollerAppliedVolts = volts.in(Volts);
     }
-
 
     @Override
     public void updateInputs(IntakeRollersInputs inputs) {

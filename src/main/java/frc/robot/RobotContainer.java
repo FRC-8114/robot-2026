@@ -297,20 +297,6 @@ public class RobotContainer {
                                 "Intake Deploy SysId (Dynamic Reverse)",
                                 intakePivot.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
-                // Intake Roller SysId
-                autoChooser.addOption(
-                                "Intake Roller SysId (Quasistatic Forward)",
-                                intakeRollers.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-                autoChooser.addOption(
-                                "Intake Roller SysId (Quasistatic Reverse)",
-                                intakeRollers.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-                autoChooser.addOption(
-                                "Intake Roller SysId (Dynamic Forward)",
-                                intakeRollers.sysIdDynamic(SysIdRoutine.Direction.kForward));
-                autoChooser.addOption(
-                                "Intake Roller SysId (Dynamic Reverse)",
-                                intakeRollers.sysIdDynamic(SysIdRoutine.Direction.kReverse));
-
                 // Shooter SysId
                 autoChooser.addOption(
                                 "Shooter SysId (Quasistatic Forward)",

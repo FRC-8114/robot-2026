@@ -13,8 +13,6 @@ public interface IntakeRollersIO {
         public double rollerPositionRads = 0;
     }
 
-    void setVelocity(AngularVelocity velocity);
-
     void runVolts(Voltage volts);
 
     void updateInputs(IntakeRollersInputs inputs);

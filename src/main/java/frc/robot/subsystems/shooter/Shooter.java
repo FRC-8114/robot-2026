@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -67,19 +68,19 @@ public class Shooter extends SubsystemBase {
                 () -> io.stopFlywheels());
     }
 
+    public Command runFlywheelsVolts(Voltage volts) {
+        return run(() -> io.setVoltage(volts.in(Volts)));
+    }
+
     public Command stopFlywheels() {
         return runOnce(() -> io.stopFlywheels());
     }
 
     public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-        return run(() -> io.stopFlywheels())
-                .withTimeout(1.0)
-                .andThen(sysId.quasistatic(direction));
+        return sysId.quasistatic(direction);
     }
 
     public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-        return run(() -> io.stopFlywheels())
-                .withTimeout(1.0)
-                .andThen(sysId.dynamic(direction));
+        return sysId.dynamic(direction);
     }
 }

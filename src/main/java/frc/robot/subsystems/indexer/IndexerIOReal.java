@@ -26,6 +26,7 @@ public class IndexerIOReal implements IndexerIO {
                 .withKD(0.0);
 
         static final TalonFXConfiguration turretLaneMotorConfig = new TalonFXConfiguration()
+                .withMotorOutput(new MotorOutputConfigs() .withInverted(InvertedValue.Clockwise_Positive))
                 .withSlot0(turretLaneMotorSlot0);
 
         static final Slot0Configs hopperLaneMotorSlot0 = new Slot0Configs()

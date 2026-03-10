@@ -22,7 +22,7 @@ SWERVE (REAR): 2
     RR Steer: 5 (25)
     RR Encoder: 6 (26)
 TURRET: 3
-    Pitch Motor: 1 (31)
+    Pitch Motor: 1 (38)
     Yaw Motor: 2 (32)
     19T Gear Encoder: 3 (33)
     21T Gear Encoder: 4 (34)

@@ -11,6 +11,10 @@ public interface ShooterIO {
         public double rightFlywheelRPMs = 0;
         public double leftCurrentAmps = 0;
         public double rightCurrentAmps = 0;
+        public double leftAppliedVoltage = 0;
+        public double rightAppliedVoltage = 0;
+        public double leftPositionRads = 0;
+        public double rightPositionRads = 0;
     }
 
     void setFlywheelVelocity(AngularVelocity velocity);

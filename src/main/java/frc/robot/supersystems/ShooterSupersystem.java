@@ -42,6 +42,8 @@ public class ShooterSupersystem {
         public static final double turretYOffset = 6.875; // positive Y is left
 
         public static final Transform2d turretOffset = new Transform2d(turretXOffset, turretYOffset, new Rotation2d());
+
+        public static final double FLYWHEEL_RADIUS_METERS = 0.075;
     }
 
     public ShooterSupersystem(Turret turretPivot, ShooterPitch turretPitch, Shooter shooter, Indexer indexer,
@@ -63,7 +65,13 @@ public class ShooterSupersystem {
     }
 
     private double estimateTimeOfFlight(double distance) {
-        return distance / 7.62;
+        var rpmAndPitch = getRPMAndPitch(distance);
+        double rpm = rpmAndPitch.getFirst();
+        double pitchRad = rpmAndPitch.getSecond();
+        double exitVelocity = rpm * 2.0 * Math.PI * Constants.FLYWHEEL_RADIUS_METERS / 60.0;
+        double horizontalDist = target.toTranslation2d().getDistance(getTurretPosition());
+        
+        return horizontalDist / (exitVelocity * Math.cos(pitchRad));
     }
 
     private Translation2d getTurretPosition() {

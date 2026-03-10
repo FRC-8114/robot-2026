@@ -7,11 +7,10 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import edu.wpi.first.math.InterpolatingMatrixTreeMap;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -63,8 +62,8 @@ public class ShooterSupersystem {
         return Pair.of(mat[0], mat[1]);
     }
 
-    private double estimateShotTravel(double distance) {
-        return distance * 0.2;
+    private double estimateTimeOfFlight(double distance) {
+        return distance / 7.62;
     }
 
     private Translation2d getTurretPosition() {
@@ -72,15 +71,21 @@ public class ShooterSupersystem {
     }
 
     private Angle getLeadYaw() {
-        ChassisSpeeds speeds = drive.getChassisSpeeds();
+        ChassisSpeeds robotSpeeds = drive.getChassisSpeeds();
+        double heading = drive.getPose().getRotation().getRadians();
+        ChassisSpeeds fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(robotSpeeds, Rotation2d.fromRadians(heading));
+
         Translation2d turretPosition = getTurretPosition();
         double distance = target.getDistance(new Translation3d(turretPosition));
 
-        Transform3d velocityOffset = new Transform3d(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, 0, new Rotation3d(0, 0, speeds.omegaRadiansPerSecond)).times(estimateShotTravel(distance));
-        Translation3d offsetTarget = target.minus(velocityOffset.getTranslation());
-        Translation2d offsetFromTurret = offsetTarget.toTranslation2d().minus(turretPosition);
+        Translation2d velocityOffset = new Translation2d(fieldSpeeds.vxMetersPerSecond, fieldSpeeds.vyMetersPerSecond).times(estimateTimeOfFlight(distance));
+        Translation2d offsetTarget = target.toTranslation2d().minus(velocityOffset);
+        Translation2d offsetFromTurret = offsetTarget.minus(turretPosition);
 
-        return Radians.of(Math.atan2(offsetFromTurret.getY(), offsetFromTurret.getX()));
+        double fieldAngle = Math.atan2(offsetFromTurret.getY(), offsetFromTurret.getX());
+        double turretAngle = fieldAngle - heading;
+
+        return Radians.of(MathUtil.inputModulus(turretAngle, -Math.PI, Math.PI));
     }
 
     public boolean isReadyToFire(Angle turretAngle, Angle pitchAngle) {

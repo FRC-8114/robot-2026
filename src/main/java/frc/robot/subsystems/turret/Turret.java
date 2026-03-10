@@ -17,8 +17,8 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 public class Turret extends SubsystemBase {
     public static class Constants {
         private static final Angle ANGLE_TOLERANCE = Degrees.of(1);
-        public static final Angle MIN_ANGLE = Degrees.of(0);
-        public static final Angle MAX_ANGLE = Degrees.of(270);
+        public static final Angle MIN_ANGLE = Degrees.of(-90);
+        public static final Angle MAX_ANGLE = Degrees.of(180);
     }
 
     private final TurretIO pivotMotor;
@@ -26,7 +26,7 @@ public class Turret extends SubsystemBase {
     private final SysIdRoutine sysId;
     private double normalizedPositionDeg;
 
-    private final LoggedNetworkNumber turretPosition = new LoggedNetworkNumber("Tuning/TurretPosition", 90);
+    private final LoggedNetworkNumber turretPosition = new LoggedNetworkNumber("Tuning/TurretPosition", 0);
 
     public Turret(TurretIO pivotMotor) {
         this.pivotMotor = pivotMotor;
@@ -50,7 +50,7 @@ public class Turret extends SubsystemBase {
     public void periodic() {
         pivotMotor.updateInputs(inputs);
         Logger.processInputs("Turret", inputs);
-        normalizedPositionDeg = MathUtil.inputModulus(Math.toDegrees(inputs.turretMotorPosition), 0, 360);
+        normalizedPositionDeg = MathUtil.inputModulus(Math.toDegrees(inputs.turretMotorPosition), -180, 180);
         Logger.recordOutput("Turret/NormalizedPositionDeg", normalizedPositionDeg);
     }
 

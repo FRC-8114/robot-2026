@@ -1,6 +1,8 @@
 package frc.robot.subsystems.turret;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Radian;
+import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Volts;
 
 import java.util.function.Supplier;
@@ -17,8 +19,8 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 public class Turret extends SubsystemBase {
     public static class Constants {
         private static final Angle ANGLE_TOLERANCE = Degrees.of(1);
-        public static final Angle MIN_ANGLE = Degrees.of(-90);
-        public static final Angle MAX_ANGLE = Degrees.of(180);
+        public static final Angle MIN_ANGLE = Radians.of(0.75185);
+        public static final Angle MAX_ANGLE = Radians.of(4.988214);
     }
 
     private final TurretIO pivotMotor;
@@ -38,8 +40,6 @@ public class Turret extends SubsystemBase {
                 new SysIdRoutine.Mechanism(
                         (voltage) -> pivotMotor.setVoltage(voltage.in(Volts)), null, this));
 
-        setDefaultCommand(followAngle(() -> Degrees.of(MathUtil.clamp(turretPosition.get(),
-                Constants.MIN_ANGLE.in(Degrees), Constants.MAX_ANGLE.in(Degrees)))));
     }
 
     public double getTurretPositionRads() {

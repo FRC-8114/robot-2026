@@ -34,8 +34,8 @@ public class TurretIOReal implements TurretIO {
         // the turret encoder which has the 21T gear
         public static final int encoder21TID = 34;
 
-        private static final double encoder19TOffset = -0.06396484375;
-        private static final double encoder21TOffset = -0.311279296875;
+        private static final double encoder19TOffset = -0.063720703125;
+        private static final double encoder21TOffset = -0.68896484375;
 
         public static final double ERROR_THRESHOLD = Math.toRadians(2);
 
@@ -75,6 +75,7 @@ public class TurretIOReal implements TurretIO {
 
         public static final TalonFXConfiguration pivotMotorCfg = new TalonFXConfiguration()
                 .withSlot0(pivotMotorPIDs)
+            
                 .withClosedLoopGeneral(new ClosedLoopGeneralConfigs().withContinuousWrap(false))
                 .withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive))
                 .withMotionMagic(pivotMotionMagicConfigs)
@@ -130,13 +131,13 @@ public class TurretIOReal implements TurretIO {
         inputs.turretMotorPosition = position;
         inputs.turretPositionCRT = positionCrt.in(Radians);
 
-        if (Math.abs(MathUtil.angleModulus(position - positionCrt.in(Radians)))
-            > Constants.ERROR_THRESHOLD) {
-            // valid CRT but motor disagrees
-            inputs.motorPositionErrorCounter += 1;
-        } else {
-            inputs.motorPositionErrorCounter = 0;
-        }
+        // if (Math.abs(MathUtil.angleModulus(position - positionCrt.in(Radians)))
+        //     > Constants.ERROR_THRESHOLD) {
+        //     // valid CRT but motor disagrees
+        //     inputs.motorPositionErrorCounter += 1;
+        // } else {
+        //     inputs.motorPositionErrorCounter = 0;
+        // }
 
         inputs.velocityRadsPerSec = pivotMotor.getVelocity().getValue().in(RadiansPerSecond);
         inputs.appliedVoltage = pivotMotor.getMotorVoltage().getValueAsDouble();

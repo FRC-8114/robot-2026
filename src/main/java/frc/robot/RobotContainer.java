@@ -72,12 +72,11 @@ public class RobotContainer {
                         new ModuleIOTalonFX(TunerConstants.BackLeft),
                         new ModuleIOTalonFX(TunerConstants.BackRight));
 
-                vision = null;
-                // vision = Vision.fromCameraConstants(poseEstimation -> {
-                // drive.addVisionMeasurement(poseEstimation.pose().toPose2d(),
-                // poseEstimation.timestamp(),
-                // poseEstimation.stddev());
-                // });
+                vision = Vision.fromCameraConstants(poseEstimation -> {
+                    drive.addVisionMeasurement(poseEstimation.pose().toPose2d(),
+                            poseEstimation.timestamp(),
+                            poseEstimation.stddev());
+                }, drive::getRawGyroYaw);
 
                 turretPivot = new Turret(new TurretIOReal());
                 indexer = new Indexer(new IndexerIOSim());
@@ -103,7 +102,7 @@ public class RobotContainer {
                     drive.addVisionMeasurement(poseEstimation.pose().toPose2d(),
                             poseEstimation.timestamp(),
                             poseEstimation.stddev());
-                }, simVisionIOs);
+                }, drive::getRawGyroYaw, simVisionIOs);
 
                 turretPivot = new Turret(new TurretIOSim());
                 turretPitch = new ShooterPitch(new ShooterPitchIOSim());
@@ -323,10 +322,15 @@ public class RobotContainer {
                 .b()
                 .onTrue(
                         Commands.runOnce(
-                                () -> drive.setPose(
-                                        new Pose2d(drive.getPose()
-                                                .getTranslation(),
-                                                Rotation2d.kZero)),
+                                () -> {
+                                    drive.setPose(
+                                            new Pose2d(drive.getPose()
+                                                    .getTranslation(),
+                                                    Rotation2d.kZero));
+                                    if (vision != null) {
+                                        vision.seedImu();
+                                    }
+                                },
                                 drive)
                                 .ignoringDisable(true));
 

@@ -7,6 +7,7 @@ import org.littletonrobotics.junction.AutoLog;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.*;
 import frc.robot.subsystems.vision.VisionConstants.CameraConfiguration;
 
@@ -20,23 +21,20 @@ public interface VisionIO {
 
     public static class PoseEstimationBuffer {
         public int count = 0;
-        private int bufferPosition = 0;
         public PoseEstimation[] poseEstimations = new PoseEstimation[POSE_ESTIMATION_BUFFER_SIZE];
 
         public void pushEstimate(PoseEstimation estimation) {
-            bufferPosition = (bufferPosition + 1) % POSE_ESTIMATION_BUFFER_SIZE;
-            count = Math.min(count + 1, POSE_ESTIMATION_BUFFER_SIZE);
-
-            poseEstimations[bufferPosition] = estimation;
+            if (count < POSE_ESTIMATION_BUFFER_SIZE) {
+                poseEstimations[count] = estimation;
+                count++;
+            }
         }
 
         public void clear() {
-            count = 0;
-            bufferPosition = 0;
-
-            for (int i = 0; i < POSE_ESTIMATION_BUFFER_SIZE; i++) {
+            for (int i = 0; i < count; i++) {
                 poseEstimations[i] = null;
             }
+            count = 0;
         }
     }
 
@@ -68,6 +66,10 @@ public interface VisionIO {
     }
 
     CameraConfiguration getConfiguration();
+
+    void seedImu(Rotation2d gyroYaw);
+
+    void setRobotOrientation(Rotation2d gyroYaw);
 
     void updateInputs(VisionIOInputs inputs, PoseEstimationBuffer buffer);
 }

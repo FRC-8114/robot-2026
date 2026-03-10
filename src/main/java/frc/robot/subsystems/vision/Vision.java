@@ -1,6 +1,7 @@
 package frc.robot.subsystems.vision;
 
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.vision.VisionConstants.CameraConfiguration;
 import frc.robot.subsystems.vision.VisionConstants.LimelightCameraConfiguration;
@@ -10,6 +11,7 @@ import frc.robot.subsystems.vision.VisionIO.PoseEstimationBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
 
@@ -18,19 +20,21 @@ public class Vision extends SubsystemBase {
     private final List<IOBundle> ioList;
     private final ArrayList<PoseEstimation> tagObservations = new ArrayList<PoseEstimation>();
     private final Consumer<PoseEstimation> poseConsumer;
+    private final Supplier<Rotation2d> gyroYawSupplier;
 
     private final List<Pose3d> allRejectedPoses = new ArrayList<Pose3d>();
     private final List<Pose3d> allPoses = new ArrayList<Pose3d>();
 
-    public Vision(Consumer<PoseEstimation> consumer, List<VisionIO> visionIOs) {
+    public Vision(Consumer<PoseEstimation> consumer, Supplier<Rotation2d> gyroYawSupplier, List<VisionIO> visionIOs) {
         ioList = visionIOs.stream()
                 .map(io -> new IOBundle(io, new VisionIOInputsAutoLogged(), new PoseEstimationBuffer()))
                 .toList();
 
         poseConsumer = consumer;
+        this.gyroYawSupplier = gyroYawSupplier;
     }
 
-    public static Vision fromCameraConstants(Consumer<PoseEstimation> consumer) {
+    public static Vision fromCameraConstants(Consumer<PoseEstimation> consumer, Supplier<Rotation2d> gyroYawSupplier) {
         List<VisionIO> visionIOs = new ArrayList<>();
 
         for (CameraConfiguration camera : VisionConstants.cameras) {
@@ -41,20 +45,22 @@ public class Vision extends SubsystemBase {
             }
         }
 
-        return new Vision(consumer, visionIOs);
+        return new Vision(consumer, gyroYawSupplier, visionIOs);
+    }
+
+    public void seedImu() {
+        Rotation2d gyroYaw = gyroYawSupplier.get();
+        for (var bundle : ioList) {
+            bundle.io().seedImu(gyroYaw);
+        }
     }
 
     private void processPoseEstimations() {
-        if (tagObservations.size() == 0) {
+        if (tagObservations.isEmpty()) {
             return;
         }
 
         for (PoseEstimation observation : tagObservations) {
-            if (observation.ambiguity() > VisionConstants.maxAmbiguity) {
-                allRejectedPoses.add(observation.pose());
-                continue;
-            }
-
             allPoses.add(observation.pose());
             poseConsumer.accept(observation);
         }
@@ -65,15 +71,16 @@ public class Vision extends SubsystemBase {
         allPoses.clear();
         allRejectedPoses.clear();
 
+        Rotation2d heading = gyroYawSupplier.get();
+
         for (var bundle : ioList) {
+            bundle.io().setRobotOrientation(heading);
             bundle.io().updateInputs(bundle.inputs(), bundle.buffer());
             Logger.processInputs("Vision/" + bundle.io().getConfiguration().name(), bundle.inputs());
 
             if (bundle.buffer().count > 0) {
-                for (PoseEstimation est : bundle.buffer().poseEstimations) {
-                    if (est != null) {
-                        tagObservations.add(est);
-                    }
+                for (int i = 0; i < bundle.buffer().count; i++) {
+                    tagObservations.add(bundle.buffer().poseEstimations[i]);
                 }
                 bundle.buffer().clear();
             }

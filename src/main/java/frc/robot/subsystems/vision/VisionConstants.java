@@ -48,17 +48,17 @@ public class VisionConstants {
     public static AprilTagFieldLayout aprilTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
 
     // TODO: measure actual camera positions on robot
-    private static final Transform3d ROBOT_TO_CAMERA_0 = new Transform3d(
-            new Translation3d(0.3, 0.0, 0.25),
+    private static final Transform3d ROBOT_TO_CAMERA_BACKRIGHT = new Transform3d(
+            new Translation3d(0.3, 0.0, 0.29),
             new Rotation3d(0, Math.toRadians(-15), 0));
 
-    private static final Transform3d ROBOT_TO_CAMERA_1 = new Transform3d(
-            new Translation3d(-0.3, 0.0, 0.25),
+    private static final Transform3d ROBOT_TO_CAMERA_BACKLEFT = new Transform3d(
+            new Translation3d(-0.3, 0.0, 0.205),
             new Rotation3d(0, Math.toRadians(-15), Math.toRadians(180)));
 
     public static final CameraConfiguration[] cameras = {
-            new LimelightCameraConfiguration("camera_0", 1.0, ROBOT_TO_CAMERA_0),
-            new LimelightCameraConfiguration("camera_1", 1.0, ROBOT_TO_CAMERA_1)
+            new LimelightCameraConfiguration("limelight-br", 1.0, ROBOT_TO_CAMERA_BACKRIGHT),
+            new LimelightCameraConfiguration("limelight-bl", 1.0, ROBOT_TO_CAMERA_BACKLEFT)
     };
 
     // Basic filtering thresholds

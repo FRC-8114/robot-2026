@@ -434,6 +434,11 @@ public class Drive extends SubsystemBase {
         return getPose().getRotation();
     }
 
+    /** Returns the raw gyro yaw, unaffected by vision corrections. */
+    public Rotation2d getRawGyroYaw() {
+        return rawGyroRotation;
+    }
+
     /** Resets the current odometry pose. */
     public void setPose(Pose2d pose) {
         poseEstimator.resetPosition(rawGyroRotation, getModulePositions(), pose);

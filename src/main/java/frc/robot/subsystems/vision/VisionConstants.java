@@ -1,6 +1,8 @@
 
 package frc.robot.subsystems.vision;
 
+import static edu.wpi.first.units.Units.Inches;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -49,7 +51,7 @@ public class VisionConstants {
 
     // TODO: measure actual camera positions on robot
     private static final Transform3d ROBOT_TO_CAMERA_BACKRIGHT = new Transform3d(
-            new Translation3d(0.3, 0.0, 0.29),
+            new Translation3d(Inches.of(-12.427+1), Inches.of(13.927-2.5), Inches.of(3.938+4.5)),
             new Rotation3d(0, Math.toRadians(-15), 0));
 
     private static final Transform3d ROBOT_TO_CAMERA_BACKLEFT = new Transform3d(

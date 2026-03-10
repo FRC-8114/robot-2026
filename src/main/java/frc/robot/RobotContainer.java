@@ -6,6 +6,7 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.Volts;
 
 import java.util.ArrayList;
 
@@ -16,9 +17,13 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.RobotState;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
@@ -31,6 +36,7 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.indexer.Indexer;
+import frc.robot.subsystems.indexer.IndexerIOReal;
 import frc.robot.subsystems.indexer.IndexerIOSim;
 import frc.robot.subsystems.intakepivot.IntakePivot;
 import frc.robot.subsystems.intakepivot.IntakePivotIOSim;
@@ -38,6 +44,7 @@ import frc.robot.subsystems.intakerollers.IntakeRollers;
 import frc.robot.subsystems.intakerollers.IntakeRollersIOReal;
 import frc.robot.subsystems.intakerollers.IntakeRollersIOSim;
 import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.shooter.ShooterIOReal;
 import frc.robot.subsystems.shooter.ShooterIOSim;
 import frc.robot.subsystems.shooterpitch.ShooterPitch;
 import frc.robot.subsystems.shooterpitch.ShooterPitchIOReal;
@@ -50,6 +57,7 @@ import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.supersystems.ShooterSupersystem;
 import frc.robot.util.FuelSim;
+import limelight.networktables.LimelightSettings;
 
 public class RobotContainer {
     private final Drive drive;
@@ -84,6 +92,14 @@ public class RobotContainer {
                             poseEstimation.stddev());
                 }, drive::getRawGyroYaw);
 
+                                Trigger camera_disabled = new Trigger(() -> RobotState.isDisabled());
+                                camera_disabled.whileTrue(Commands.runOnce(
+                                                () -> vision.setIMUMode(LimelightSettings.ImuMode.ExternalImu)));
+
+                                Trigger camera_enabled = new Trigger(() -> RobotState.isEnabled());
+                                camera_enabled.onTrue(Commands.runOnce(() -> vision
+                                                .setIMUMode(LimelightSettings.ImuMode.InternalImuExternalAssist)));
+
                 turretPivot = new Turret(new TurretIOReal());
                 indexer = new Indexer(new IndexerIOSim());
                 climber = new Climber(new ClimberIOReal());
@@ -102,15 +118,16 @@ public class RobotContainer {
                         new ModuleIOSim(TunerConstants.FrontRight),
                         new ModuleIOSim(TunerConstants.BackLeft),
                         new ModuleIOSim(TunerConstants.BackRight));
-                var simVisionIOs = new ArrayList<frc.robot.subsystems.vision.VisionIO>();
-                for (var cam : VisionConstants.cameras) {
-                    simVisionIOs.add(new VisionIOPhotonVisionSim(cam, drive::getPose));
-                }
-                vision = new Vision(poseEstimation -> {
-                    drive.addVisionMeasurement(poseEstimation.pose().toPose2d(),
-                            poseEstimation.timestamp(),
-                            poseEstimation.stddev());
-                }, drive::getRawGyroYaw, simVisionIOs);
+                                // var simVisionIOs = new ArrayList<frc.robot.subsystems.vision.VisionIO>();
+                                // for (var cam : VisionConstants.cameras) {
+                                // simVisionIOs.add(new VisionIOPhotonVisionSim(cam, drive::getPose));
+                                // }
+                                // vision = new Vision(poseEstimation -> {
+                                // drive.addVisionMeasurement(poseEstimation.pose().toPose2d(),
+                                // poseEstimation.timestamp(),
+                                // poseEstimation.stddev());
+                                // }, drive::getRawGyroYaw, simVisionIOs);
+                                vision = null;
 
                 turretPivot = new Turret(new TurretIOSim());
                 turretPitch = new ShooterPitch(new ShooterPitchIOSim());
@@ -163,6 +180,11 @@ public class RobotContainer {
         autos = new Autos(intakePivot, intakeRollers, climber);
 
         shooterSupersystem = new ShooterSupersystem(turretPivot, turretPitch, shooter, indexer, drive);
+
+                // post field2d to elastic
+                Field2d field = new Field2d();
+                field.setRobotPose(drive.getPose());
+                SmartDashboard.putData("RobotFieldPose", field);
 
         configureButtonBindings();
         setupAutoChoices();

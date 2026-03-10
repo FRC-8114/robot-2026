@@ -57,6 +57,11 @@ public class VisionIOLimelight implements VisionIO {
                 .save();
     }
 
+    @Override
+    public void setIMUMode(LimelightSettings.ImuMode mode) {
+        limelight.getSettings().withImuMode(mode).save();
+    }
+
     public void setRobotOrientation(Rotation2d heading) {
         limelight.getSettings()
                 .withRobotOrientation(new Orientation3d(

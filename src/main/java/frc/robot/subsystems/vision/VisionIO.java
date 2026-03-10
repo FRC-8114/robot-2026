@@ -1,5 +1,6 @@
 package frc.robot.subsystems.vision;
 
+import limelight.networktables.LimelightSettings;
 import limelight.networktables.PoseEstimate;
 
 import org.littletonrobotics.junction.AutoLog;
@@ -68,6 +69,8 @@ public interface VisionIO {
     CameraConfiguration getConfiguration();
 
     void seedImu(Rotation2d gyroYaw);
+
+    void setIMUMode(LimelightSettings.ImuMode mode);
 
     void setRobotOrientation(Rotation2d gyroYaw);
 

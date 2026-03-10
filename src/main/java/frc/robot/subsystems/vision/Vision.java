@@ -7,6 +7,7 @@ import frc.robot.subsystems.vision.VisionConstants.CameraConfiguration;
 import frc.robot.subsystems.vision.VisionConstants.LimelightCameraConfiguration;
 import frc.robot.subsystems.vision.VisionIO.PoseEstimation;
 import frc.robot.subsystems.vision.VisionIO.PoseEstimationBuffer;
+import limelight.networktables.LimelightSettings;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,6 +64,12 @@ public class Vision extends SubsystemBase {
         for (PoseEstimation observation : tagObservations) {
             allPoses.add(observation.pose());
             poseConsumer.accept(observation);
+        }
+    }
+
+    public void setIMUMode(LimelightSettings.ImuMode mode) {
+        for (var bundle : ioList) {
+            bundle.io().setIMUMode(mode);
         }
     }
 

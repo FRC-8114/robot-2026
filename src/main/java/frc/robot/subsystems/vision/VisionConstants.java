@@ -1,6 +1,7 @@
 
 package frc.robot.subsystems.vision;
 
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Inches;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
@@ -50,13 +51,14 @@ public class VisionConstants {
     public static AprilTagFieldLayout aprilTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
 
     // TODO: measure actual camera positions on robot
-    private static final Transform3d ROBOT_TO_CAMERA_BACKRIGHT = new Transform3d(
-            new Translation3d(Inches.of(-12.427+1), Inches.of(13.927-2.5), Inches.of(3.938+4.5)),
-            new Rotation3d(0, Math.toRadians(-15), 0));
-
+    
     private static final Transform3d ROBOT_TO_CAMERA_BACKLEFT = new Transform3d(
-            new Translation3d(-0.3, 0.0, 0.205),
-            new Rotation3d(0, Math.toRadians(-15), Math.toRadians(180)));
+            new Translation3d(Inches.of(-12.427 + 1), Inches.of(-13.927 + 2.5), Inches.of(3.938 + 4.5)),
+            new Rotation3d(Degrees.of(0), Degrees.of(45), Degrees.of(135)));
+
+    private static final Transform3d ROBOT_TO_CAMERA_BACKRIGHT = new Transform3d(
+            new Translation3d(Inches.of(-12.427 + 0.75), Inches.of(13.427-3.25), Inches.of(3.938+7.5)),
+            new Rotation3d(Degrees.of(0), Degrees.of(45), Degrees.of(225)));
 
     public static final CameraConfiguration[] cameras = {
             new LimelightCameraConfiguration("limelight-br", 1.0, ROBOT_TO_CAMERA_BACKRIGHT),

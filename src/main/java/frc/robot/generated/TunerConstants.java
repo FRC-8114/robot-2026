@@ -24,17 +24,17 @@ public class TunerConstants {
         // output type specified by SwerveModuleConstants.SteerMotorClosedLoopOutput
 
         private static final Slot0Configs driveGainsFR = new Slot0Configs()
-                        .withKP(0.49748).withKI(0).withKD(0)
-                        .withKS(5.9441).withKV(0.41138).withKA(1.9687);
+                        .withKP(51.305).withKI(0).withKD(0)
+                        .withKS(5.9597).withKV(0.17317).withKA(2.3765);
         private static final Slot0Configs driveGainsFL = new Slot0Configs()
-                        .withKP(1.7161)
-                        .withKS(3.3282).withKV(0.5493).withKA(2.7233);
+                        .withKP(57.509).withKD(0)
+                        .withKS(6.1404).withKV(0.097164).withKA(2.867);
         private static final Slot0Configs driveGainsRL = new Slot0Configs()
-                        .withKP(0.0926)
-                        .withKS(1.4687).withKV(0.22675).withKA(3.1064);
+                        .withKP(57.267).withKD(0)
+                        .withKS(5.821).withKV(0.3799).withKA(2.2338);
         private static final Slot0Configs driveGainsRR = new Slot0Configs()
-                        .withKP(0.97275)
-                        .withKS(5.4252).withKV(0.60238).withKA(2.3747);
+                        .withKP(57.451).withKD(0)
+                        .withKS(5.816).withKV(0.26799).withKA(2.3107);
 
         private static final Slot0Configs steerGainsFR = new Slot0Configs()
                         .withKP(73.8106)

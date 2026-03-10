@@ -17,6 +17,11 @@ public class ShooterSupersystem {
     private final Shooter shooter;
     private final Indexer indexer;
 
+    public static class Constants {
+        public static final double turretYOffset = 6.875; // positive Y is left
+        public static final double turretXOffset = -6.5; // negative X is back  
+    }
+
     public ShooterSupersystem(Turret turretPivot, ShooterPitch turretPitch, Shooter shooter, Indexer indexer) {
         this.turretPivot = turretPivot;
         this.turretPitch = turretPitch;

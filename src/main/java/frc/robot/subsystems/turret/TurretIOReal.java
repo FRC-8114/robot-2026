@@ -34,8 +34,8 @@ public class TurretIOReal implements TurretIO {
         // the turret encoder which has the 21T gear
         public static final int encoder21TID = 34;
 
-        private static final double encoder19TOffset = -0.331298828125;
-        private static final double encoder21TOffset = -0.83935546875;
+        private static final double encoder19TOffset = -0.06396484375;
+        private static final double encoder21TOffset = -0.311279296875;
 
         public static final double ERROR_THRESHOLD = Math.toRadians(2);
 

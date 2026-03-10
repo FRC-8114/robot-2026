@@ -12,11 +12,14 @@ import com.pathplanner.lib.util.FileVersionException;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.climber.Climber;
-import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intakepivot.IntakePivot;
+import frc.robot.subsystems.intakerollers.IntakeRollers;
 import frc.robot.supersystems.ShooterSupersystem;
 
 public class Autos {
-    private Intake intake;
+    private IntakeRollers intakeRollers;
+    private IntakePivot intakePivot;
+
     private ShooterSupersystem shooter;
     private Climber climber;
 
@@ -46,9 +49,10 @@ public class Autos {
         System.out.println("SHOOOOOTING!!!!!!!");
         return Commands.waitUntil(() -> false);
     }
-
-    public Autos(Intake intake, Climber climber) {
-        this.intake = intake;
+    
+    public Autos(IntakePivot intakePivot, IntakeRollers intakeRollers, Climber climber) {
+        this.intakeRollers = intakeRollers;
+        this.intakePivot = intakePivot;
         this.climber = climber;
     }
 
@@ -67,8 +71,9 @@ public class Autos {
         var pathSlices = makeSlicedPath("trenchSSDepot", 3);
 
         return Commands.sequence(
+            intakePivot.deploy(),
             Commands.race( // collect balls from alliance zone
-                intake.intake(),
+                intakeRollers.intake(),
                 pathSlices.get(0)
             ),
             shootSequence()
@@ -88,8 +93,9 @@ public class Autos {
         var pathSlices = makeSlicedPath("trenchSSOutpost", 3);
 
         return Commands.sequence(
+            intakePivot.deploy(),
             Commands.race( // collect balls from alliance zone
-                intake.intake(),
+                intakeRollers.intake(),
                 pathSlices.get(0)
             ),
             shootSequence()

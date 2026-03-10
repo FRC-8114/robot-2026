@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.RPM;
 
 import java.util.ArrayList;
@@ -31,12 +32,15 @@ import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.indexer.IndexerIOSim;
-import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.intake.IntakeIOReal;
-import frc.robot.subsystems.intake.IntakeIOSim;
+import frc.robot.subsystems.intakepivot.IntakePivot;
+import frc.robot.subsystems.intakepivot.IntakePivotIOSim;
+import frc.robot.subsystems.intakerollers.IntakeRollers;
+import frc.robot.subsystems.intakerollers.IntakeRollersIOReal;
+import frc.robot.subsystems.intakerollers.IntakeRollersIOSim;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterIOSim;
 import frc.robot.subsystems.shooterpitch.ShooterPitch;
+import frc.robot.subsystems.shooterpitch.ShooterPitchIOReal;
 import frc.robot.subsystems.shooterpitch.ShooterPitchIOSim;
 import frc.robot.subsystems.turret.Turret;
 import frc.robot.subsystems.turret.TurretIOReal;
@@ -53,9 +57,12 @@ public class RobotContainer {
     private final Turret turretPivot;
     private final ShooterPitch turretPitch;
     private final Indexer indexer;
-    private final Intake intake;
     private final Shooter shooter;
     private final Climber climber;
+
+    private final IntakePivot intakePivot;
+    private final IntakeRollers intakeRollers;
+
     private GamePieceTracker gamePieceTracker;
     
     private final ShooterSupersystem shooterSupersystem;
@@ -79,10 +86,12 @@ public class RobotContainer {
 
                 turretPivot = new Turret(new TurretIOReal());
                 indexer = new Indexer(new IndexerIOSim());
-                intake = new Intake(new IntakeIOReal());
                 climber = new Climber(new ClimberIOReal());
 
-                turretPitch = new ShooterPitch(new ShooterPitchIOSim());
+                intakePivot = new IntakePivot(new IntakePivotIOSim());
+                intakeRollers = new IntakeRollers(new IntakeRollersIOReal());
+
+                turretPitch = new ShooterPitch(new ShooterPitchIOReal());
                 shooter = new Shooter(new ShooterIOSim());
 
                 break;
@@ -106,9 +115,11 @@ public class RobotContainer {
                 turretPivot = new Turret(new TurretIOSim());
                 turretPitch = new ShooterPitch(new ShooterPitchIOSim());
                 indexer = new Indexer(new IndexerIOSim());
-                intake = new Intake(new IntakeIOSim());
                 shooter = new Shooter(new ShooterIOSim());
                 climber = new Climber(new ClimberIOSim());
+
+                intakePivot = new IntakePivot(new IntakePivotIOSim());
+                intakeRollers = new IntakeRollers(new IntakeRollersIOSim());
 
                 // FuelSim setup
                 var fuelSim = new FuelSim();
@@ -134,7 +145,7 @@ public class RobotContainer {
 
                 fuelSim.registerIntake(
                         -0.336, 0.336, -0.2, 0.2,
-                        () -> intake.getRollerVelocity().gt(RPM.of(500)),
+                        () -> intakeRollers.getVelocity().gt(RPM.of(500)),
                         () -> gamePieceTracker.onIntake());
 
                 fuelSim.start();
@@ -149,7 +160,7 @@ public class RobotContainer {
                 throw new IllegalStateException("Unexpected value: " + RobotConstants.robotMode);
         }
 
-        autos = new Autos(intake, climber);
+        autos = new Autos(intakePivot, intakeRollers, climber);
 
         shooterSupersystem = new ShooterSupersystem(turretPivot, turretPitch, shooter, indexer, drive);
 
@@ -254,30 +265,30 @@ public class RobotContainer {
         // Intake Deploy SysId
         autoChooser.addOption(
                 "Intake Deploy SysId (Quasistatic Forward)",
-                intake.deploySysIdQuasistatic(SysIdRoutine.Direction.kForward));
+                intakePivot.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
         autoChooser.addOption(
                 "Intake Deploy SysId (Quasistatic Reverse)",
-                intake.deploySysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+                intakePivot.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
         autoChooser.addOption(
                 "Intake Deploy SysId (Dynamic Forward)",
-                intake.deploySysIdDynamic(SysIdRoutine.Direction.kForward));
+                intakePivot.sysIdDynamic(SysIdRoutine.Direction.kForward));
         autoChooser.addOption(
                 "Intake Deploy SysId (Dynamic Reverse)",
-                intake.deploySysIdDynamic(SysIdRoutine.Direction.kReverse));
+                intakePivot.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
         // Intake Roller SysId
         autoChooser.addOption(
                 "Intake Roller SysId (Quasistatic Forward)",
-                intake.rollerSysIdQuasistatic(SysIdRoutine.Direction.kForward));
+                intakeRollers.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
         autoChooser.addOption(
                 "Intake Roller SysId (Quasistatic Reverse)",
-                intake.rollerSysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+                intakeRollers.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
         autoChooser.addOption(
                 "Intake Roller SysId (Dynamic Forward)",
-                intake.rollerSysIdDynamic(SysIdRoutine.Direction.kForward));
+                intakeRollers.sysIdDynamic(SysIdRoutine.Direction.kForward));
         autoChooser.addOption(
                 "Intake Roller SysId (Dynamic Reverse)",
-                intake.rollerSysIdDynamic(SysIdRoutine.Direction.kReverse));
+                intakeRollers.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
         // Shooter SysId
         autoChooser.addOption(
@@ -333,8 +344,11 @@ public class RobotContainer {
                                 drive)
                                 .ignoringDisable(true));
 
-        controller.leftBumper().whileTrue(intake.intake());
-        controller.rightBumper().whileTrue(intake.stow());
+        controller.leftBumper().whileTrue(intakeRollers.intake());
+
+        // TODO: the actual solving
+        var turretAngle = Degrees.of(0);
+        var pitchAngle = Degrees.of(50);
 
         controller.leftTrigger().whileTrue(
                 shooterSupersystem.shootAtTarget(

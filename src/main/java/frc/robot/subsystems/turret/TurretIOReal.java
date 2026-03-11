@@ -99,13 +99,13 @@ public class TurretIOReal implements TurretIO {
         turret21TEncoder.getConfigurator().apply(Constants.encoder2Cfg);
         pivotMotor.getConfigurator().apply(Constants.pivotMotorCfg);
 
-        Angle initialAngle = getTurretAngle();
+        Angle initialAngle = getSeedAngle();
 
         reseedPosition(initialAngle);
     }
 
     // chinese remainder theorem is simple, actually
-    private Angle getTurretAngle() {
+    private Angle getAbsoluteCrtAngle() {
         double rawTeeth1 = turret19TEncoder.getAbsolutePosition().getValueAsDouble() * 19.0;
         double rawTeeth2 = turret21TEncoder.getAbsolutePosition().getValueAsDouble() * 21.0;
         long teeth1 = Math.round(rawTeeth1) % 19l;
@@ -116,7 +116,15 @@ public class TurretIOReal implements TurretIO {
         double turretGearTeeth = coarse + fraction;
 
         double angle0To2Pi = MathUtil.inputModulus(turretGearTeeth * ((2 * Math.PI) / 200.0), 0, Math.PI * 2);
-        return Turret.normalizeAngle(Radians.of(angle0To2Pi));
+        return Radians.of(angle0To2Pi);
+    }
+
+    private Angle seedAngleFromCRT(Angle crtAngle) {
+        return Radians.of(MathUtil.angleModulus(crtAngle.in(Radians) + Math.PI));
+    }
+
+    private Angle getSeedAngle() {
+        return seedAngleFromCRT(getAbsoluteCrtAngle());
     }
 
     private void reseedPosition(Angle angle) {
@@ -139,11 +147,11 @@ public class TurretIOReal implements TurretIO {
     public void updateInputs(TurretIOInputs inputs) {
         double position = pivotMotor.getPosition().getValue().in(Radians);
         double velocity = pivotMotor.getVelocity().getValue().in(RadiansPerSecond);
-        double crtPosition = getTurretAngle().in(Radians);
+        double crtPosition = getSeedAngle().in(Radians);
         double filteredCrtPosition = crtMedianFilter.calculate(crtPosition);
         boolean hasValidCrt = Double.isFinite(filteredCrtPosition);
         boolean crtInRange = hasValidCrt && isWithinLimits(filteredCrtPosition);
-        double positionError = filteredCrtPosition - position;
+        double positionError = hasValidCrt ? MathUtil.angleModulus(filteredCrtPosition - position) : 0.0;
 
         inputs.turretMotorPosition = position;
         inputs.turretPositionCRT = filteredCrtPosition;

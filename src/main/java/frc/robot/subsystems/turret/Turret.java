@@ -38,28 +38,15 @@ public class Turret extends SubsystemBase {
 
     }
 
-    public static double wrapAngleRadians(double angleRadians) {
-        return MathUtil.inputModulus(angleRadians, 0.0, 2.0 * Math.PI);
-    }
-
-    private static double crtAngleToTurretAngleRadians(double crtAngleRadians) {
-        // Raw CRT is 0 along -X, positive counterclockwise, shift by 180
-        return wrapAngleRadians(crtAngleRadians + Math.PI);
-    }
-
-    public static Angle normalizeAngle(Angle angle) {
-        return Radians.of(crtAngleToTurretAngleRadians(angle.in(Radians)));
-    }
-
     public static Angle clampAngle(Angle angle) {
         return Radians.of(MathUtil.clamp(
-                wrapAngleRadians(angle.in(Radians)),
+                MathUtil.angleModulus(angle.in(Radians)),
                 Constants.MIN_ANGLE.in(Radians),
                 Constants.MAX_ANGLE.in(Radians)));
     }
 
     public double getTurretPositionRads() {
-        return wrapAngleRadians(inputs.turretMotorPosition);
+        return inputs.turretMotorPosition;
     }
 
     @Override

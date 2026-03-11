@@ -3,6 +3,7 @@ package frc.robot.subsystems.turret;
 import static edu.wpi.first.units.Units.Radians;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
@@ -27,6 +28,8 @@ public class TurretIOSim implements TurretIO {
         sim = new DCMotorSim(
                 LinearSystemId.createDCMotorSystem(GEARBOX, MOI, GEAR_RATIO),
                 GEARBOX);
+        double initialAngle = 0.5 * (Turret.Constants.MIN_ANGLE.in(Radians) + Turret.Constants.MAX_ANGLE.in(Radians));
+        sim.setState(VecBuilder.fill(initialAngle, 0.0));
     }
 
     public void setTarget(Angle angle) {

@@ -11,7 +11,6 @@ import org.ejml.simple.SimpleMatrix;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.InterpolatingMatrixTreeMap;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -125,9 +124,7 @@ public class ShooterSupersystem extends SubsystemBase {
         Translation2d offsetFromTurret = offsetTarget.minus(turretPosition.toTranslation2d());
 
         double fieldAngle = Math.atan2(offsetFromTurret.getY(), offsetFromTurret.getX());
-        double turretAngle = fieldAngle - heading - Math.PI;
-
-        return Turret.clampAngle(Radians.of(MathUtil.inputModulus(turretAngle, -Math.PI, Math.PI)));
+        return Turret.clampAngle(Radians.of(fieldAngle - heading));
     }
 
     public boolean isReadyToFire(Angle turretAngle, Angle pitchAngle) {

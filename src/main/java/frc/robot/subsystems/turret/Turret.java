@@ -7,7 +7,6 @@ import static edu.wpi.first.units.Units.Volts;
 import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
-import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.Angle;
@@ -18,16 +17,14 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 public class Turret extends SubsystemBase {
     public static class Constants {
         private static final Angle ANGLE_TOLERANCE = Degrees.of(1);
-        public static final Angle MIN_ANGLE = Radians.of(4.988214 - (2.0 * Math.PI));
-        public static final Angle MAX_ANGLE = Radians.of(0.75185);
+
+        public static final Angle MIN_ANGLE = Radians.of(0);
+        public static final Angle MAX_ANGLE = Radians.of(1);
     }
 
     private final TurretIO pivotMotor;
     private final TurretIOInputsAutoLogged inputs = new TurretIOInputsAutoLogged();
     private final SysIdRoutine sysId;
-    private double normalizedPositionDeg;
-
-    private final LoggedNetworkNumber turretPosition = new LoggedNetworkNumber("Tuning/TurretPosition", 0);
 
     public Turret(TurretIO pivotMotor) {
         this.pivotMotor = pivotMotor;
@@ -42,18 +39,21 @@ public class Turret extends SubsystemBase {
     }
 
     public static double wrapAngleRadians(double angleRadians) {
-        return MathUtil.inputModulus(angleRadians, -Math.PI, Math.PI);
+        return MathUtil.inputModulus(angleRadians, 0.0, 2.0 * Math.PI);
+    }
+
+    private static double crtAngleToTurretAngleRadians(double crtAngleRadians) {
+        // Raw CRT is 0 along -X, positive counterclockwise, shift by 180
+        return wrapAngleRadians(crtAngleRadians + Math.PI);
     }
 
     public static Angle normalizeAngle(Angle angle) {
-        return Radians.of(wrapAngleRadians(angle.in(Radians)));
+        return Radians.of(crtAngleToTurretAngleRadians(angle.in(Radians)));
     }
 
     public static Angle clampAngle(Angle angle) {
-        double wrappedRadians = wrapAngleRadians(angle.in(Radians));
-        
         return Radians.of(MathUtil.clamp(
-                wrappedRadians,
+                wrapAngleRadians(angle.in(Radians)),
                 Constants.MIN_ANGLE.in(Radians),
                 Constants.MAX_ANGLE.in(Radians)));
     }
@@ -66,13 +66,12 @@ public class Turret extends SubsystemBase {
     public void periodic() {
         pivotMotor.updateInputs(inputs);
         Logger.processInputs("Turret", inputs);
-        normalizedPositionDeg = Math.toDegrees(wrapAngleRadians(inputs.turretMotorPosition));
-        Logger.recordOutput("Turret/NormalizedPositionDeg", normalizedPositionDeg);
+        Logger.recordOutput("Turret/NormalizedPositionDeg", Math.toDegrees(getTurretPositionRads()));
     }
 
     public boolean isAtAngle(Angle target) {
-        double error = MathUtil.inputModulus(clampAngle(target).in(Degrees) - normalizedPositionDeg, -180, 180);
-        return Math.abs(error) <= Constants.ANGLE_TOLERANCE.in(Degrees);
+        double error = MathUtil.angleModulus(clampAngle(target).in(Radians) - getTurretPositionRads());
+        return Math.abs(error) <= Constants.ANGLE_TOLERANCE.in(Radians);
     }
 
     public Command setAngle(Angle angle) {
@@ -84,9 +83,8 @@ public class Turret extends SubsystemBase {
     }
 
     private boolean isOutOfBounds() {
-        double signedPosition = wrapAngleRadians(inputs.turretMotorPosition);
-        return signedPosition < Constants.MIN_ANGLE.in(Radians)
-                || signedPosition > Constants.MAX_ANGLE.in(Radians);
+        return inputs.turretMotorPosition < Constants.MIN_ANGLE.in(Radians)
+                || inputs.turretMotorPosition > Constants.MAX_ANGLE.in(Radians);
     }
 
     public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {

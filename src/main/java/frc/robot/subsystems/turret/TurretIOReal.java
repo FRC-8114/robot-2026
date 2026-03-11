@@ -20,6 +20,7 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.SensorDirectionValue;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.filter.MedianFilter;
 import edu.wpi.first.units.measure.Angle;
 import frc.robot.RobotConstants;
 
@@ -35,7 +36,10 @@ public class TurretIOReal implements TurretIO {
         private static final double encoder19TOffset = -0.063720703125;
         private static final double encoder21TOffset = -0.68896484375;
 
-        public static final double ERROR_THRESHOLD = Math.toRadians(2);
+        public static final double RESEED_ERROR_THRESHOLD = Math.toRadians(4);
+        public static final double STATIONARY_VELOCITY_THRESHOLD = Math.toRadians(5);
+        public static final int RESEED_SAMPLE_COUNT = 10;
+        public static final int CRT_MEDIAN_TAPS = 5;
 
         private static final MagnetSensorConfigs magnetConfig = new MagnetSensorConfigs()
                 .withMagnetOffset(encoder19TOffset)
@@ -86,6 +90,9 @@ public class TurretIOReal implements TurretIO {
     private final CANcoder turret21TEncoder = new CANcoder(Constants.encoder21TID, RobotConstants.canBus);
     private final MotionMagicVoltage control = new MotionMagicVoltage(0);
     private final VoltageOut voltageControl = new VoltageOut(0);
+    private final MedianFilter crtMedianFilter = new MedianFilter(Constants.CRT_MEDIAN_TAPS);
+
+    private int reseedCounter = 0;
 
     public TurretIOReal() {
         turret19TEncoder.getConfigurator().apply(Constants.encoder1Cfg);
@@ -116,6 +123,11 @@ public class TurretIOReal implements TurretIO {
         pivotMotor.setPosition(angle);
     }
 
+    private static boolean isWithinLimits(double angleRadians) {
+        return angleRadians >= Turret.Constants.MIN_ANGLE.in(Radians)
+                && angleRadians <= Turret.Constants.MAX_ANGLE.in(Radians);
+    }
+
     public void setTarget(Angle angle) {
         pivotMotor.setControl(control.withPosition(Turret.clampAngle(angle)));
     }
@@ -125,26 +137,30 @@ public class TurretIOReal implements TurretIO {
     }
 
     public void updateInputs(TurretIOInputs inputs) {
-        double position = Turret.wrapAngleRadians(pivotMotor.getPosition().getValue().in(Radians));
-        Angle positionCrt = getTurretAngle();
+        double position = pivotMotor.getPosition().getValue().in(Radians);
+        double velocity = pivotMotor.getVelocity().getValue().in(RadiansPerSecond);
+        double crtPosition = getTurretAngle().in(Radians);
+        double filteredCrtPosition = crtMedianFilter.calculate(crtPosition);
+        boolean hasValidCrt = Double.isFinite(filteredCrtPosition);
+        boolean crtInRange = hasValidCrt && isWithinLimits(filteredCrtPosition);
+        double positionError = filteredCrtPosition - position;
 
         inputs.turretMotorPosition = position;
-        inputs.turretPositionCRT = positionCrt.in(Radians);
-
-        // if (Math.abs(MathUtil.angleModulus(position - positionCrt.in(Radians)))
-        // > Constants.ERROR_THRESHOLD) {
-        // // valid CRT but motor disagrees
-        // inputs.motorPositionErrorCounter += 1;
-        // } else {
-        // inputs.motorPositionErrorCounter = 0;
-        // }
-
-        inputs.velocityRadsPerSec = pivotMotor.getVelocity().getValue().in(RadiansPerSecond);
+        inputs.turretPositionCRT = filteredCrtPosition;
+        inputs.hasValidCRT = hasValidCrt;
+        inputs.velocityRadsPerSec = velocity;
         inputs.appliedVoltage = pivotMotor.getMotorVoltage().getValueAsDouble();
 
-        // err
-        if (Math.abs(inputs.motorPositionErrorCounter) > 5) {
-            reseedPosition(positionCrt);
+        boolean shouldReseed = crtInRange
+                && Math.abs(velocity) <= Constants.STATIONARY_VELOCITY_THRESHOLD
+                && Math.abs(positionError) >= Constants.RESEED_ERROR_THRESHOLD;
+
+        reseedCounter = shouldReseed ? reseedCounter + 1 : 0;
+        inputs.motorPositionErrorCounter = reseedCounter;
+
+        if (reseedCounter >= Constants.RESEED_SAMPLE_COUNT) {
+            reseedPosition(Radians.of(filteredCrtPosition));
+            reseedCounter = 0;
             inputs.motorPositionErrorCounter = 0;
         }
     }

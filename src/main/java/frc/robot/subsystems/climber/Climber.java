@@ -1,5 +1,7 @@
 package frc.robot.subsystems.climber;
 
+import static edu.wpi.first.units.Units.Volts;
+
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.wpilibj2.command.Command;
@@ -28,26 +30,31 @@ public class Climber extends SubsystemBase {
                         (voltage) -> climber.runVolts(voltage), null, this));
     }
 
-    private Command doRotationsCommand(double rotations) {
+    private Command doRotationsDownCommand(double rotations) {
         double startRotations = inputs.rotations;
-        return run(() -> climber.doRotations(rotations))
+        return run(() -> climber.runVolts(Volts.of(-3)))
+            .until(() -> startRotations - inputs.rotations == rotations);
+    }
+    private Command doRotationsUpCommand(double rotations) {
+        double startRotations = inputs.rotations;
+        return run(() -> climber.runVolts(Volts.of(3)))
             .until(() -> startRotations - inputs.rotations == rotations);
     }
 
     public Command deploy() {
-        return doRotationsCommand(Constants.DEPLOY_ROTATIONS);
+        return doRotationsUpCommand(Constants.DEPLOY_ROTATIONS);
     }
 
     public Command climb() {
-        return doRotationsCommand(Constants.CLIMB_ROTATIONS);
+        return doRotationsDownCommand(Constants.CLIMB_ROTATIONS);
     }
 
     public Command unclimb() {
-        return doRotationsCommand(-Constants.CLIMB_ROTATIONS);
+        return doRotationsUpCommand(-Constants.CLIMB_ROTATIONS);
     }
 
     public Command stow() {
-        return doRotationsCommand(-Constants.CLIMB_ROTATIONS);
+        return doRotationsDownCommand(-Constants.CLIMB_ROTATIONS);
     }
 
     public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {

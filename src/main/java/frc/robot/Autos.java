@@ -46,8 +46,10 @@ public class Autos {
     }
 
     private Command shootSequence() {
-        System.out.println("SHOOOOOTING!!!!!!!");
-        return Commands.waitUntil(() -> false);
+        return Commands.waitUntil(() -> {
+            System.out.println("SHOOOOOTING!!!!!!!");
+            return false;
+        });
     }
     
     public Autos(IntakePivot intakePivot, IntakeRollers intakeRollers, Climber climber) {
@@ -67,6 +69,29 @@ public class Autos {
         );
     }
 
+    public Command trenchSSOutpost() {
+        var pathSlices = makeSlicedPath("trenchSSOutpost", 5);
+
+        return Commands.sequence(
+            intakePivot.deploy(),
+            Commands.race( // collect balls from alliance zone
+                intakeRollers.intake(),
+                pathSlices.get(0)
+            ),
+            shootSequence()
+                .withTimeout(Seconds.of(5)), // TODO: tune shoot time
+            pathSlices.get(1), // drive to outpost
+            Commands.waitTime(Seconds.of(4)), // balls dump
+            pathSlices.get(2), // drive to shot
+            shootSequence()
+                .withTimeout(Seconds.of(4)), // TODO: tune shoot time
+            pathSlices.get(3), // drive to prepare climb
+            climber.deploy(),
+            pathSlices.get(4), // approach climb
+            climber.climb()
+        );
+    }
+
     public Command trenchSSDepot() {
         var pathSlices = makeSlicedPath("trenchSSDepot", 3);
 
@@ -82,28 +107,6 @@ public class Autos {
                 pathSlices.get(1), 
                 shootSequence()
                     .withTimeout(Seconds.of(4)) // TODO: tune shoot time
-            ),
-            climber.deploy(),
-            pathSlices.get(2), // approach climb
-            climber.climb()
-        );
-    }
-
-    public Command trenchSSOutpost() {
-        var pathSlices = makeSlicedPath("trenchSSOutpost", 3);
-
-        return Commands.sequence(
-            intakePivot.deploy(),
-            Commands.race( // collect balls from alliance zone
-                intakeRollers.intake(),
-                pathSlices.get(0)
-            ),
-            shootSequence()
-                .withTimeout(Seconds.of(0)), // TODO: tune shoot time
-            Commands.parallel( // collect balls from outpost while shooting
-                pathSlices.get(1), 
-                shootSequence()
-                    .withTimeout(Seconds.of(0)) // TODO: tune shoot time
             ),
             climber.deploy(),
             pathSlices.get(2), // approach climb

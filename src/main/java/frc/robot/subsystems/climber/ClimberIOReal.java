@@ -25,7 +25,7 @@ public class ClimberIOReal implements ClimberIO {
 
         private static final Slot0Configs climbMotorPIDs = new Slot0Configs()
                 .withGravityType(GravityTypeValue.Elevator_Static)
-                .withKP(0)
+                .withKP(30)
                 .withKI(0)
                 .withKD(0);
         private static final FeedbackConfigs fusedEncoderCfg = new FeedbackConfigs()
@@ -49,10 +49,6 @@ public class ClimberIOReal implements ClimberIO {
 
     public void runVolts(Voltage volts) {
         climbMotor.setControl(voltageOut.withOutput(volts));
-    }
-
-    public void doRotations(double rotations) {
-        climbMotor.setControl(control.withPosition(Rotations.of(rotations)));
     }
 
     public void updateInputs(ClimberIOInputs inputs) {

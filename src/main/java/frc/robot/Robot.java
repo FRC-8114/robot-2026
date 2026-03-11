@@ -51,6 +51,8 @@ public class Robot extends LoggedRobot {
 
     CommandScheduler.getInstance().run();
 
+    m_robotContainer.updateDashboardField();
+
     Threads.setCurrentThreadPriority(false, 10);
   }
 

@@ -34,7 +34,6 @@ public class ClimberIOSim implements ClimberIO {
         appliedVolts = volts.in(Volts);
     }
 
-    @Override
     public void doRotations(double rotations) {
         closedLoop = true;
         climberController.setSetpoint(rotations * 2.0 * Math.PI);

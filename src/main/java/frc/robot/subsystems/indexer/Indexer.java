@@ -29,7 +29,7 @@ public class Indexer extends SubsystemBase {
     private final LoggedNetworkNumber turretLaneVelocity = new LoggedNetworkNumber("Tuning/TuneTurretLaneVelocity", 1500);
 
     private final LoggedNetworkNumber hopperLaneVoltage = new LoggedNetworkNumber("Tuning/TuneHopperLaneVoltage", 9.82);
-    private final LoggedNetworkNumber turretLaneVoltage = new LoggedNetworkNumber("Tuning/TuneTUrretLaneVoltage", 5.52);
+    private final LoggedNetworkNumber turretLaneVoltage = new LoggedNetworkNumber("Tuning/TuneTurretLaneVoltage", 5.52);
 
     public Indexer(IndexerIO io) {
         this.io = io;

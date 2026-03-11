@@ -3,6 +3,7 @@ package frc.robot.subsystems.shooter;
 import org.littletonrobotics.junction.AutoLog;
 
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Voltage;
 
 public interface ShooterIO {
     @AutoLog
@@ -19,7 +20,7 @@ public interface ShooterIO {
 
     void setFlywheelVelocity(AngularVelocity velocity);
 
-    void setVoltage(double volts);
+    void runVolts(Voltage volts);
 
     void stopFlywheels();
 

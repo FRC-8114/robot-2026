@@ -1,12 +1,14 @@
 package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.Volts;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
 public class ShooterIOSim implements ShooterIO {
@@ -42,10 +44,10 @@ public class ShooterIOSim implements ShooterIO {
         rightController.setSetpoint(setpointRadPerSec);
     }
 
-    public void setVoltage(double volts) {
+    public void runVolts(Voltage volts) {
         closedLoop = false;
-        leftVolts = volts;
-        rightVolts = volts;
+        leftVolts = volts.in(Volts);
+        rightVolts = volts.in(Volts);
     }
 
     public void stopFlywheels() {

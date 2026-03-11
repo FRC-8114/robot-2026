@@ -53,7 +53,7 @@ public class ShooterPitch extends SubsystemBase {
     }
 
     public boolean isAtAngle(Angle target) {
-        return target.isNear(Radians.of(inputs.pitchPosition), ANGLE_TOLERANCE);
+        return target.isNear(Degrees.of(inputs.pitchPosition), ANGLE_TOLERANCE);
     }
 
     public Command setAngle(Angle pitchAngle) {

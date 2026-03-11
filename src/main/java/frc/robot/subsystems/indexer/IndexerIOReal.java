@@ -53,6 +53,9 @@ public class IndexerIOReal implements IndexerIO {
     private final VelocityTorqueCurrentFOC turretLaneControl = new VelocityTorqueCurrentFOC(0).withSlot(0);
     private final VelocityTorqueCurrentFOC hopperLaneControl = new VelocityTorqueCurrentFOC(0).withSlot(0);
 
+    private final VoltageOut turretLaneControlVoltage = new VoltageOut(0);
+    private final VoltageOut hopperLaneControlVoltage = new VoltageOut(0);
+
     public IndexerIOReal() {
         turretLaneMotor.getConfigurator().apply(Constants.turretLaneMotorConfig);
         hopperLanesMotor.getConfigurator().apply(Constants.hopperLaneMotorConfig);
@@ -93,10 +96,10 @@ public class IndexerIOReal implements IndexerIO {
     }
 
     public void setHopperLaneVoltage(Voltage volts) {
-        hopperLanesMotor.setControl(new VoltageOut(volts));
+        hopperLanesMotor.setControl(hopperLaneControlVoltage.withOutput(volts));
     }
 
     public void setTurretLaneVoltage(Voltage volts) {
-        turretLaneMotor.setControl(new VoltageOut(volts));
+        turretLaneMotor.setControl(turretLaneControlVoltage.withOutput(volts));
     }
 }

@@ -21,12 +21,13 @@ public class Shooter extends SubsystemBase {
 
     private final ShooterIO io;
     private final ShooterInputsAutoLogged inputs = new ShooterInputsAutoLogged();
-    private final SysIdRoutine sysId;
 
     private AngularVelocity targetVelocity;
+    
+    private static final LoggedNetworkNumber tuneVelocity = new LoggedNetworkNumber("Tuning/TuneShooterVelocityRPM", 2000);
+    
+    private SysIdRoutine sysId;
 
-    private LoggedNetworkNumber tuneVelocity;
- 
     public Shooter(ShooterIO io) {
         this.io = io;
 
@@ -35,10 +36,8 @@ public class Shooter extends SubsystemBase {
                         null, null, null,
                         (state) -> Logger.recordOutput("Shooter/SysIdState", state.toString())),
                 new SysIdRoutine.Mechanism(
-                        (voltage) -> io.setVoltage(voltage.in(Volts)),
+                        (voltage) -> io.runVolts(voltage),
                         null, this));
-        
-        tuneVelocity = new LoggedNetworkNumber("Tuning/TuneShooterVelocityRPM", 2000);
     }
 
     public double getAverageFlywheelRPMs() {
@@ -52,22 +51,22 @@ public class Shooter extends SubsystemBase {
     }
 
     public boolean isAtSpeed() {
-        return RPM.of(inputs.leftFlywheelRPMs).minus(targetVelocity).magnitude() < Constants.flywheelToleranceRPM
-                && RPM.of(inputs.rightFlywheelRPMs).minus(targetVelocity).magnitude() < Constants.flywheelToleranceRPM;
+        return RPM.of(inputs.leftFlywheelRPMs).isNear(targetVelocity, Constants.flywheelToleranceRPM);
     }
 
     public Command runFlywheelsTunableVelocity() {
-        return run(() -> io.setFlywheelVelocity(RPM.of(tuneVelocity.get())));
+        return runEnd(
+            () -> io.setFlywheelVelocity(RPM.of(tuneVelocity.get())),
+            () -> io.stopFlywheels());
     }
 
     public Command runFlywheels(AngularVelocity target) {
         targetVelocity = target;
 
         return runEnd(
-                () -> io.setFlywheelVelocity(targetVelocity),
+                () -> io.setFlywheelVelocity(target),
                 () -> io.stopFlywheels());
     }
-
     public Command runFlywheels(Supplier<AngularVelocity> target) {
         return runEnd(
                 () -> {
@@ -75,10 +74,6 @@ public class Shooter extends SubsystemBase {
                     io.setFlywheelVelocity(targetVelocity);
                 },
                 () -> io.stopFlywheels());
-    }
-
-    public Command runFlywheelsVolts(Voltage volts) {
-        return runEnd(() -> io.setVoltage(volts.in(Volts)), () -> io.stopFlywheels());
     }
 
     public Command stopFlywheels() {

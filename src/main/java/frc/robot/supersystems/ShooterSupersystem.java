@@ -8,6 +8,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import org.ejml.simple.SimpleMatrix;
+import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.InterpolatingMatrixTreeMap;
 import edu.wpi.first.math.MathUtil;
@@ -16,7 +17,6 @@ import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
@@ -50,15 +50,16 @@ public class ShooterSupersystem extends SubsystemBase {
     public static class Constants {
         public static final Distance turretXOffset = Inches.of(-6.5); // negative X is back
         public static final Distance turretYOffset = Inches.of(6.875); // positive Y is left
-        public static final Distance turretZOffset = Inches.of(20.5); // positive Y is left
+        public static final Distance turretZOffset = Inches.of(20.5); // positive Z is up
 
         public static final Transform3d turretOffset = new Transform3d(turretXOffset, turretYOffset, turretZOffset, new Rotation3d());
 
-        public static final double FLYWHEEL_RADIUS_METERS = 0.50;
+        public static final double FLYWHEEL_RADIUS_METERS = 0.050;
     }
 
-    private void putMeasurement(double meters, double pitch, double rpm) {
-        distanceToPitchAndRPM.put(meters, new Matrix<N2, N1>(new SimpleMatrix(new double[] { 11, 1200 })));
+    private void putMeasurement(double meters, double pitchDegrees, double rpm) {
+        double pitchRad = Math.toRadians(pitchDegrees);
+        distanceToPitchAndRPM.put(meters, new Matrix<N2, N1>(new SimpleMatrix(new double[] { pitchRad, rpm })));
     }
 
     public ShooterSupersystem(Turret turretPivot, ShooterPitch turretPitch, Shooter shooter, Indexer indexer,
@@ -81,15 +82,16 @@ public class ShooterSupersystem extends SubsystemBase {
     private Pair<Double, Double> getRPMAndPitch(double distance) {
         var mat = distanceToPitchAndRPM.get(distance).getData();
 
-        return Pair.of(mat[0], mat[1]);
+        return Pair.of(mat[1], mat[0]);
     }
 
-    private double estimateTimeOfFlight(double distance) {
-        var rpmAndPitch = getRPMAndPitch(distance);
+    private double estimateTimeOfFlight(double horizontalDist) {
+        var rpmAndPitch = getRPMAndPitch(horizontalDist);
         double rpm = rpmAndPitch.getFirst();
         double pitchRad = rpmAndPitch.getSecond();
-        double exitVelocity = rpm * 2.0 * Math.PI * Constants.FLYWHEEL_RADIUS_METERS / 60.0;
-        double horizontalDist = target.getDistance(getTurretPosition());
+        double exitVelocity = (rpm * 2.0 * Math.PI * Constants.FLYWHEEL_RADIUS_METERS / 60.0) * 0.75;
+
+        Logger.recordOutput("Shooter/exitVelocity", exitVelocity);
 
         return horizontalDist / (exitVelocity * Math.cos(pitchRad));
     }
@@ -104,15 +106,19 @@ public class ShooterSupersystem extends SubsystemBase {
         ChassisSpeeds fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(robotSpeeds, Rotation2d.fromRadians(heading));
 
         Translation3d turretPosition = getTurretPosition();
-        double distance = target.getDistance(turretPosition);
+        double distance = target.toTranslation2d().getDistance(turretPosition.toTranslation2d());
 
-        Translation3d velocityOffset = new Translation3d(fieldSpeeds.vxMetersPerSecond, fieldSpeeds.vyMetersPerSecond, 0)
-                .times(estimateTimeOfFlight(distance));
-        Translation3d offsetTarget = target.minus(velocityOffset);
-        Translation3d offsetFromTurret = offsetTarget.minus(turretPosition);
+        double tof = estimateTimeOfFlight(distance);
+        Translation2d velocityOffset = new Translation2d(fieldSpeeds.vxMetersPerSecond, fieldSpeeds.vyMetersPerSecond)
+                .times(tof);
+        Translation2d offsetTarget = target.toTranslation2d().minus(velocityOffset);
+            
+        Logger.recordOutput("Shooter/offsetTarget", offsetTarget);
+
+        Translation2d offsetFromTurret = offsetTarget.minus(turretPosition.toTranslation2d());
 
         double fieldAngle = Math.atan2(offsetFromTurret.getY(), offsetFromTurret.getX());
-        double turretAngle = fieldAngle - heading;
+        double turretAngle = fieldAngle - heading - Math.PI;
 
         return Radians.of(MathUtil.inputModulus(turretAngle, -Math.PI, Math.PI));
     }
@@ -137,8 +143,7 @@ public class ShooterSupersystem extends SubsystemBase {
     }
 
     private double getDistanceToTarget() {
-        Translation3d turretPosition = getTurretPosition();
-        return target.getDistance(turretPosition);
+        return target.toTranslation2d().getDistance(getTurretPosition().toTranslation2d());
     }
 
     private Angle getPitchAngle() {

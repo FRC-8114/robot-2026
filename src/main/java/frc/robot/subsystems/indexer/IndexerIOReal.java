@@ -3,12 +3,14 @@ package frc.robot.subsystems.indexer;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Volts;
 
+import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.CoastOut;
 import com.ctre.phoenix6.controls.ControlRequest;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
@@ -23,26 +25,28 @@ public class IndexerIOReal implements IndexerIO {
         static final int turretLaneMotorId = 42;
 
         static final Slot0Configs turretLaneMotorSlot0 = new Slot0Configs()
-                .withKS(0.001)
-                .withKV(0.032)
-                .withKA(0.01)
-                .withKP(9.78)
+                .withKS(1.0481)
+                .withKV(0.13694)
+                .withKA(0.010647)
+                .withKP(0.55729)
                 .withKI(0.0)
                 .withKD(0.0);
 
         static final TalonFXConfiguration turretLaneMotorConfig = new TalonFXConfiguration()
-                .withMotorOutput(new MotorOutputConfigs() .withInverted(InvertedValue.Clockwise_Positive))
+                .withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive))
+                .withFeedback(new FeedbackConfigs().withSensorToMechanismRatio(1.875))
                 .withSlot0(turretLaneMotorSlot0);
 
         static final Slot0Configs hopperLaneMotorSlot0 = new Slot0Configs()
-                .withKS(0.02)
-                .withKV(0.032)
-                .withKA(0.01)
-                .withKP(9.78)
+                .withKS(0.56491)
+                .withKV(0.097911)
+                .withKA(0.0092569)
+                .withKP(0.58604)
                 .withKI(0.0)
                 .withKD(0.0);
 
         static final TalonFXConfiguration hopperLaneMotorConfig = new TalonFXConfiguration()
+            .withFeedback(new FeedbackConfigs().withSensorToMechanismRatio(14.4))
                 .withSlot0(hopperLaneMotorSlot0);
 
     };
@@ -50,8 +54,8 @@ public class IndexerIOReal implements IndexerIO {
     private final TalonFX turretLaneMotor = new TalonFX(Constants.turretLaneMotorId, RobotConstants.canBus);
     private final TalonFX hopperLanesMotor = new TalonFX(Constants.hopperLanesMotorId, RobotConstants.canBus);
 
-    private final VelocityTorqueCurrentFOC turretLaneControl = new VelocityTorqueCurrentFOC(0).withSlot(0);
-    private final VelocityTorqueCurrentFOC hopperLaneControl = new VelocityTorqueCurrentFOC(0).withSlot(0);
+    private final VelocityVoltage turretLaneControl = new VelocityVoltage(0).withSlot(0);
+    private final VelocityVoltage hopperLaneControl = new VelocityVoltage(0).withSlot(0);
 
     private final VoltageOut turretLaneControlVoltage = new VoltageOut(0);
     private final VoltageOut hopperLaneControlVoltage = new VoltageOut(0);
@@ -72,7 +76,7 @@ public class IndexerIOReal implements IndexerIO {
     public void stopHopperLane() {
         hopperLanesMotor.setControl(new VoltageOut(0));
     }
- 
+
     public void stopTurretLane() {
         turretLaneMotor.setControl(new VoltageOut(0));
     }
@@ -86,13 +90,15 @@ public class IndexerIOReal implements IndexerIO {
     }
 
     public void updateInputs(IndexerInputs inputs) {
-        inputs.hopperLanesRPMs = hopperLanesMotor.getVelocity().getValue().in(RPM);
-        inputs.hopperLanesCurrentAmps = hopperLanesMotor.getSupplyCurrent().getValueAsDouble();
-        inputs.hopperLanesAppliedVoltage = hopperLanesMotor.getMotorVoltage().getValue().in(Volts);
+        inputs.hopperLanesVelocity = hopperLanesMotor.getVelocity().getValueAsDouble();
+        inputs.hopperLanesCurrentAmps = hopperLanesMotor.getTorqueCurrent().getValueAsDouble();
+        inputs.hopperLanesAppliedVoltage = hopperLanesMotor.getMotorVoltage().getValueAsDouble();
+        inputs.hopperLanePosition = hopperLanesMotor.getPosition().getValueAsDouble();
 
-        inputs.turretLaneRPMs = turretLaneMotor.getVelocity().getValue().in(RPM);
+        inputs.turretLaneVelocity = turretLaneMotor.getVelocity().getValueAsDouble();
         inputs.turretLaneCurrentAmps = turretLaneMotor.getSupplyCurrent().getValueAsDouble();
         inputs.turretLaneAppliedVoltage = turretLaneMotor.getMotorVoltage().getValue().in(Volts);
+        inputs.turretLanePosition = turretLaneMotor.getPosition().getValueAsDouble();
     }
 
     public void setHopperLaneVoltage(Voltage volts) {

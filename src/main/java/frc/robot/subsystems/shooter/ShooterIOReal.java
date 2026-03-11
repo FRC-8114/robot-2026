@@ -25,11 +25,11 @@ public class ShooterIOReal implements ShooterIO {
         static final int leftFlywheelMotorId = 35;
         static final int rightFlywheelMotorId = 36;
 
-        static final Slot0Configs flywheelSlot0 = new Slot0Configs()
-                .withKS(0.30068)
-                .withKV(0.0016465)
-                .withKA(0.00035087)
-                .withKP(0.70705)
+         static final Slot0Configs flywheelSlot0 = new Slot0Configs()
+                .withKS(0.29425)
+                .withKV(0.098203)
+                .withKA(0.025206)
+                .withKP(0.24396)
                 .withKI(0.0)
                 .withKD(0.0);
 

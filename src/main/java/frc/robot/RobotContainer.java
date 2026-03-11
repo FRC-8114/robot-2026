@@ -357,6 +357,33 @@ public class RobotContainer {
         autoChooser.addOption(
                 "Shooter SysId (Dynamic Reverse)",
                 shooter.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+
+                
+        autoChooser.addOption(
+                "Turret Lane SysId (Quasistatic Forward)",
+                indexer.sysIdQuasistaticTurret(SysIdRoutine.Direction.kForward));
+        autoChooser.addOption(
+                "Turret Lane SysId (Quasistatic Reverse)",
+                indexer.sysIdQuasistaticTurret(SysIdRoutine.Direction.kReverse));
+        autoChooser.addOption(
+                "Turret Lane SysId (Dynamic Forward)",
+                indexer.sysIdDynamicTurret(SysIdRoutine.Direction.kForward));
+        autoChooser.addOption(
+                "Turret Lane SysId (Dynamic Reverse)",
+                indexer.sysIdDynamicTurret(SysIdRoutine.Direction.kReverse));
+
+        autoChooser.addOption(
+                "Hopper Lane SysId (Quasistatic Forward)",
+                indexer.sysIdQuasistaticHopper(SysIdRoutine.Direction.kForward));
+        autoChooser.addOption(
+                "Hopper Lane SysId (Quasistatic Reverse)",
+                indexer.sysIdQuasistaticHopper(SysIdRoutine.Direction.kReverse));
+        autoChooser.addOption(
+                "Hopper Lane SysId (Dynamic Forward)",
+                indexer.sysIdDynamicHopper(SysIdRoutine.Direction.kForward));
+        autoChooser.addOption(
+                "Hopper Lane SysId (Dynamic Reverse)",
+                indexer.sysIdDynamicHopper(SysIdRoutine.Direction.kReverse));
     }
 
     private void configureButtonBindings() {
@@ -406,7 +433,7 @@ public class RobotContainer {
 
         controller.leftBumper().whileTrue(intakeRollers.intake());
 
-        controller.y().whileTrue(indexer.feedVoltage());
+        controller.y().whileTrue(indexer.feed());
 
         controller.povUp().whileTrue(shooter.runFlywheelsTunableVelocity());
 

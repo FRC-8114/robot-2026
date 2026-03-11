@@ -1,7 +1,9 @@
 package frc.robot.supersystems;
 
 import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Feet;
 import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.Meter;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Radians;
 
@@ -61,16 +63,16 @@ public class ShooterSupersystem extends SubsystemBase {
     private static final LoggedNetworkBoolean staticTurretMode = new LoggedNetworkBoolean("Tuning/TurretStaticMode",
             false);
 
-    private void putMeasurement(double meters, double pitchDegrees, double rpm) {
+    private void putMeasurement(Distance dist, double pitchDegrees, double rpm) {
         double pitchRad = Math.toRadians(pitchDegrees);
-        distanceToPitchAndRPM.put(meters, new Matrix<N2, N1>(new SimpleMatrix(new double[] { pitchRad, rpm })));
+        distanceToPitchAndRPM.put(dist.in(Meter), new Matrix<N2, N1>(new SimpleMatrix(new double[] { pitchRad, rpm })));
     }
 
     public ShooterSupersystem(Turret turretPivot, ShooterPitch turretPitch, Shooter shooter, Indexer indexer,
             Drive drive) {
 
-        putMeasurement(1, 11, 1200);
-        putMeasurement(2, 15, 1200);
+        putMeasurement(Feet.of(7), 19.7, 1630);
+        putMeasurement(Feet.of(8), 15, 1200);
 
         // todo: distance to pitch and rpm
 

@@ -3,6 +3,8 @@ package frc.robot.subsystems.turret;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.ClosedLoopGeneralConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
@@ -137,6 +139,7 @@ public class TurretIOReal implements TurretIO {
     }
 
     public void setTarget(Angle angle) {
+        Logger.recordOutput("Turret/Goal", Turret.clampAngle(angle));
         pivotMotor.setControl(control.withPosition(Turret.clampAngle(angle)));
     }
 

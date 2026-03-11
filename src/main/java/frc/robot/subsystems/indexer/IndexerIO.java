@@ -8,11 +8,13 @@ import edu.wpi.first.units.measure.Voltage;
 public interface IndexerIO {
     @AutoLog
     public static class IndexerInputs {
-        public double turretLaneRPMs = 0;
+        public double turretLaneVelocity = 0;
+        public double turretLanePosition = 0;
         public double turretLaneCurrentAmps = 0;
         public double turretLaneAppliedVoltage = 0;
     
-        public double hopperLanesRPMs = 0;
+        public double hopperLanesVelocity = 0;
+        public double hopperLanePosition = 0;
         public double hopperLanesCurrentAmps = 0;
         public double hopperLanesAppliedVoltage = 0;
     }

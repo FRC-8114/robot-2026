@@ -78,10 +78,10 @@ public class IndexerIOSim implements IndexerIO {
         turretLaneSim.update(0.02);
         hopperLanesSim.update(0.02);
 
-        inputs.turretLaneRPMs = turretLaneSim.getAngularVelocityRadPerSec() / (2.0 * Math.PI) * 60.0;
+        // inputs.turretLaneRPMs = turretLaneSim.getAngularVelocityRadPerSec() / (2.0 * Math.PI) * 60.0;
         inputs.turretLaneCurrentAmps = Math.abs(turretLaneSim.getCurrentDrawAmps());
 
-        inputs.hopperLanesRPMs = hopperLanesSim.getAngularVelocityRadPerSec() / (2.0 * Math.PI) * 60.0;
+        // inputs.hopperLanesRPMs = hopperLanesSim.getAngularVelocityRadPerSec() / (2.0 * Math.PI) * 60.0;
         inputs.hopperLanesCurrentAmps = Math.abs(hopperLanesSim.getCurrentDrawAmps());
     }
 

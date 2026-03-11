@@ -113,7 +113,7 @@ public class GamePieceTracker {
         fuelSim.launchFuel(
                 MetersPerSecond.of(mps),
                 Radians.of(shooterPitch.getPitchPositionRads()),
-                Radians.of(turret.getTurretPositionRads()),
+                Radians.of(turret.getTurretPositionRads() + Math.PI),
                 Meters.of(LAUNCH_HEIGHT_METERS));
 
         readyToFireCount--;

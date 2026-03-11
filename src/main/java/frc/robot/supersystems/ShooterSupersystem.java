@@ -45,8 +45,6 @@ public class ShooterSupersystem extends SubsystemBase {
 
     private final InterpolatingMatrixTreeMap<Double, N2, N1> distanceToPitchAndRPM = new InterpolatingMatrixTreeMap<Double, N2, N1>();
 
-    private Translation3d target = new Translation3d();
-
     public static class Constants {
         public static final Distance turretXOffset = Inches.of(-6.5); // negative X is back
         public static final Distance turretYOffset = Inches.of(6.875); // positive Y is left
@@ -100,11 +98,20 @@ public class ShooterSupersystem extends SubsystemBase {
         return new Pose3d(drive.getPose()).transformBy(Constants.turretOffset).getTranslation();
     }
 
+    private Translation3d getTarget() {
+        if (drive.getPose().getX() > FieldConstants.LinesVertical.allianceZone) {
+            return new Translation3d(); // TODO: pass
+        }
+
+        return FieldConstants.Hub.innerCenterPoint;
+    }
+
     private Angle getLeadYaw() {
         ChassisSpeeds robotSpeeds = drive.getChassisSpeeds();
         double heading = drive.getPose().getRotation().getRadians();
         ChassisSpeeds fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(robotSpeeds, Rotation2d.fromRadians(heading));
 
+        Translation3d target = getTarget();
         Translation3d turretPosition = getTurretPosition();
         double distance = target.toTranslation2d().getDistance(turretPosition.toTranslation2d());
 
@@ -120,7 +127,7 @@ public class ShooterSupersystem extends SubsystemBase {
         double fieldAngle = Math.atan2(offsetFromTurret.getY(), offsetFromTurret.getX());
         double turretAngle = fieldAngle - heading - Math.PI;
 
-        return Radians.of(MathUtil.inputModulus(turretAngle, -Math.PI, Math.PI));
+        return Turret.clampAngle(Radians.of(MathUtil.inputModulus(turretAngle, -Math.PI, Math.PI)));
     }
 
     public boolean isReadyToFire(Angle turretAngle, Angle pitchAngle) {
@@ -143,7 +150,7 @@ public class ShooterSupersystem extends SubsystemBase {
     }
 
     private double getDistanceToTarget() {
-        return target.toTranslation2d().getDistance(getTurretPosition().toTranslation2d());
+        return getTarget().toTranslation2d().getDistance(getTurretPosition().toTranslation2d());
     }
 
     private Angle getPitchAngle() {
@@ -164,19 +171,11 @@ public class ShooterSupersystem extends SubsystemBase {
         return shootWhenReady(yaw, pitch, rpm, fireTrigger);
     }
 
-    private void updateTarget() {
-        if (drive.getPose().getX() > FieldConstants.LinesVertical.allianceZone) {
-            target = new Translation3d(); // TOOD: pass
-        } else {
-            target = FieldConstants.Hub.innerCenterPoint;
-        }
-    }
-
     public Command defaultHoming() {
         Supplier<Angle> yaw = this::getLeadYaw;
         Supplier<Angle> pitch = this::getPitchAngle;
 
         return Commands.parallel(turretPivot.followAngle(yaw),
-                turretPitch.followAngle(pitch), run(this::updateTarget));
+                turretPitch.followAngle(pitch));
     }
 }

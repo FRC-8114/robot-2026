@@ -73,7 +73,7 @@ public class ShooterPitchIOReal implements ShooterPitchIO {
     }
 
     public void updateInputs(ShooterPitchInputs inputs) {
-        inputs.pitchPosition = turretPitchMotor.getPosition().getValue().in(Degree);
+        inputs.pitchPosition = turretPitchMotor.getPosition().getValue().in(Radians);
         inputs.velocityRadsPerSec = turretPitchMotor.getVelocity().getValue().in(RadiansPerSecond);
         inputs.appliedVoltage = turretPitchMotor.getMotorVoltage().getValueAsDouble();
     }

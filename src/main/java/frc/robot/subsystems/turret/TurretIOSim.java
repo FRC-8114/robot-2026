@@ -31,7 +31,7 @@ public class TurretIOSim implements TurretIO {
 
     public void setTarget(Angle angle) {
         closedLoop = true;
-        controller.setSetpoint(angle.in(Radians));
+        controller.setSetpoint(Turret.clampAngle(angle).in(Radians));
     }
 
     public void setVoltage(double volts) {
@@ -51,7 +51,7 @@ public class TurretIOSim implements TurretIO {
 
         inputs.hasValidCRT = true;
         inputs.turretMotorPosition = sim.getAngularPositionRad();
-        inputs.turretPositionCRT = sim.getAngularPositionRad();
+        inputs.turretPositionCRT = Turret.wrapAngleRadians(sim.getAngularPositionRad());
         inputs.motorPositionErrorCounter = 0;
         inputs.velocityRadsPerSec = sim.getAngularVelocityRadPerSec();
         inputs.appliedVoltage = appliedVolts;

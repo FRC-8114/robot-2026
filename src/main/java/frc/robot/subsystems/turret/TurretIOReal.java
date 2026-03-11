@@ -1,9 +1,7 @@
 package frc.robot.subsystems.turret;
 
-import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
-
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.ClosedLoopGeneralConfigs;
@@ -75,13 +73,12 @@ public class TurretIOReal implements TurretIO {
 
         public static final TalonFXConfiguration pivotMotorCfg = new TalonFXConfiguration()
                 .withSlot0(pivotMotorPIDs)
-            
                 .withClosedLoopGeneral(new ClosedLoopGeneralConfigs().withContinuousWrap(false))
                 .withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive))
                 .withMotionMagic(pivotMotionMagicConfigs)
                 .withSoftwareLimitSwitch(softwareLimits)
                 .withFeedback(new FeedbackConfigs()
-                    .withSensorToMechanismRatio(10)); // 10 rotations of the motor for 1 rotation of the turret
+                        .withSensorToMechanismRatio(10)); // 10 rotations of the motor for 1 rotation of the turret
     }
 
     private final TalonFX pivotMotor = new TalonFX(Constants.pivotMotorID, RobotConstants.canBus);
@@ -102,14 +99,17 @@ public class TurretIOReal implements TurretIO {
 
     // chinese remainder theorem is simple, actually
     private Angle getTurretAngle() {
-        long teeth1 = Math.round(turret19TEncoder.getAbsolutePosition().getValueAsDouble() * 19.0) % 19l;
-        long teeth2 = Math.round(turret21TEncoder.getAbsolutePosition().getValueAsDouble() * 21.0) % 21l;
+        double rawTeeth1 = turret19TEncoder.getAbsolutePosition().getValueAsDouble() * 19.0;
+        double rawTeeth2 = turret21TEncoder.getAbsolutePosition().getValueAsDouble() * 21.0;
+        long teeth1 = Math.round(rawTeeth1) % 19l;
+        long teeth2 = Math.round(rawTeeth2) % 21l;
         long coarse = (teeth1 * 21l * 10l + teeth2 * 19l * 10l) % 399l;
 
-        double fraction = teeth2 % 1;
+        double fraction = rawTeeth2 - Math.round(rawTeeth2);
         double turretGearTeeth = coarse + fraction;
 
-        return Radians.of(MathUtil.inputModulus(turretGearTeeth * ((2 * Math.PI) / 200.0), 0, Math.PI * 2));
+        double angle0To2Pi = MathUtil.inputModulus(turretGearTeeth * ((2 * Math.PI) / 200.0), 0, Math.PI * 2);
+        return Turret.normalizeAngle(Radians.of(angle0To2Pi));
     }
 
     private void reseedPosition(Angle angle) {
@@ -117,7 +117,7 @@ public class TurretIOReal implements TurretIO {
     }
 
     public void setTarget(Angle angle) {
-        pivotMotor.setControl(control.withPosition(angle));
+        pivotMotor.setControl(control.withPosition(Turret.clampAngle(angle)));
     }
 
     public void setVoltage(double volts) {
@@ -125,18 +125,18 @@ public class TurretIOReal implements TurretIO {
     }
 
     public void updateInputs(TurretIOInputs inputs) {
-        double position = pivotMotor.getPosition().getValue().in(Radians);
+        double position = Turret.wrapAngleRadians(pivotMotor.getPosition().getValue().in(Radians));
         Angle positionCrt = getTurretAngle();
 
         inputs.turretMotorPosition = position;
         inputs.turretPositionCRT = positionCrt.in(Radians);
 
         // if (Math.abs(MathUtil.angleModulus(position - positionCrt.in(Radians)))
-        //     > Constants.ERROR_THRESHOLD) {
-        //     // valid CRT but motor disagrees
-        //     inputs.motorPositionErrorCounter += 1;
+        // > Constants.ERROR_THRESHOLD) {
+        // // valid CRT but motor disagrees
+        // inputs.motorPositionErrorCounter += 1;
         // } else {
-        //     inputs.motorPositionErrorCounter = 0;
+        // inputs.motorPositionErrorCounter = 0;
         // }
 
         inputs.velocityRadsPerSec = pivotMotor.getVelocity().getValue().in(RadiansPerSecond);

@@ -1,7 +1,7 @@
 package frc.robot.subsystems.vision;
 
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.vision.VisionConstants.CameraConfiguration;
 import frc.robot.subsystems.vision.VisionConstants.LimelightCameraConfiguration;
@@ -21,21 +21,23 @@ public class Vision extends SubsystemBase {
     private final List<IOBundle> ioList;
     private final ArrayList<PoseEstimation> tagObservations = new ArrayList<PoseEstimation>();
     private final Consumer<PoseEstimation> poseConsumer;
-    private final Supplier<Rotation2d> gyroYawSupplier;
+    private final Supplier<Rotation3d> gyroRotationSupplier;
+    private final Supplier<Rotation3d> gyroVelocitySupplier;
 
     private final List<Pose3d> allRejectedPoses = new ArrayList<Pose3d>();
     private final List<Pose3d> allPoses = new ArrayList<Pose3d>();
 
-    public Vision(Consumer<PoseEstimation> consumer, Supplier<Rotation2d> gyroYawSupplier, List<VisionIO> visionIOs) {
+    public Vision(Consumer<PoseEstimation> consumer, Supplier<Rotation3d> gyroRotationSupplier, Supplier<Rotation3d> gyroVelocitySupplier, List<VisionIO> visionIOs) {
         ioList = visionIOs.stream()
                 .map(io -> new IOBundle(io, new VisionIOInputsAutoLogged(), new PoseEstimationBuffer()))
                 .toList();
 
         poseConsumer = consumer;
-        this.gyroYawSupplier = gyroYawSupplier;
+        this.gyroRotationSupplier = gyroRotationSupplier;
+        this.gyroVelocitySupplier = gyroVelocitySupplier;
     }
 
-    public static Vision fromCameraConstants(Consumer<PoseEstimation> consumer, Supplier<Rotation2d> gyroYawSupplier) {
+    public static Vision fromCameraConstants(Consumer<PoseEstimation> consumer, Supplier<Rotation3d> gyroRotationSupplier, Supplier<Rotation3d> gyroVelocitySupplier) {
         List<VisionIO> visionIOs = new ArrayList<>();
 
         for (CameraConfiguration camera : VisionConstants.cameras) {
@@ -46,13 +48,12 @@ public class Vision extends SubsystemBase {
             }
         }
 
-        return new Vision(consumer, gyroYawSupplier, visionIOs);
+        return new Vision(consumer, gyroRotationSupplier, gyroVelocitySupplier, visionIOs);
     }
 
-    public void seedImu() {
-        Rotation2d gyroYaw = gyroYawSupplier.get();
+    public void seedPoseFromVision() {
         for (var bundle : ioList) {
-            bundle.io().seedImu(gyroYaw);
+            bundle.io().seedPoseFromMegatag1(poseConsumer);
         }
     }
 
@@ -78,10 +79,11 @@ public class Vision extends SubsystemBase {
         allPoses.clear();
         allRejectedPoses.clear();
 
-        Rotation2d heading = gyroYawSupplier.get();
+        Rotation3d gyroRotation3d = gyroRotationSupplier.get();
+        Rotation3d gyroVelocityRadPerSec = gyroVelocitySupplier.get();
 
         for (var bundle : ioList) {
-            bundle.io().setRobotOrientation(heading);
+            bundle.io().setRobotOrientation(gyroRotation3d, gyroVelocityRadPerSec);
             bundle.io().updateInputs(bundle.inputs(), bundle.buffer());
             Logger.processInputs("Vision/" + bundle.io().getConfiguration().name(), bundle.inputs());
 

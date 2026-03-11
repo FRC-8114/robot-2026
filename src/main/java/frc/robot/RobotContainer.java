@@ -89,7 +89,7 @@ public class RobotContainer {
                                         drive.addVisionMeasurement(poseEstimation.pose().toPose2d(),
                                                         poseEstimation.timestamp(),
                                                         poseEstimation.stddev());
-                                }, drive::getRawGyroYaw);
+                                }, drive::getRawGyroRotation3d, drive::getRawGyroVelocityRadPerSec);
 
                                 Trigger camera_disabled = new Trigger(() -> RobotState.isDisabled());
                                 camera_disabled.whileTrue(Commands.runOnce(
@@ -297,6 +297,62 @@ public class RobotContainer {
                                 "Intake Deploy SysId (Dynamic Reverse)",
                                 intakePivot.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
+                // Turret Pivot SysId
+                autoChooser.addOption(
+                                "Turret Pivot SysId (Quasistatic Forward)",
+                                turretPivot.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+                autoChooser.addOption(
+                                "Turret Pivot SysId (Quasistatic Reverse)",
+                                turretPivot.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+                autoChooser.addOption(
+                                "Turret Pivot SysId (Dynamic Forward)",
+                                turretPivot.sysIdDynamic(SysIdRoutine.Direction.kForward));
+                autoChooser.addOption(
+                                "Turret Pivot SysId (Dynamic Reverse)",
+                                turretPivot.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+
+                // Turret Pitch SysId
+                autoChooser.addOption(
+                                "Turret Pitch SysId (Quasistatic Forward)",
+                                turretPitch.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+                autoChooser.addOption(
+                                "Turret Pitch SysId (Quasistatic Reverse)",
+                                turretPitch.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+                autoChooser.addOption(
+                                "Turret Pitch SysId (Dynamic Forward)",
+                                turretPitch.sysIdDynamic(SysIdRoutine.Direction.kForward));
+                autoChooser.addOption(
+                                "Turret Pitch SysId (Dynamic Reverse)",
+                                turretPitch.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+
+                // Intake Deploy SysId
+                autoChooser.addOption(
+                                "Intake Deploy SysId (Quasistatic Forward)",
+                                intakePivot.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+                autoChooser.addOption(
+                                "Intake Deploy SysId (Quasistatic Reverse)",
+                                intakePivot.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+                autoChooser.addOption(
+                                "Intake Deploy SysId (Dynamic Forward)",
+                                intakePivot.sysIdDynamic(SysIdRoutine.Direction.kForward));
+                autoChooser.addOption(
+                                "Intake Deploy SysId (Dynamic Reverse)",
+                                intakePivot.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+
+                // // Intake Roller SysId
+                // autoChooser.addOption(
+                // "Intake Roller SysId (Quasistatic Forward)",
+                // intakeRollers.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+                // autoChooser.addOption(
+                // "Intake Roller SysId (Quasistatic Reverse)",
+                // intakeRollers.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+                // autoChooser.addOption(
+                // "Intake Roller SysId (Dynamic Forward)",
+                // intakeRollers.sysIdDynamic(SysIdRoutine.Direction.kForward));
+                // autoChooser.addOption(
+                // "Intake Roller SysId (Dynamic Reverse)",
+                // intakeRollers.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+
                 // Shooter SysId
                 autoChooser.addOption(
                                 "Shooter SysId (Quasistatic Forward)",
@@ -339,16 +395,22 @@ public class RobotContainer {
                                 .b()
                                 .onTrue(
                                                 Commands.runOnce(
-                                                                () -> {
-                                                                        drive.setPose(
-                                                                                        new Pose2d(drive.getPose()
-                                                                                                        .getTranslation(),
-                                                                                                        Rotation2d.kZero));
-                                                                        if (vision != null) {
-                                                                                vision.seedImu();
-                                                                        }
-                                                                },
+                                                                () -> drive.setPose(
+                                                                                new Pose2d(drive.getPose()
+                                                                                                .getTranslation(),
+                                                                                                Rotation2d.kZero)),
                                                                 drive)
+                                                                .ignoringDisable(true));
+
+                controller
+                                .start()
+                                .onTrue(
+                                                Commands.runOnce(
+                                                                () -> {
+                                                                        if (vision != null) {
+                                                                                vision.seedPoseFromVision();
+                                                                        }
+                                                                })
                                                                 .ignoringDisable(true));
 
                 controller.leftBumper().whileTrue(intakeRollers.intake());
@@ -360,6 +422,7 @@ public class RobotContainer {
                 controller.leftTrigger().whileTrue(
                                 shooterSupersystem.shootAtTarget(
                                                 () -> controller.getRightTriggerAxis() > 0.5));
+
         }
 
         public void simulationPeriodic() {

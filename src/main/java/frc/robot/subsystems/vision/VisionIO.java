@@ -1,6 +1,7 @@
 package frc.robot.subsystems.vision;
 
-import limelight.networktables.LimelightSettings;
+import java.util.function.Consumer;
+
 import limelight.networktables.PoseEstimate;
 
 import org.littletonrobotics.junction.AutoLog;
@@ -8,7 +9,7 @@ import org.littletonrobotics.junction.AutoLog;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.numbers.*;
 import frc.robot.subsystems.vision.VisionConstants.CameraConfiguration;
 
@@ -68,11 +69,9 @@ public interface VisionIO {
 
     CameraConfiguration getConfiguration();
 
-    void seedImu(Rotation2d gyroYaw);
+    void seedPoseFromMegatag1(Consumer<PoseEstimation> poseConsumer);
 
-    void setIMUMode(LimelightSettings.ImuMode mode);
-
-    void setRobotOrientation(Rotation2d gyroYaw);
+    void setRobotOrientation(Rotation3d gyroRotation3d, Rotation3d gyroVelocityRadPerSec);
 
     void updateInputs(VisionIOInputs inputs, PoseEstimationBuffer buffer);
 }

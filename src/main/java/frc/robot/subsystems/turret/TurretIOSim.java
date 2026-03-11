@@ -54,7 +54,7 @@ public class TurretIOSim implements TurretIO {
 
         inputs.hasValidCRT = true;
         inputs.turretMotorPosition = sim.getAngularPositionRad();
-        inputs.turretPositionCRT = Turret.wrapAngleRadians(sim.getAngularPositionRad());
+        inputs.turretPositionCRT = sim.getAngularPositionRad();
         inputs.motorPositionErrorCounter = 0;
         inputs.velocityRadsPerSec = sim.getAngularVelocityRadPerSec();
         inputs.appliedVoltage = appliedVolts;

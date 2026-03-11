@@ -2,6 +2,7 @@ package frc.robot.subsystems.vision;
 
 import java.util.function.Consumer;
 
+import limelight.networktables.LimelightSettings;
 import limelight.networktables.PoseEstimate;
 
 import org.littletonrobotics.junction.AutoLog;
@@ -68,6 +69,8 @@ public interface VisionIO {
     }
 
     CameraConfiguration getConfiguration();
+
+    default void setIMUMode(LimelightSettings.ImuMode imuMode) {};
 
     void seedPoseFromMegatag1(Consumer<PoseEstimation> poseConsumer);
 

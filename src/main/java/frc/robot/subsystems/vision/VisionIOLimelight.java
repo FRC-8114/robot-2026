@@ -111,4 +111,9 @@ public class VisionIOLimelight implements VisionIO {
                 estimated.pose);
         buffer.pushEstimate(VisionIO.PoseEstimation.fromLimelightEstimate(this, estimated));
     }
+
+    @Override
+    public void setIMUMode(LimelightSettings.ImuMode imuMode) {
+        limelight.getSettings().withImuMode(imuMode).save();
+    }
 }

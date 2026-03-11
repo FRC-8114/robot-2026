@@ -7,6 +7,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
 public class IndexerIOSim implements IndexerIO {
@@ -94,5 +95,17 @@ public class IndexerIOSim implements IndexerIO {
     public void stopHopperLane() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'stopHopperLane'");
+    }
+
+    @Override
+    public void setHopperLaneVoltage(Voltage volts) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setHopperLaneVoltage'");
+    }
+
+    @Override
+    public void setTurretLaneVoltage(Voltage volts) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setTurretLaneVoltage'");
     }
 }

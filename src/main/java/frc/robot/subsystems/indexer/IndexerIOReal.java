@@ -14,6 +14,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Voltage;
 import frc.robot.RobotConstants;
 
 public class IndexerIOReal implements IndexerIO {
@@ -89,5 +90,13 @@ public class IndexerIOReal implements IndexerIO {
         inputs.turretLaneRPMs = turretLaneMotor.getVelocity().getValue().in(RPM);
         inputs.turretLaneCurrentAmps = turretLaneMotor.getSupplyCurrent().getValueAsDouble();
         inputs.turretLaneAppliedVoltage = turretLaneMotor.getMotorVoltage().getValue().in(Volts);
+    }
+
+    public void setHopperLaneVoltage(Voltage volts) {
+        hopperLanesMotor.setControl(new VoltageOut(volts));
+    }
+
+    public void setTurretLaneVoltage(Voltage volts) {
+        turretLaneMotor.setControl(new VoltageOut(volts));
     }
 }

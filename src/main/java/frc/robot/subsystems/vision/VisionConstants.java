@@ -12,7 +12,7 @@ import edu.wpi.first.math.geometry.Translation3d;
 import limelight.networktables.LimelightPoseEstimator.EstimationMode;
 
 public class VisionConstants {
-    public static final EstimationMode LIMELIGHT_ESTIMATION_MODE = EstimationMode.MEGATAG2;
+    public static final EstimationMode LIMELIGHT_ESTIMATION_MODE = EstimationMode.MEGATAG1;
 
     public interface CameraConfiguration {
         String name();

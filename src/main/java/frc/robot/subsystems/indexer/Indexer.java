@@ -1,12 +1,14 @@
 package frc.robot.subsystems.indexer;
 
 import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.Volts;
 
 import java.util.function.BooleanSupplier;
 
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
+import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -25,6 +27,9 @@ public class Indexer extends SubsystemBase {
 
     private final LoggedNetworkNumber hopperLaneVelocity = new LoggedNetworkNumber("Tuning/TuneHopperLaneVelocity", 250);
     private final LoggedNetworkNumber turretLaneVelocity = new LoggedNetworkNumber("Tuning/TuneTurretLaneVelocity", 1500);
+
+    private final LoggedNetworkNumber hopperLaneVoltage = new LoggedNetworkNumber("Tuning/TuneHopperLaneVoltage", 9.82);
+    private final LoggedNetworkNumber turretLaneVoltage = new LoggedNetworkNumber("Tuning/TuneTUrretLaneVoltage", 5.52);
 
     public Indexer(IndexerIO io) {
         this.io = io;
@@ -57,6 +62,16 @@ public class Indexer extends SubsystemBase {
                     io.stopHopperLane();
                     io.stopTurretLane();
                 });
+    }
+
+    public Command feedVoltage() {
+        return runEnd(() -> {
+            io.setTurretLaneVoltage(Volts.of(turretLaneVoltage.get()));
+            io.setHopperLaneVoltage(Volts.of(hopperLaneVoltage.get()));
+        }, () -> {
+            io.stopTurretLane();
+            io.stopHopperLane();
+        });
     }
 
     public Command prepareAndFeedWhen(BooleanSupplier shouldFeed) {

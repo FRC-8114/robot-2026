@@ -18,7 +18,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 public class ShooterPitch extends SubsystemBase {
     public static class Constants {
         public static final Angle MAX_ANGLE = Degree.of(34.5);
-        public static final Angle MIN_ANGLE = Degree.of(10.5);
+        public static final Angle MIN_ANGLE = Degree.of(5.361328);
     }
 
     private static final Angle ANGLE_TOLERANCE = Degrees.of(1);
@@ -43,7 +43,7 @@ public class ShooterPitch extends SubsystemBase {
     }
 
     public double getPitchPositionRads() {
-        return inputs.pitchPosition;
+        return Math.toDegrees(inputs.pitchPosition);
     }
 
     @Override
@@ -53,7 +53,7 @@ public class ShooterPitch extends SubsystemBase {
     }
 
     public boolean isAtAngle(Angle target) {
-        return target.isNear(Radians.of(inputs.pitchPosition), ANGLE_TOLERANCE);
+        return target.isNear(Degrees.of(inputs.pitchPosition), ANGLE_TOLERANCE);
     }
 
     public Command setAngle(Angle pitchAngle) {

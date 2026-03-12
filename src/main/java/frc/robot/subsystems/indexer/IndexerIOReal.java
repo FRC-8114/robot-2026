@@ -28,7 +28,7 @@ public class IndexerIOReal implements IndexerIO {
                 .withKS(1.0481)
                 .withKV(0.13694)
                 .withKA(0.010647)
-                .withKP(0.55729)
+                .withKP(2.0247)
                 .withKI(0.0)
                 .withKD(0.0);
 

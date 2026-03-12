@@ -30,7 +30,7 @@ public class ShooterPitchIOReal implements ShooterPitchIO {
                 .withKS(0.55)
                 .withKV(0.032)
                 .withKA(0.011)
-                .withKP(100.78)
+                .withKP(120.78)
                 .withKG(0.4)
                 .withKI(0.0)
                 .withKD(0.0);

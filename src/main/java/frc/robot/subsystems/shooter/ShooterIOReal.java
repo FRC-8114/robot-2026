@@ -25,13 +25,10 @@ public class ShooterIOReal implements ShooterIO {
         static final int leftFlywheelMotorId = 35;
         static final int rightFlywheelMotorId = 36;
 
-         static final Slot0Configs flywheelSlot0 = new Slot0Configs()
+        static final Slot0Configs flywheelSlot0 = new Slot0Configs()
                 .withKS(0.29425)
-                .withKV(0.098203)
-                .withKA(0.025206)
-                .withKP(0.24396)
-                .withKI(0.0)
-                .withKD(0.0);
+                .withKV(0.108203)
+                .withKP(0.18997);
 
         static final CurrentLimitsConfigs currentLimits = new CurrentLimitsConfigs()
                 .withSupplyCurrentLimit(80)
@@ -41,7 +38,7 @@ public class ShooterIOReal implements ShooterIO {
 
         static final TalonFXConfiguration flywheelMotorConfig = new TalonFXConfiguration()
                 .withSlot0(flywheelSlot0)
-                .withMotorOutput(new MotorOutputConfigs() .withInverted(InvertedValue.Clockwise_Positive))
+                .withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive))
                 .withCurrentLimits(currentLimits);
     }
 

@@ -71,8 +71,17 @@ public class ShooterSupersystem extends SubsystemBase {
     public ShooterSupersystem(Turret turretPivot, ShooterPitch turretPitch, Shooter shooter, Indexer indexer,
             Drive drive) {
 
-        putMeasurement(Feet.of(7), 19.7, 1630);
-        putMeasurement(Feet.of(8), 15, 1200);
+        putMeasurement(Feet.of(7), 20, 1300);
+        putMeasurement(Feet.of(8), 24.0, 1450);
+        putMeasurement(Feet.of(9), 28.0, 1485);
+        putMeasurement(Feet.of(10), 28.0, 1555);
+        putMeasurement(Feet.of(11), 28.0, 1630);
+        putMeasurement(Feet.of(13), 28.0, 1820);
+        putMeasurement(Feet.of(16), 28.0, 2060);
+        putMeasurement(Feet.of(16), 33, 1950);
+
+        putMeasurement(Feet.of(25), 33, 2225);
+        putMeasurement(Feet.of(40), 33, 2800);
 
         // todo: distance to pitch and rpm
 
@@ -82,7 +91,7 @@ public class ShooterSupersystem extends SubsystemBase {
         this.indexer = indexer;
         this.drive = drive;
 
-        // setDefaultCommand(defaultHoming());
+        setDefaultCommand(defaultHoming());
         // new Trigger(staticTurretMode)
         // .onTrue(Commands.parallel(
         // turretPivot.setAngle(Degrees.of(0)),
@@ -105,7 +114,7 @@ public class ShooterSupersystem extends SubsystemBase {
 
         Logger.recordOutput("Shooter/exitVelocity", exitVelocity);
 
-        return horizontalDist / (exitVelocity * Math.cos((2 * Math.PI) - pitchRad));
+        return horizontalDist / (exitVelocity * Math.cos(Math.PI - pitchRad));
     }
 
     private Translation3d getTurretPosition() {

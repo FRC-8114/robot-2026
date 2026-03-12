@@ -29,7 +29,7 @@ public class Indexer extends SubsystemBase {
     private final IndexerInputsAutoLogged inputs = new IndexerInputsAutoLogged();
 
     private final LoggedNetworkNumber hopperLaneVelocity = new LoggedNetworkNumber("Tuning/TuneHopperLaneVelocity",
-            250);
+            700);
     private final LoggedNetworkNumber turretLaneVelocity = new LoggedNetworkNumber("Tuning/TuneTurretLaneVelocity",
             1500);
 

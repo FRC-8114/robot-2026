@@ -148,13 +148,15 @@ public class TurretIOReal implements TurretIO {
     }
 
     public void updateInputs(TurretIOInputs inputs) {
-        double position = pivotMotor.getPosition().getValue().in(Radians);
+        double position = Turret.normalizeAngle(pivotMotor.getPosition().getValue()).in(Radians);
         double velocity = pivotMotor.getVelocity().getValue().in(RadiansPerSecond);
         double crtPosition = getSeedAngle().in(Radians);
         double filteredCrtPosition = crtMedianFilter.calculate(crtPosition);
         boolean hasValidCrt = Double.isFinite(filteredCrtPosition);
         boolean crtInRange = hasValidCrt && isWithinLimits(filteredCrtPosition);
-        double positionError = hasValidCrt ? MathUtil.angleModulus(filteredCrtPosition - position) : 0.0;
+        double positionError = hasValidCrt
+                ? MathUtil.inputModulus(filteredCrtPosition - position, -Math.PI, Math.PI)
+                : 0.0;
 
         inputs.turretMotorPosition = position;
         inputs.turretPositionCRT = filteredCrtPosition;

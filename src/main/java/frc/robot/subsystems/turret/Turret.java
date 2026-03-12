@@ -20,8 +20,8 @@ public class Turret extends SubsystemBase {
     public static class Constants {
         private static final Angle ANGLE_TOLERANCE = Degrees.of(1);
 
-        public static final Angle MIN_ANGLE = Radians.of(1.492563);
-        public static final Angle MAX_ANGLE = Radians.of(5.833729);
+        public static final Angle MIN_ANGLE = Radians.of(-1.6490296535897926);
+        public static final Angle MAX_ANGLE = Radians.of(2.692136346410207);
     }
 
     private final TurretIO pivotMotor;
@@ -41,19 +41,41 @@ public class Turret extends SubsystemBase {
     }
 
     public static Angle normalizeAngle(Angle angle) {
-        return Radians.of(MathUtil.inputModulus(angle.in(Radians), 0.0, 2.0 * Math.PI));
+        return Radians.of(MathUtil.inputModulus(angle.in(Radians), -Math.PI, Math.PI));
     }
 
     public static Angle clampAngle(Angle angle) {
-        double normalizedAngle = normalizeAngle(angle).in(Radians);
-        return Radians.of(MathUtil.clamp(
-                normalizedAngle,
-                Constants.MIN_ANGLE.in(Radians),
-                Constants.MAX_ANGLE.in(Radians)));
+        double targetRadians = angle.in(Radians);
+        double minAngleRadians = Constants.MIN_ANGLE.in(Radians);
+        double maxAngleRadians = Constants.MAX_ANGLE.in(Radians);
+        double fullRotationRadians = 2.0 * Math.PI;
+
+        long minimumTurnsToEnterRange = (long) Math.ceil((minAngleRadians - targetRadians) / fullRotationRadians);
+        long maximumTurnsToEnterRange = (long) Math.floor((maxAngleRadians - targetRadians) / fullRotationRadians);
+
+        if (minimumTurnsToEnterRange <= maximumTurnsToEnterRange) {
+            long turns = minimumTurnsToEnterRange <= 0 && 0 <= maximumTurnsToEnterRange
+                    ? 0
+                    : (Math.abs(minimumTurnsToEnterRange) <= Math.abs(maximumTurnsToEnterRange)
+                            ? minimumTurnsToEnterRange
+                            : maximumTurnsToEnterRange);
+            return Radians.of(targetRadians + (turns * fullRotationRadians));
+        }
+
+        double distanceToMinAngle = Math.abs(MathUtil.inputModulus(
+                targetRadians - minAngleRadians,
+                -Math.PI,
+                Math.PI));
+        double distanceToMaxAngle = Math.abs(MathUtil.inputModulus(
+                targetRadians - maxAngleRadians,
+                -Math.PI,
+                Math.PI));
+
+        return Radians.of(distanceToMinAngle <= distanceToMaxAngle ? minAngleRadians : maxAngleRadians);
     }
 
     public double getTurretPositionRads() {
-        return inputs.turretMotorPosition;
+        return normalizeAngle(Radians.of(inputs.turretMotorPosition)).in(Radians);
     }
 
     @Override
@@ -64,8 +86,10 @@ public class Turret extends SubsystemBase {
     }
 
     public boolean isAtAngle(Angle target) {
-        double error = clampAngle(target).in(Radians)
-                - normalizeAngle(Radians.of(getTurretPositionRads())).in(Radians);
+        double error = MathUtil.inputModulus(
+                clampAngle(target).in(Radians) - getTurretPositionRads(),
+                -Math.PI,
+                Math.PI);
         return Math.abs(error) <= Constants.ANGLE_TOLERANCE.in(Radians);
     }
 

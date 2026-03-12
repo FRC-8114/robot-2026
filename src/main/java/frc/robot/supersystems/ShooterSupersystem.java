@@ -80,7 +80,6 @@ public class ShooterSupersystem extends SubsystemBase {
         putMeasurement(Feet.of(11), 28.0, 1630);
         putMeasurement(Feet.of(13), 28.0, 1820);
         putMeasurement(Feet.of(16), 28.0, 2060);
-        putMeasurement(Feet.of(16), 33, 1950);
 
         putMeasurement(Feet.of(25), 33, 2225);
         putMeasurement(Feet.of(40), 33, 2800);
@@ -111,7 +110,7 @@ public class ShooterSupersystem extends SubsystemBase {
 
         Logger.recordOutput("Shooter/exitVelocity", exitVelocity);
 
-        return horizontalDist / (exitVelocity * Math.cos(Math.PI - pitchRad));
+        return horizontalDist / (exitVelocity * Math.cos(pitchRad));
     }
 
     private Translation3d getTurretPosition() {
@@ -119,10 +118,6 @@ public class ShooterSupersystem extends SubsystemBase {
     }
 
     private Translation3d getTarget() {
-        if (drive.getPose().getX() > FieldConstants.LinesVertical.allianceZone) {
-            return new Translation3d(); // TODO: pass
-        }
-
         return FieldConstants.Hub.innerCenterPoint;
     }
 
@@ -145,7 +140,9 @@ public class ShooterSupersystem extends SubsystemBase {
         Translation2d offsetFromTurret = offsetTarget.minus(turretPosition.toTranslation2d());
 
         double fieldAngle = Math.atan2(offsetFromTurret.getY(), offsetFromTurret.getX());
-        return Turret.clampAngle(Radians.of(fieldAngle - heading));
+        double turretAngle = fieldAngle - heading;
+        Logger.recordOutput("Shooter/LeadYawRawRad", turretAngle);
+        return Turret.clampAngle(Radians.of(turretAngle));
     }
 
     public boolean isReadyToFire(Angle turretAngle, Angle pitchAngle) {

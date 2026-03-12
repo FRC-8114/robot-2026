@@ -121,28 +121,68 @@ public class ShooterSupersystem extends SubsystemBase {
         return FieldConstants.Hub.innerCenterPoint;
     }
 
+    static Translation2d getFieldRelativeLeadTargetVector(
+            Translation2d turretPosition,
+            Translation2d targetPosition,
+            Translation2d fieldVelocity,
+            double timeOfFlight) {
+        Translation2d offsetTarget = targetPosition.minus(fieldVelocity.times(timeOfFlight));
+        return offsetTarget.minus(turretPosition);
+    }
+
+    static Translation2d getRobotRelativeTargetVector(
+            Translation2d fieldRelativeTargetVector,
+            Rotation2d robotHeading) {
+        return fieldRelativeTargetVector.rotateBy(robotHeading.unaryMinus());
+    }
+
+    static Angle getRobotRelativeYaw(Translation2d fieldRelativeTargetVector, Rotation2d robotHeading) {
+        if (fieldRelativeTargetVector.getNorm() < 1e-9) {
+            return Radians.zero();
+        }
+
+        Translation2d robotRelativeTargetVector = getRobotRelativeTargetVector(fieldRelativeTargetVector, robotHeading);
+        return Radians.of(robotRelativeTargetVector.getAngle().getRadians());
+    }
+
+    static Angle getLeadYaw(
+            Translation2d turretPosition,
+            Translation2d targetPosition,
+            Rotation2d robotHeading,
+            Translation2d fieldVelocity,
+            double timeOfFlight) {
+        Translation2d fieldRelativeTargetVector =
+                getFieldRelativeLeadTargetVector(turretPosition, targetPosition, fieldVelocity, timeOfFlight);
+        return getRobotRelativeYaw(fieldRelativeTargetVector, robotHeading);
+    }
+
     private Angle getLeadYaw() {
         ChassisSpeeds robotSpeeds = drive.getChassisSpeeds();
-        double heading = drive.getPose().getRotation().getRadians();
-        ChassisSpeeds fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(robotSpeeds, Rotation2d.fromRadians(heading));
+        Rotation2d heading = drive.getPose().getRotation();
+        ChassisSpeeds fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(robotSpeeds, heading);
 
         Translation3d target = getTarget();
         Translation3d turretPosition = getTurretPosition();
         double distance = target.toTranslation2d().getDistance(turretPosition.toTranslation2d());
 
         double tof = estimateTimeOfFlight(distance);
-        Translation2d velocityOffset = new Translation2d(fieldSpeeds.vxMetersPerSecond, fieldSpeeds.vyMetersPerSecond)
-                .times(tof);
-        Translation2d offsetTarget = target.toTranslation2d().minus(velocityOffset);
+        Translation2d targetPosition = target.toTranslation2d();
+        Translation2d turretPosition2d = turretPosition.toTranslation2d();
+        Translation2d fieldVelocity = new Translation2d(fieldSpeeds.vxMetersPerSecond, fieldSpeeds.vyMetersPerSecond);
+        Translation2d fieldRelativeTargetVector =
+                getFieldRelativeLeadTargetVector(turretPosition2d, targetPosition, fieldVelocity, tof);
+        Translation2d robotRelativeTargetVector = getRobotRelativeTargetVector(fieldRelativeTargetVector, heading);
+        Angle turretAngle = getRobotRelativeYaw(fieldRelativeTargetVector, heading);
 
-        Logger.recordOutput("Shooter/offsetTarget", offsetTarget);
-
-        Translation2d offsetFromTurret = offsetTarget.minus(turretPosition.toTranslation2d());
-
-        double fieldAngle = Math.atan2(offsetFromTurret.getY(), offsetFromTurret.getX());
-        double turretAngle = fieldAngle - heading;
-        Logger.recordOutput("Shooter/LeadYawRawRad", turretAngle);
-        return Turret.clampAngle(Radians.of(turretAngle));
+        Logger.recordOutput("Shooter/RobotHeadingRad", heading.getRadians());
+        Logger.recordOutput("Shooter/TurretPosition", turretPosition2d);
+        Logger.recordOutput("Shooter/TargetPosition", targetPosition);
+        Logger.recordOutput("Shooter/FieldVelocity", fieldVelocity);
+        Logger.recordOutput("Shooter/TimeOfFlight", tof);
+        Logger.recordOutput("Shooter/FieldRelativeTargetVector", fieldRelativeTargetVector);
+        Logger.recordOutput("Shooter/RobotRelativeTargetVector", robotRelativeTargetVector);
+        Logger.recordOutput("Shooter/LeadYawRawRad", turretAngle.in(Radians));
+        return Turret.clampAngle(turretAngle);
     }
 
     public boolean isReadyToFire(Angle turretAngle, Angle pitchAngle) {

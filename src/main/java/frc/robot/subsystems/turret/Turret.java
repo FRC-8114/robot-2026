@@ -41,7 +41,14 @@ public class Turret extends SubsystemBase {
     }
 
     public static Angle normalizeAngle(Angle angle) {
-        return Radians.of(MathUtil.inputModulus(angle.in(Radians), -Math.PI, Math.PI));
+        double fullRotationRadians = 2.0 * Math.PI;
+        double normalizedAngle = angle.in(Radians) % fullRotationRadians;
+
+        if (normalizedAngle < 0.0) {
+            normalizedAngle += fullRotationRadians;
+        }
+
+        return Radians.of(normalizedAngle);
     }
 
     public static Angle clampAngle(Angle angle) {

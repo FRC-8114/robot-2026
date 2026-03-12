@@ -142,7 +142,7 @@ public class ShooterSupersystem extends SubsystemBase {
         }
 
         Translation2d robotRelativeTargetVector = getRobotRelativeTargetVector(fieldRelativeTargetVector, robotHeading);
-        return Radians.of(robotRelativeTargetVector.getAngle().getRadians());
+        return Turret.normalizeAngle(Radians.of(robotRelativeTargetVector.getAngle().getRadians()));
     }
 
     static Angle getLeadYaw(

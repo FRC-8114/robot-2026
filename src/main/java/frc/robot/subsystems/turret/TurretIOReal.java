@@ -80,7 +80,6 @@ public class TurretIOReal implements TurretIO {
         public static final TalonFXConfiguration pivotMotorCfg = new TalonFXConfiguration()
                 .withSlot0(pivotMotorPIDs)
                 .withClosedLoopGeneral(new ClosedLoopGeneralConfigs().withContinuousWrap(false))
-                .withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive))
                 .withMotionMagic(pivotMotionMagicConfigs)
                 .withSoftwareLimitSwitch(softwareLimits)
                 .withFeedback(new FeedbackConfigs()

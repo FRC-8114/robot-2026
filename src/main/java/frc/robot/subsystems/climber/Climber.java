@@ -2,76 +2,76 @@ package frc.robot.subsystems.climber;
 
 import static edu.wpi.first.units.Units.Volts;
 
-import org.littletonrobotics.junction.Logger;
-
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 public class Climber extends SubsystemBase {
+    private enum ClimbState {
+        DEPLOY,
+        CLIMB,
+        UNCLIMB,
+        STOW
+    }
+
     private static class Constants {
         // drum diameter: 0.787in
         public static final double DEPLOY_ROTATIONS = 3.023;
         public static final double CLIMB_ROTATIONS = 1.511;
+
+        static final double rotationTolerance = 0.025;
     }
+
+    private ClimbState state;
 
     private final ClimberIO climber;
     private final ClimberIOInputsAutoLogged inputs = new ClimberIOInputsAutoLogged();
-    private final SysIdRoutine sysId;
 
     public Climber(ClimberIO io) {
         this.climber = io;
 
-        sysId = new SysIdRoutine(
-                new SysIdRoutine.Config(
-                        null, null, null,
-                        (state) -> Logger.recordOutput("Climber/SysIdState", state.toString())),
-                new SysIdRoutine.Mechanism(
-                        (voltage) -> climber.runVolts(voltage), null, this));
+        this.state = ClimbState.STOW;
     }
 
     private Command doRotationsDownCommand(double rotations) {
         double startRotations = inputs.rotations;
         return run(() -> climber.runVolts(Volts.of(-3)))
-            .until(() -> startRotations - inputs.rotations == rotations);
+            .until(() -> MathUtil.isNear(rotations, startRotations - inputs.rotations, Constants.rotationTolerance));
     }
     private Command doRotationsUpCommand(double rotations) {
         double startRotations = inputs.rotations;
         return run(() -> climber.runVolts(Volts.of(3)))
-            .until(() -> startRotations - inputs.rotations == rotations);
+            .until(() -> MathUtil.isNear(rotations, inputs.rotations - startRotations, Constants.rotationTolerance));
     }
 
     public Command deploy() {
+        state = ClimbState.DEPLOY;
         return doRotationsUpCommand(Constants.DEPLOY_ROTATIONS);
     }
 
     public Command climb() {
+        state = ClimbState.CLIMB;
         return doRotationsDownCommand(Constants.CLIMB_ROTATIONS);
     }
 
     public Command unclimb() {
-        return doRotationsUpCommand(-Constants.CLIMB_ROTATIONS);
+        state = ClimbState.UNCLIMB;
+        return doRotationsUpCommand(Constants.CLIMB_ROTATIONS);
     }
 
     public Command stow() {
-        return doRotationsDownCommand(-Constants.CLIMB_ROTATIONS);
+        state = ClimbState.STOW;
+        return doRotationsDownCommand(Constants.DEPLOY_ROTATIONS);
     }
 
-    public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-        return switch (direction) {
-            case kForward ->
-                sysId.quasistatic(direction).until(() -> inputs.rotations == Constants.CLIMB_ROTATIONS);
-            case kReverse ->
-                sysId.quasistatic(direction).until(() -> inputs.rotations == 0);
-        };
-    }
-
-    public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-        return switch (direction) {
-            case kForward ->
-                sysId.dynamic(direction).until(() -> inputs.rotations == Constants.CLIMB_ROTATIONS);
-            case kReverse ->
-                sysId.dynamic(direction).until(() -> inputs.rotations == 0);
+    public Command doNext() {
+        return switch (state) {
+            case DEPLOY -> climb();
+            case CLIMB -> unclimb();
+            case UNCLIMB -> stow();
+            case STOW -> deploy();
+            default -> Commands.none();
         };
     }
 

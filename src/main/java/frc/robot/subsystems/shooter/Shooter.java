@@ -12,6 +12,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 public class Shooter extends SubsystemBase {
@@ -50,9 +51,7 @@ public class Shooter extends SubsystemBase {
         Logger.processInputs("Shooter", inputs);
     }
 
-    public boolean isAtSpeed() {
-        return RPM.of(inputs.leftFlywheelRPMs).isNear(targetVelocity, Constants.flywheelToleranceRPM);
-    }
+    public Trigger atSpeed = new Trigger(() -> RPM.of(inputs.leftFlywheelRPMs).isNear(targetVelocity, Constants.flywheelToleranceRPM));
 
     public Command runFlywheelsTunableVelocity() {
         return runEnd(

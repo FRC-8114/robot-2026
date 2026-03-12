@@ -93,6 +93,7 @@ public class Drive extends SubsystemBase {
 
     private SwerveDriveKinematics kinematics = new SwerveDriveKinematics(getModuleTranslations());
     private Rotation2d rawGyroRotation = Rotation2d.kZero;
+    private Rotation2d gyroYawOffset = Rotation2d.kZero;
     private SwerveModulePosition[] lastModulePositions = // For delta tracking
             new SwerveModulePosition[] {
                     new SwerveModulePosition(),
@@ -239,7 +240,7 @@ public class Drive extends SubsystemBase {
             }
 
             // Apply update
-            poseEstimator.updateWithTime(sampleTimestamps[i], rawGyroRotation, modulePositions);
+            poseEstimator.updateWithTime(sampleTimestamps[i], getFieldGyroYaw(), modulePositions);
         }
 
         // Update gyro alert
@@ -440,12 +441,25 @@ public class Drive extends SubsystemBase {
         return rawGyroRotation;
     }
 
+    /** Returns the field-relative gyro yaw after applying any seeded offset. */
+    public Rotation2d getFieldGyroYaw() {
+        return rawGyroRotation.plus(gyroYawOffset);
+    }
+
     /** Returns the full 3D gyro rotation (roll, pitch, yaw), unaffected by vision corrections. */
     public Rotation3d getRawGyroRotation3d() {
         return new Rotation3d(
                 gyroInputs.rollPosition.getRadians(),
                 gyroInputs.pitchPosition.getRadians(),
                 rawGyroRotation.getRadians());
+    }
+
+    /** Returns the full 3D gyro rotation with field-relative yaw for vision consumers. */
+    public Rotation3d getFieldGyroRotation3d() {
+        return new Rotation3d(
+                gyroInputs.rollPosition.getRadians(),
+                gyroInputs.pitchPosition.getRadians(),
+                getFieldGyroYaw().getRadians());
     }
 
     /** Returns the full 3D gyro angular velocity (roll, pitch, yaw rates) in radians per second. */
@@ -458,7 +472,8 @@ public class Drive extends SubsystemBase {
 
     /** Resets the current odometry pose. */
     public void setPose(Pose2d pose) {
-        poseEstimator.resetPosition(rawGyroRotation, getModulePositions(), pose);
+        gyroYawOffset = pose.getRotation().minus(rawGyroRotation);
+        poseEstimator.resetPosition(getFieldGyroYaw(), getModulePositions(), pose);
     }
 
     /** Adds a new timestamped vision measurement. */

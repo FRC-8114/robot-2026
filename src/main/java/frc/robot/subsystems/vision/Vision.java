@@ -2,42 +2,52 @@ package frc.robot.subsystems.vision;
 
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.vision.VisionConstants.CameraConfiguration;
 import frc.robot.subsystems.vision.VisionConstants.LimelightCameraConfiguration;
 import frc.robot.subsystems.vision.VisionIO.PoseEstimation;
-import frc.robot.subsystems.vision.VisionIO.PoseEstimationBuffer;
 import limelight.networktables.LimelightSettings;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
 
 public class Vision extends SubsystemBase {
-    private record IOBundle(VisionIO io, VisionIOInputsAutoLogged inputs, PoseEstimationBuffer buffer) {}
+    private record IOBundle(VisionIO io, VisionIOInputsAutoLogged inputs) {}
     private final List<IOBundle> ioList;
-    private final ArrayList<PoseEstimation> tagObservations = new ArrayList<PoseEstimation>();
     private final Consumer<PoseEstimation> poseConsumer;
+    private final Consumer<PoseEstimation> poseSeedConsumer;
     private final Supplier<Rotation3d> gyroRotationSupplier;
     private final Supplier<Rotation3d> gyroVelocitySupplier;
 
-    private final List<Pose3d> allRejectedPoses = new ArrayList<Pose3d>();
     private final List<Pose3d> allPoses = new ArrayList<Pose3d>();
 
-    public Vision(Consumer<PoseEstimation> consumer, Supplier<Rotation3d> gyroRotationSupplier, Supplier<Rotation3d> gyroVelocitySupplier, List<VisionIO> visionIOs) {
+    public Vision(
+            Consumer<PoseEstimation> consumer,
+            Consumer<PoseEstimation> seedConsumer,
+            Supplier<Rotation3d> gyroRotationSupplier,
+            Supplier<Rotation3d> gyroVelocitySupplier,
+            List<VisionIO> visionIOs) {
         ioList = visionIOs.stream()
-                .map(io -> new IOBundle(io, new VisionIOInputsAutoLogged(), new PoseEstimationBuffer()))
+                .map(io -> new IOBundle(io, new VisionIOInputsAutoLogged()))
                 .toList();
 
         poseConsumer = consumer;
+        poseSeedConsumer = seedConsumer;
         this.gyroRotationSupplier = gyroRotationSupplier;
         this.gyroVelocitySupplier = gyroVelocitySupplier;
     }
 
-    public static Vision fromCameraConstants(Consumer<PoseEstimation> consumer, Supplier<Rotation3d> gyroRotationSupplier, Supplier<Rotation3d> gyroVelocitySupplier) {
+    public static Vision fromCameraConstants(
+            Consumer<PoseEstimation> consumer,
+            Consumer<PoseEstimation> seedConsumer,
+            Supplier<Rotation3d> gyroRotationSupplier,
+            Supplier<Rotation3d> gyroVelocitySupplier) {
         List<VisionIO> visionIOs = new ArrayList<>();
 
         for (CameraConfiguration camera : VisionConstants.cameras) {
@@ -48,24 +58,30 @@ public class Vision extends SubsystemBase {
             }
         }
 
-        return new Vision(consumer, gyroRotationSupplier, gyroVelocitySupplier, visionIOs);
+        return new Vision(consumer, seedConsumer, gyroRotationSupplier, gyroVelocitySupplier, visionIOs);
     }
 
     public void seedPoseFromVision() {
-        for (var bundle : ioList) {
-            bundle.io().seedPoseFromMegatag1(poseConsumer);
-        }
+        getLowestAmbiguitySeedObservation().ifPresent(poseSeedConsumer);
     }
 
-    private void processPoseEstimations() {
-        if (tagObservations.isEmpty()) {
-            return;
+    private Optional<PoseEstimation> getLowestAmbiguitySeedObservation() {
+        PoseEstimation bestSeed = null;
+
+        for (var bundle : ioList) {
+            Optional<PoseEstimation> candidate = bundle.io().sampleSeedPose();
+            if (candidate.isPresent()
+                    && (bestSeed == null || candidate.get().ambiguity() < bestSeed.ambiguity())) {
+                bestSeed = candidate.get();
+            }
         }
 
-        for (PoseEstimation observation : tagObservations) {
-            allPoses.add(observation.pose());
-            poseConsumer.accept(observation);
-        }
+        return Optional.ofNullable(bestSeed);
+    }
+
+    private void acceptObservation(PoseEstimation observation) {
+        allPoses.add(observation.pose());
+        poseConsumer.accept(observation);
     }
 
     public void setIMUMode(LimelightSettings.ImuMode mode) {
@@ -77,31 +93,25 @@ public class Vision extends SubsystemBase {
     @Override
     public void periodic() {
         allPoses.clear();
-        allRejectedPoses.clear();
+        
+        if (RobotState.isDisabled()) {
+            seedPoseFromVision();
+        }
 
         Rotation3d gyroRotation3d = gyroRotationSupplier.get();
         Rotation3d gyroVelocityRadPerSec = gyroVelocitySupplier.get();
 
         for (var bundle : ioList) {
-            bundle.io().setRobotOrientation(gyroRotation3d, gyroVelocityRadPerSec);
-            bundle.io().updateInputs(bundle.inputs(), bundle.buffer());
+            List<PoseEstimation> observations = bundle.io().updateInputs(
+                    bundle.inputs(),
+                    gyroRotation3d,
+                    gyroVelocityRadPerSec);
             Logger.processInputs("Vision/" + bundle.io().getConfiguration().name(), bundle.inputs());
-
-            if (bundle.buffer().count > 0) {
-                for (int i = 0; i < bundle.buffer().count; i++) {
-                    tagObservations.add(bundle.buffer().poseEstimations[i]);
-                }
-                bundle.buffer().clear();
-            }
+            observations.forEach(this::acceptObservation);
         }
 
-        processPoseEstimations();
-        tagObservations.clear();
-
         Logger.recordOutput("Vision/AllPoses", allPoses.toArray(new Pose3d[0]));
-        Logger.recordOutput("Vision/AllRejectedPoses", allRejectedPoses.toArray(new Pose3d[0]));
         Logger.recordOutput("Vision/AcceptedCount", allPoses.size());
-        Logger.recordOutput("Vision/RejectedCount", allRejectedPoses.size());
     }
 
 }

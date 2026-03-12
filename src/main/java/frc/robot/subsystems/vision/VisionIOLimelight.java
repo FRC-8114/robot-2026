@@ -4,13 +4,11 @@ import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static frc.robot.subsystems.vision.VisionConstants.aprilTagLayout;
 import static frc.robot.subsystems.vision.VisionConstants.maxAmbiguity;
 
+import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import frc.robot.subsystems.vision.VisionConstants.CameraConfiguration;
@@ -47,69 +45,58 @@ public class VisionIOLimelight implements VisionIO {
         return config;
     }
 
-    public void seedPoseFromMegatag1(Consumer<PoseEstimation> poseConsumer) {
-        Optional<PoseEstimate> estimate = megatag1Estimator.getPoseEstimate();
-        if (estimate.isEmpty()) {
-            return;
-        }
-
-        PoseEstimate estimated = estimate.get();
-        boolean willReject = estimated.tagCount == 0
-                || (estimated.tagCount == 1 && estimated.getAvgTagAmbiguity() > maxAmbiguity)
-                || estimated.pose.getX() < 0.0
-                || estimated.pose.getX() > aprilTagLayout.getFieldLength()
-                || estimated.pose.getY() < 0.0
-                || estimated.pose.getY() > aprilTagLayout.getFieldWidth();
-
-        if (!willReject) {
-            poseConsumer.accept(new VisionIO.PoseEstimation(
-                    estimated.pose,
-                    estimated.timestampSeconds,
-                    estimated.getAvgTagAmbiguity(),
-                    new Matrix<>(VecBuilder.fill(1e-4, 1e-4, 1e-4))));
-        }
+    @Override
+    public Optional<PoseEstimation> sampleSeedPose() {
+        return megatag1Estimator.getPoseEstimate()
+                .filter(estimate -> !shouldRejectEstimate(estimate, false))
+                .map(VisionIO.PoseEstimation::seedFromLimelightEstimate);
     }
 
-    public void setRobotOrientation(Rotation3d gyroRotation3d, Rotation3d gyroVelocityRadPerSec) {
+    private void setRobotOrientation(Rotation3d gyroRotation3d, Rotation3d gyroVelocityRadPerSec) {
         limelight.getSettings()
                 .withRobotOrientation(new Orientation3d(
                         gyroRotation3d,
-                        RadiansPerSecond.of(gyroVelocityRadPerSec.getX()),
+                        RadiansPerSecond.of(gyroVelocityRadPerSec.getZ()),
                         RadiansPerSecond.of(gyroVelocityRadPerSec.getY()),
-                        RadiansPerSecond.of(gyroVelocityRadPerSec.getZ())))
+                        RadiansPerSecond.of(gyroVelocityRadPerSec.getX())))
                 .save();
     }
 
-    public void updateInputs(VisionIOInputs inputs, PoseEstimationBuffer buffer) {
+    private boolean shouldRejectEstimate(PoseEstimate estimate, boolean rejectOnZError) {
+        return estimate.tagCount == 0
+                || (estimate.tagCount == 1 && estimate.getAvgTagAmbiguity() > maxAmbiguity)
+                || (rejectOnZError && Math.abs(estimate.pose.getZ()) > VisionConstants.maxZError)
+                || estimate.pose.getX() < 0.0
+                || estimate.pose.getX() > aprilTagLayout.getFieldLength()
+                || estimate.pose.getY() < 0.0
+                || estimate.pose.getY() > aprilTagLayout.getFieldWidth();
+    }
+
+    @Override
+    public List<PoseEstimation> updateInputs(
+            VisionIOInputs inputs,
+            Rotation3d gyroRotation3d,
+            Rotation3d gyroVelocityRadPerSec) {
+        setRobotOrientation(gyroRotation3d, gyroVelocityRadPerSec);
         inputs.connected = limelight.getNTTable().containsKey("getpipe");
 
         Optional<PoseEstimate> estimate = poseEstimator.getPoseEstimate();
-
         if (estimate.isEmpty()) {
-            return;
+            return List.of();
         }
 
         PoseEstimate estimated = estimate.get();
-        boolean willReject = estimated.tagCount == 0
-                || (estimated.tagCount == 1
-                        && estimated.getAvgTagAmbiguity() > maxAmbiguity)
-                || Math.abs(estimated.pose.getZ()) > VisionConstants.maxZError
-                || estimated.pose.getX() < 0.0
-                || estimated.pose.getX() > aprilTagLayout.getFieldLength()
-                || estimated.pose.getY() < 0.0
-                || estimated.pose.getY() > aprilTagLayout.getFieldWidth();
-
-        if (willReject) {
+        if (shouldRejectEstimate(estimated, true)) {
             Logger.recordOutput(
                     "Vision/Camera/" + config.name() + "/RejectedPose",
                     estimated.pose);
-            return;
+            return List.of();
         }
 
         Logger.recordOutput(
                 "Vision/Camera/" + config.name() + "/AcceptedPose",
                 estimated.pose);
-        buffer.pushEstimate(VisionIO.PoseEstimation.fromLimelightEstimate(this, estimated));
+        return List.of(VisionIO.PoseEstimation.fromLimelightEstimate(config, estimated));
     }
 
     @Override

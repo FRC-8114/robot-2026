@@ -12,7 +12,7 @@ import edu.wpi.first.math.geometry.Translation3d;
 import limelight.networktables.LimelightPoseEstimator.EstimationMode;
 
 public class VisionConstants {
-    public static final EstimationMode LIMELIGHT_ESTIMATION_MODE = EstimationMode.MEGATAG1;
+    public static final EstimationMode LIMELIGHT_ESTIMATION_MODE = EstimationMode.MEGATAG2;
 
     public interface CameraConfiguration {
         String name();
@@ -49,8 +49,6 @@ public class VisionConstants {
 
     // AprilTag layout
     public static AprilTagFieldLayout aprilTagLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
-
-    // TODO: measure actual camera positions on robot
     
     private static final Transform3d ROBOT_TO_CAMERA_BACKLEFT = new Transform3d(
             new Translation3d(Inches.of(-12.427 + 1), Inches.of(-13.927 + 2.5), Inches.of(3.938 + 4.5)),

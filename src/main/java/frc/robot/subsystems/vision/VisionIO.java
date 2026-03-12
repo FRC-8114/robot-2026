@@ -1,6 +1,7 @@
 package frc.robot.subsystems.vision;
 
-import java.util.function.Consumer;
+import java.util.List;
+import java.util.Optional;
 
 import limelight.networktables.LimelightSettings;
 import limelight.networktables.PoseEstimate;
@@ -15,30 +16,9 @@ import edu.wpi.first.math.numbers.*;
 import frc.robot.subsystems.vision.VisionConstants.CameraConfiguration;
 
 public interface VisionIO {
-    public static final int POSE_ESTIMATION_BUFFER_SIZE = 48;
-
     @AutoLog
     public static class VisionIOInputs {
         public boolean connected;
-    }
-
-    public static class PoseEstimationBuffer {
-        public int count = 0;
-        public PoseEstimation[] poseEstimations = new PoseEstimation[POSE_ESTIMATION_BUFFER_SIZE];
-
-        public void pushEstimate(PoseEstimation estimation) {
-            if (count < POSE_ESTIMATION_BUFFER_SIZE) {
-                poseEstimations[count] = estimation;
-                count++;
-            }
-        }
-
-        public void clear() {
-            for (int i = 0; i < count; i++) {
-                poseEstimations[i] = null;
-            }
-            count = 0;
-        }
     }
 
     public static record PoseEstimation(
@@ -47,23 +27,49 @@ public interface VisionIO {
             double ambiguity,
             Matrix<N3, N1> stddev) {
 
-        public static PoseEstimation fromLimelightEstimate(VisionIO visionIO, PoseEstimate estimate) {
-            double stdDevFactor = Math.pow(estimate.avgTagDist, 2.0) / estimate.tagCount;
-            double linearStdDev = VisionConstants.linearStdDevBaseline * stdDevFactor;
-            double angularStdDev = VisionConstants.angularStdDevBaseline * stdDevFactor;
-
-            if (estimate.isMegaTag2) {
-                linearStdDev *= VisionConstants.linearStdDevMegatag2Factor;
-                angularStdDev *= VisionConstants.angularStdDevMegatag2Factor;
-            }
-
-            linearStdDev *= visionIO.getConfiguration().stdDeviation();
-            angularStdDev *= visionIO.getConfiguration().stdDeviation();
-
+        public static PoseEstimation seedFromLimelightEstimate(PoseEstimate estimate) {
             return new PoseEstimation(
                     estimate.pose,
                     estimate.timestampSeconds,
                     estimate.getAvgTagAmbiguity(),
+                    new Matrix<>(VecBuilder.fill(1e-4, 1e-4, 1e-4)));
+        }
+
+        public static PoseEstimation fromLimelightEstimate(CameraConfiguration configuration, PoseEstimate estimate) {
+            return fromStatistics(
+                    configuration,
+                    estimate.pose,
+                    estimate.timestampSeconds,
+                    estimate.getAvgTagAmbiguity(),
+                    estimate.avgTagDist,
+                    estimate.tagCount,
+                    estimate.isMegaTag2);
+        }
+
+        public static PoseEstimation fromStatistics(
+                CameraConfiguration configuration,
+                Pose3d pose,
+                double timestamp,
+                double ambiguity,
+                double avgTagDist,
+                int tagCount,
+                boolean isMegaTag2) {
+            double stdDevFactor = Math.pow(avgTagDist, 2.0) / tagCount;
+            double linearStdDev = VisionConstants.linearStdDevBaseline * stdDevFactor;
+            double angularStdDev = VisionConstants.angularStdDevBaseline * stdDevFactor;
+
+            if (isMegaTag2) {
+                linearStdDev *= VisionConstants.linearStdDevMegatag2Factor;
+                angularStdDev *= VisionConstants.angularStdDevMegatag2Factor;
+            }
+
+            linearStdDev *= configuration.stdDeviation();
+            angularStdDev *= configuration.stdDeviation();
+
+            return new PoseEstimation(
+                    pose,
+                    timestamp,
+                    ambiguity,
                     new Matrix<>(VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev)));
         }
     }
@@ -72,9 +78,10 @@ public interface VisionIO {
 
     default void setIMUMode(LimelightSettings.ImuMode imuMode) {};
 
-    void seedPoseFromMegatag1(Consumer<PoseEstimation> poseConsumer);
+    Optional<PoseEstimation> sampleSeedPose();
 
-    void setRobotOrientation(Rotation3d gyroRotation3d, Rotation3d gyroVelocityRadPerSec);
-
-    void updateInputs(VisionIOInputs inputs, PoseEstimationBuffer buffer);
+    List<PoseEstimation> updateInputs(
+            VisionIOInputs inputs,
+            Rotation3d gyroRotation3d,
+            Rotation3d gyroVelocityRadPerSec);
 }

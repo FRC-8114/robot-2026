@@ -1,14 +1,12 @@
 package frc.robot.subsystems.vision;
 
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.subsystems.vision.VisionConstants.CameraConfiguration;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -55,13 +53,23 @@ public class VisionIOPhotonVisionSim implements VisionIO {
         return config;
     }
 
-    public void updateInputs(VisionIOInputs inputs, PoseEstimationBuffer buffer) {
+    @Override
+    public Optional<PoseEstimation> sampleSeedPose() {
+        return Optional.empty();
+    }
+
+    @Override
+    public List<PoseEstimation> updateInputs(
+            VisionIOInputs inputs,
+            Rotation3d gyroRotation3d,
+            Rotation3d gyroVelocityRadPerSec) {
         double now = Timer.getFPGATimestamp();
         if (now - lastSimUpdateTimeSec > 0.005) {
             visionSim.update(poseSupplier.get());
             lastSimUpdateTimeSec = now;
         }
         inputs.connected = camera.isConnected();
+        List<PoseEstimation> observations = new ArrayList<>();
 
         var results = camera.getAllUnreadResults();
         for (var result : results) {
@@ -89,25 +97,15 @@ public class VisionIOPhotonVisionSim implements VisionIO {
                     .average()
                     .orElse(0.0);
 
-            double stdDevFactor = Math.pow(avgDist, 2.0) / tagCount;
-            double linearStdDev = VisionConstants.linearStdDevBaseline * stdDevFactor * config.stdDeviation();
-            double angularStdDev = VisionConstants.angularStdDevBaseline * stdDevFactor * config.stdDeviation();
-
-            Matrix<N3, N1> stddev = new Matrix<>(VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev));
-
-            buffer.pushEstimate(new PoseEstimation(
+            observations.add(PoseEstimation.fromStatistics(
+                    config,
                     pose.estimatedPose,
                     pose.timestampSeconds,
                     avgAmbiguity,
-                    stddev));
+                    avgDist,
+                    tagCount,
+                    false));
         }
-    }
-
-    @Override
-    public void seedPoseFromMegatag1(java.util.function.Consumer<PoseEstimation> poseConsumer) {
-    }
-
-    @Override
-    public void setRobotOrientation(Rotation3d gyroRotation3d, Rotation3d gyroVelocityRadPerSec) {
+        return observations;
     }
 }

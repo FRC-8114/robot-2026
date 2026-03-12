@@ -75,7 +75,7 @@ public class Autos {
     }
 
     public Command trenchSSOutpost() {
-        var pathSlices = makeSlicedPath("trenchSSOutpost", 5);
+        var pathSlices = makeSlicedPath("trenchSSOutpost", 6);
 
         return Commands.sequence(
             intakePivot.deploy(),
@@ -83,16 +83,17 @@ public class Autos {
                 intakeRollers.intake(),
                 pathSlices.get(0)
             ),
+            pathSlices.get(1), // drive to shot
             shootSequence()
                 .withTimeout(Seconds.of(5)), // TODO: tune shoot time
-            pathSlices.get(1), // drive to outpost
+            pathSlices.get(2), // drive to outpost
             Commands.waitTime(Seconds.of(4)), // balls dump
-            pathSlices.get(2), // drive to shot
+            pathSlices.get(3), // drive to shot
             shootSequence()
                 .withTimeout(Seconds.of(4)), // TODO: tune shoot time
-            pathSlices.get(3), // drive to prepare climb
+            pathSlices.get(4), // drive to prepare climb
             climber.deploy(),
-            pathSlices.get(4), // approach climb
+            pathSlices.get(5), // approach climb
             climber.climb()
         );
     }

@@ -196,7 +196,10 @@ public class ShooterSupersystem extends SubsystemBase {
         Supplier<Angle> yaw = this::getLeadYaw;
         Supplier<Angle> pitch = this::getPitchAngle;
 
-        return Commands.parallel(turretPivot.followAngle(yaw),
-                turretPitch.followAngle(pitch), run(() -> {}));
+        return Commands.parallel(
+            turretPivot.followAngle(yaw),
+            turretPitch.followAngle(pitch),
+            run(() -> {})
+        );
     }
 }

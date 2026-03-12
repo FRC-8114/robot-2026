@@ -88,21 +88,19 @@ public class RobotContainer {
                         new ModuleIOTalonFX(TunerConstants.BackLeft),
                         new ModuleIOTalonFX(TunerConstants.BackRight));
 
-                // vision = Vision.fromCameraConstants(poseEstimation -> {
-                //     drive.addVisionMeasurement(poseEstimation.pose().toPose2d(),
-                //             poseEstimation.timestamp(),
-                //             poseEstimation.stddev());
-                // }, drive::getRawGyroRotation3d, drive::getRawGyroVelocityRadPerSec);
+                vision = Vision.fromCameraConstants(poseEstimation -> {
+                    drive.addVisionMeasurement(poseEstimation.pose().toPose2d(),
+                            poseEstimation.timestamp(),
+                            poseEstimation.stddev());
+                }, drive::getRawGyroRotation3d, drive::getRawGyroVelocityRadPerSec);
 
-                // Trigger camera_disabled = new Trigger(() -> RobotState.isDisabled());
-                // camera_disabled.whileTrue(Commands.runOnce(
-                //         () -> vision.setIMUMode(LimelightSettings.ImuMode.ExternalImu)));
+                Trigger camera_disabled = new Trigger(() -> RobotState.isDisabled());
+                camera_disabled.whileTrue(Commands.runOnce(
+                        () -> vision.setIMUMode(LimelightSettings.ImuMode.ExternalImu)));
 
-                // Trigger camera_enabled = new Trigger(() -> RobotState.isEnabled());
-                // camera_enabled.onTrue(Commands.runOnce(() -> vision
-                //         .setIMUMode(LimelightSettings.ImuMode.InternalImuExternalAssist)));
-
-                vision = null;
+                Trigger camera_enabled = new Trigger(() -> RobotState.isEnabled());
+                camera_enabled.onTrue(Commands.runOnce(() -> vision
+                        .setIMUMode(LimelightSettings.ImuMode.InternalImuExternalAssist)));
 
                 turretPivot = new Turret(new TurretIOReal());
                 indexer = new Indexer(new IndexerIOReal());

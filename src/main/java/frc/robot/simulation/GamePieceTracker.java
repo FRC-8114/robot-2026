@@ -2,16 +2,18 @@ package frc.robot.simulation;
 
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Radians;
 
 import edu.wpi.first.wpilibj.Timer;
 import org.littletonrobotics.junction.Logger;
 
 import frc.robot.subsystems.drive.Drive;
-import frc.robot.subsystems.indexer.Indexer;
+import frc.robot.subsystems.indexer2.Indexer;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooterpitch.ShooterPitch;
 import frc.robot.subsystems.turret.Turret;
+import frc.robot.subsystems.turretloader.TurretLoader;
 import frc.robot.util.FuelSim;
 
 public class GamePieceTracker {
@@ -24,6 +26,7 @@ public class GamePieceTracker {
 
     private final FuelSim fuelSim;
     private final Indexer indexer;
+    private final TurretLoader turretLoader;
     private final Shooter shooter;
     private final ShooterPitch shooterPitch;
     private final Turret turret;
@@ -39,10 +42,11 @@ public class GamePieceTracker {
     private final Timer hopperTimer = new Timer();
     private final Timer turretLaneTimer = new Timer();
 
-    public GamePieceTracker(FuelSim fuelSim, Indexer indexer, Shooter shooter,
+    public GamePieceTracker(FuelSim fuelSim, Indexer indexer, TurretLoader turretLoader, Shooter shooter,
             ShooterPitch shooterPitch, Turret turret, Drive drive) {
         this.fuelSim = fuelSim;
         this.indexer = indexer;
+        this.turretLoader = turretLoader;
         this.shooter = shooter;
         this.shooterPitch = shooterPitch;
         this.turret = turret;
@@ -53,13 +57,13 @@ public class GamePieceTracker {
         // Fire when ready: flywheels spinning and hopper feeding balls through
         if (readyToFireCount > 0
                 && shooter.getAverageFlywheelRPMs() > RPM_THRESHOLD
-                && indexer.getHopperLanesRPMs() > RPM_THRESHOLD) {
+                && indexer.getVelocity().in(RPM) > RPM_THRESHOLD) {
             tryShoot();
         }
 
         // Advance turret lane → ready to fire
         if (turretLaneCount > 0
-                && indexer.getTurretLaneRPMs() > RPM_THRESHOLD
+                && turretLoader.getVelocity().in(RPM) > RPM_THRESHOLD
                 && turretLaneTimer.hasElapsed(TURRET_LANE_DWELL)) {
             int transfer = turretLaneCount;
             turretLaneCount = 0;
@@ -69,7 +73,7 @@ public class GamePieceTracker {
 
         // Advance hopper → turret lane
         if (hopperCount > 0
-                && indexer.getHopperLanesRPMs() > RPM_THRESHOLD
+                && indexer.getVelocity().in(RPM) > RPM_THRESHOLD
                 && hopperTimer.hasElapsed(HOPPER_DWELL)) {
             int transfer = hopperCount;
             hopperCount = 0;

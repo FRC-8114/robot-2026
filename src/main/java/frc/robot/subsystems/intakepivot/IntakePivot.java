@@ -36,8 +36,8 @@ public class IntakePivot extends SubsystemBase {
                         (voltage) -> io.runVolts(voltage), null, this));
     }
 
-    private Trigger isDeployed = new Trigger(() -> Radians.of(inputs.positionRads).isNear(deployAngle, angleTolerance));
-    private Trigger isStowed = new Trigger(() -> Radians.of(inputs.positionRads).isNear(stowAngle, angleTolerance));
+    public Trigger isDeployed = new Trigger(() -> Radians.of(inputs.positionRads).isNear(deployAngle, angleTolerance));
+    public Trigger isStowed = new Trigger(() -> Radians.of(inputs.positionRads).isNear(stowAngle, angleTolerance));
 
     public Command periodicPulse() {
         return Commands.repeatingSequence(

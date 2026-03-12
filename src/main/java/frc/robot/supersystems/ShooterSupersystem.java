@@ -33,18 +33,20 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooterpitch.ShooterPitch;
 import frc.robot.subsystems.turret.Turret;
+import frc.robot.subsystems.turretloader.TurretLoader;
 import frc.robot.FieldConstants;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.indexer2.Indexer;
 
 public class ShooterSupersystem extends SubsystemBase {
     private final Turret turretPivot;
     private final ShooterPitch turretPitch;
     private final Shooter shooter;
     private final Indexer indexer;
+    private final TurretLoader turretLoader;
     private final Drive drive;
 
     private final InterpolatingMatrixTreeMap<Double, N2, N1> distanceToPitchAndRPM = new InterpolatingMatrixTreeMap<Double, N2, N1>();
@@ -68,7 +70,7 @@ public class ShooterSupersystem extends SubsystemBase {
         distanceToPitchAndRPM.put(dist.in(Meter), new Matrix<N2, N1>(new SimpleMatrix(new double[] { pitchRad, rpm })));
     }
 
-    public ShooterSupersystem(Turret turretPivot, ShooterPitch turretPitch, Shooter shooter, Indexer indexer,
+    public ShooterSupersystem(Turret turretPivot, ShooterPitch turretPitch, Shooter shooter, Indexer indexer, TurretLoader turretLoader,
             Drive drive) {
 
         putMeasurement(Feet.of(7), 20, 1300);
@@ -89,15 +91,10 @@ public class ShooterSupersystem extends SubsystemBase {
         this.turretPitch = turretPitch;
         this.shooter = shooter;
         this.indexer = indexer;
+        this.turretLoader = turretLoader;
         this.drive = drive;
 
         setDefaultCommand(defaultHoming());
-        // new Trigger(staticTurretMode)
-        // .onTrue(Commands.parallel(
-        // turretPivot.setAngle(Degrees.of(0)),
-        // runOnce(() -> setDefaultCommand(runOnce(Commands::none)))
-        // ))
-        // .onFalse(runOnce(() -> setDefaultCommand(defaultHoming())));
     }
 
     private Pair<Double, Double> getRPMAndPitch(double distance) {
@@ -154,20 +151,23 @@ public class ShooterSupersystem extends SubsystemBase {
     public boolean isReadyToFire(Angle turretAngle, Angle pitchAngle) {
         return turretPivot.isAtAngle(turretAngle)
                 && turretPitch.isAtAngle(pitchAngle)
-                && shooter.isAtSpeed()
-                && indexer.isTurretLaneAtSpeed();
+                && shooter.atSpeed.getAsBoolean()
+                && turretLoader.atSpeed.getAsBoolean();
     }
 
-    public Command shootWhenReady(Supplier<Angle> turretAngle, Supplier<Angle> pitchAngle,
-            Supplier<AngularVelocity> rpm, BooleanSupplier fireTrigger) {
-        BooleanSupplier shouldFeed = () -> fireTrigger.getAsBoolean()
-                && isReadyToFire(turretAngle.get(), pitchAngle.get());
+    public Command shootWhenReady(Supplier<Angle> turretAngle, Supplier<Angle> pitchAngle, Supplier<AngularVelocity> rpm, BooleanSupplier fireTrigger) {
+        Trigger shouldFeed = new Trigger(() -> fireTrigger.getAsBoolean()
+                && isReadyToFire(turretAngle.get(), pitchAngle.get()));
 
         return Commands.parallel(
                 turretPivot.followAngle(turretAngle),
                 turretPitch.followAngle(pitchAngle),
                 shooter.runFlywheels(rpm),
-                indexer.prepareAndFeedWhen(shouldFeed));
+                turretLoader.feed(),
+                Commands.sequence(
+                    Commands.waitUntil(shouldFeed),
+                    indexer.feed()
+                ));
     }
 
     private double getDistanceToTarget() {

@@ -35,9 +35,9 @@ import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
-import frc.robot.subsystems.indexer.Indexer;
-import frc.robot.subsystems.indexer.IndexerIOReal;
-import frc.robot.subsystems.indexer.IndexerIOSim;
+import frc.robot.subsystems.indexer2.Indexer;
+import frc.robot.subsystems.indexer2.IndexerIOReal;
+import frc.robot.subsystems.indexer2.IndexerIOSim;
 import frc.robot.subsystems.intakepivot.IntakePivot;
 import frc.robot.subsystems.intakepivot.IntakePivotIOReal;
 import frc.robot.subsystems.intakepivot.IntakePivotIOSim;
@@ -53,6 +53,9 @@ import frc.robot.subsystems.shooterpitch.ShooterPitchIOSim;
 import frc.robot.subsystems.turret.Turret;
 import frc.robot.subsystems.turret.TurretIOReal;
 import frc.robot.subsystems.turret.TurretIOSim;
+import frc.robot.subsystems.turretloader.TurretLoader;
+import frc.robot.subsystems.turretloader.TurretLoaderIOReal;
+import frc.robot.subsystems.turretloader.TurretLoaderIOSim;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.supersystems.ShooterSupersystem;
@@ -60,13 +63,15 @@ import frc.robot.util.FuelSim;
 import limelight.networktables.LimelightSettings;
 
 public class RobotContainer {
-        private final Drive drive;
-        private final Vision vision;
-        private final Turret turretPivot;
-        private final ShooterPitch turretPitch;
-        private final Indexer indexer;
-        private final Shooter shooter;
-        private final Climber climber;
+    private final Drive drive;
+    private final Vision vision;
+    private final Turret turretPivot;
+    private final ShooterPitch turretPitch;
+    private final Shooter shooter;
+    private final Climber climber;
+
+    private final Indexer indexer;
+    private final TurretLoader turretLoader;
 
         private final IntakePivot intakePivot;
         private final IntakeRollers intakeRollers;
@@ -99,9 +104,12 @@ public class RobotContainer {
                                                 drive::getFieldGyroRotation3d,
                                                 drive::getRawGyroVelocityRadPerSec);
 
-                                turretPivot = new Turret(new TurretIOReal());
-                                indexer = new Indexer(new IndexerIOReal());
-                                climber = new Climber(new ClimberIOReal());
+                turretPivot = new Turret(new TurretIOReal());
+        
+                climber = new Climber(new ClimberIOReal());
+
+                indexer = new Indexer(new IndexerIOReal());
+                turretLoader = new TurretLoader(new TurretLoaderIOReal());
 
                                 intakePivot = new IntakePivot(new IntakePivotIOReal());
                                 intakeRollers = new IntakeRollers(new IntakeRollersIOReal());
@@ -128,11 +136,12 @@ public class RobotContainer {
                                 // }, drive::getRawGyroYaw, simVisionIOs);
                                 vision = null;
 
-                                turretPivot = new Turret(new TurretIOSim());
-                                turretPitch = new ShooterPitch(new ShooterPitchIOSim());
-                                indexer = new Indexer(new IndexerIOSim());
-                                shooter = new Shooter(new ShooterIOSim());
-                                climber = new Climber(new ClimberIOSim());
+                turretPivot = new Turret(new TurretIOSim());
+                turretPitch = new ShooterPitch(new ShooterPitchIOSim());
+                indexer = new Indexer(new IndexerIOSim());
+                turretLoader = new TurretLoader(new TurretLoaderIOSim());
+                shooter = new Shooter(new ShooterIOSim());
+                climber = new Climber(new ClimberIOSim());
 
                                 intakePivot = new IntakePivot(new IntakePivotIOSim());
                                 intakeRollers = new IntakeRollers(new IntakeRollersIOSim());
@@ -156,8 +165,8 @@ public class RobotContainer {
                                                 });
                                 fuelSim.spawnStartingFuel();
 
-                                gamePieceTracker = new GamePieceTracker(
-                                                fuelSim, indexer, shooter, turretPitch, turretPivot, drive);
+                gamePieceTracker = new GamePieceTracker(
+                        fuelSim, indexer, turretLoader, shooter, turretPitch, turretPivot, drive);
 
                                 fuelSim.registerIntake(
                                                 -0.336, 0.336, -0.2, 0.2,
@@ -178,7 +187,7 @@ public class RobotContainer {
 
                 autos = new Autos(intakePivot, intakeRollers, climber);
 
-                shooterSupersystem = new ShooterSupersystem(turretPivot, turretPitch, shooter, indexer, drive);
+        shooterSupersystem = new ShooterSupersystem(turretPivot, turretPitch, shooter, indexer, turretLoader, drive);
 
                 // post field2d to elastic
                 SmartDashboard.putData("RobotFieldPose", dashboardField);
@@ -351,46 +360,48 @@ public class RobotContainer {
                                 "Intake Deploy SysId (Dynamic Reverse)",
                                 intakePivot.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
-                // Shooter SysId
-                autoChooser.addOption(
-                                "Shooter SysId (Quasistatic Forward)",
-                                shooter.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-                autoChooser.addOption(
-                                "Shooter SysId (Quasistatic Reverse)",
-                                shooter.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-                autoChooser.addOption(
-                                "Shooter SysId (Dynamic Forward)",
-                                shooter.sysIdDynamic(SysIdRoutine.Direction.kForward));
-                autoChooser.addOption(
-                                "Shooter SysId (Dynamic Reverse)",
-                                shooter.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+        // Shooter SysId
+        autoChooser.addOption(
+                "Shooter SysId (Quasistatic Forward)",
+                shooter.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+        autoChooser.addOption(
+                "Shooter SysId (Quasistatic Reverse)",
+                shooter.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+        autoChooser.addOption(
+                "Shooter SysId (Dynamic Forward)",
+                shooter.sysIdDynamic(SysIdRoutine.Direction.kForward));
+        autoChooser.addOption(
+                "Shooter SysId (Dynamic Reverse)",
+                shooter.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
-                autoChooser.addOption(
-                                "Turret Lane SysId (Quasistatic Forward)",
-                                indexer.sysIdQuasistaticTurret(SysIdRoutine.Direction.kForward));
-                autoChooser.addOption(
-                                "Turret Lane SysId (Quasistatic Reverse)",
-                                indexer.sysIdQuasistaticTurret(SysIdRoutine.Direction.kReverse));
-                autoChooser.addOption(
-                                "Turret Lane SysId (Dynamic Forward)",
-                                indexer.sysIdDynamicTurret(SysIdRoutine.Direction.kForward));
-                autoChooser.addOption(
-                                "Turret Lane SysId (Dynamic Reverse)",
-                                indexer.sysIdDynamicTurret(SysIdRoutine.Direction.kReverse));
+        // Turret Loader SysId
+        autoChooser.addOption(
+                "Turret Lane SysId (Quasistatic Forward)",
+                turretLoader.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+        autoChooser.addOption(
+                "Turret Lane SysId (Quasistatic Reverse)",
+                turretLoader.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+        autoChooser.addOption(
+                "Turret Lane SysId (Dynamic Forward)",
+                turretLoader.sysIdDynamic(SysIdRoutine.Direction.kForward));
+        autoChooser.addOption(
+                "Turret Lane SysId (Dynamic Reverse)",
+                turretLoader.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
-                autoChooser.addOption(
-                                "Hopper Lane SysId (Quasistatic Forward)",
-                                indexer.sysIdQuasistaticHopper(SysIdRoutine.Direction.kForward));
-                autoChooser.addOption(
-                                "Hopper Lane SysId (Quasistatic Reverse)",
-                                indexer.sysIdQuasistaticHopper(SysIdRoutine.Direction.kReverse));
-                autoChooser.addOption(
-                                "Hopper Lane SysId (Dynamic Forward)",
-                                indexer.sysIdDynamicHopper(SysIdRoutine.Direction.kForward));
-                autoChooser.addOption(
-                                "Hopper Lane SysId (Dynamic Reverse)",
-                                indexer.sysIdDynamicHopper(SysIdRoutine.Direction.kReverse));
-        }
+        // Indexer SysId
+        autoChooser.addOption(
+                "Hopper Lane SysId (Quasistatic Forward)",
+                indexer.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+        autoChooser.addOption(
+                "Hopper Lane SysId (Quasistatic Reverse)",
+                indexer.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+        autoChooser.addOption(
+                "Hopper Lane SysId (Dynamic Forward)",
+                indexer.sysIdDynamic(SysIdRoutine.Direction.kForward));
+        autoChooser.addOption(
+                "Hopper Lane SysId (Dynamic Reverse)",
+                indexer.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+    }
 
         private void configureButtonBindings() {
                 // Default command, normal field-relative drive
@@ -414,17 +425,28 @@ public class RobotContainer {
                 // Switch to X pattern when X button is pressed
                 controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
-                // Reset gyro to 0° when B button is pressed
-                controller
-                                .b()
-                                .onTrue(
-                                                Commands.runOnce(
-                                                                () -> drive.setPose(
-                                                                                new Pose2d(drive.getPose()
-                                                                                                .getTranslation(),
-                                                                                                Rotation2d.kZero)),
-                                                                drive)
-                                                                .ignoringDisable(true));
+        // Reset gyro to 0° when B button is pressed
+        // controller
+        //         .b()
+        //         .onTrue(
+        //                 Commands.runOnce(
+        //                         () -> drive.setPose(
+        //                                 new Pose2d(drive.getPose()
+        //                                         .getTranslation(),
+        //                                         Rotation2d.kZero)),
+        //                         drive)
+        //                         .ignoringDisable(true));
+
+        controller.b().onTrue(Commands.runOnce(() -> {
+                if (intakePivot.isDeployed.getAsBoolean()) {
+                        intakePivot.stow();
+                } else if (intakePivot.isStowed.getAsBoolean()) {
+                        intakePivot.deploy();
+                } else {
+                        // failsafe
+                        intakePivot.deploy();
+                }
+        }));
 
                 controller
                                 .start()
@@ -437,20 +459,14 @@ public class RobotContainer {
                                                                 })
                                                                 .ignoringDisable(true));
 
-                controller.leftBumper().whileTrue(intakeRollers.intake());
+        controller.leftTrigger().whileTrue(intakeRollers.intake());
 
-                controller.y().whileTrue(indexer.feed());
+        controller.rightTrigger().whileTrue(
+                shooterSupersystem.shootAtTarget(
+                        () -> controller.getRightTriggerAxis() > 0.5));
 
-                controller.povUp().whileTrue(shooter.runFlywheelsTunableVelocity());
-                // controller.povUp().whileTrue(shooter.runFlywheelsFULL());
-
-                controller.povLeft().whileTrue(climber.stow());
-
-                // controller.leftTrigger().whileTrue(
-                // shooterSupersystem.shootAtTarget(
-                // () -> controller.getRightTriggerAxis() > 0.5));
-
-        }
+        controller.y().onTrue(climber.doNext());
+    }
 
         public void simulationPeriodic() {
                 if (gamePieceTracker != null) {

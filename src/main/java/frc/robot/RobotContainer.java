@@ -88,19 +88,21 @@ public class RobotContainer {
                         new ModuleIOTalonFX(TunerConstants.BackLeft),
                         new ModuleIOTalonFX(TunerConstants.BackRight));
 
-                vision = Vision.fromCameraConstants(poseEstimation -> {
-                    drive.addVisionMeasurement(poseEstimation.pose().toPose2d(),
-                            poseEstimation.timestamp(),
-                            poseEstimation.stddev());
-                }, drive::getRawGyroRotation3d, drive::getRawGyroVelocityRadPerSec);
+                // vision = Vision.fromCameraConstants(poseEstimation -> {
+                //     drive.addVisionMeasurement(poseEstimation.pose().toPose2d(),
+                //             poseEstimation.timestamp(),
+                //             poseEstimation.stddev());
+                // }, drive::getRawGyroRotation3d, drive::getRawGyroVelocityRadPerSec);
 
-                Trigger camera_disabled = new Trigger(() -> RobotState.isDisabled());
-                camera_disabled.whileTrue(Commands.runOnce(
-                        () -> vision.setIMUMode(LimelightSettings.ImuMode.ExternalImu)));
+                // Trigger camera_disabled = new Trigger(() -> RobotState.isDisabled());
+                // camera_disabled.whileTrue(Commands.runOnce(
+                //         () -> vision.setIMUMode(LimelightSettings.ImuMode.ExternalImu)));
 
-                Trigger camera_enabled = new Trigger(() -> RobotState.isEnabled());
-                camera_enabled.onTrue(Commands.runOnce(() -> vision
-                        .setIMUMode(LimelightSettings.ImuMode.InternalImuExternalAssist)));
+                // Trigger camera_enabled = new Trigger(() -> RobotState.isEnabled());
+                // camera_enabled.onTrue(Commands.runOnce(() -> vision
+                //         .setIMUMode(LimelightSettings.ImuMode.InternalImuExternalAssist)));
+
+                vision = null;
 
                 turretPivot = new Turret(new TurretIOReal());
                 indexer = new Indexer(new IndexerIOReal());
@@ -199,6 +201,8 @@ public class RobotContainer {
     private void setupAutoChoices() {
         autoChooser = new LoggedDashboardChooser<>("Auto Choices",
                 AutoBuilder.buildAutoChooser());
+
+        autoChooser.addOption("MOI CALC", autos.TUNE_MOI());
 
         // Real Autos
         autoChooser.addOption("Same Side Trench (Depot Side)", autos.trenchSSDepot());
@@ -436,6 +440,7 @@ public class RobotContainer {
         controller.y().whileTrue(indexer.feed());
 
         controller.povUp().whileTrue(shooter.runFlywheelsTunableVelocity());
+        // controller.povUp().whileTrue(shooter.runFlywheelsFULL());
 
         controller.povLeft().whileTrue(climber.stow());
 

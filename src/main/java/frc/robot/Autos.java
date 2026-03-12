@@ -69,6 +69,11 @@ public class Autos {
         );
     }
 
+    public Command TUNE_MOI() {
+        var pathSlices = makeSlicedPath("CalibrateMOI", 1);
+        return pathSlices.get(0);
+    }
+
     public Command trenchSSOutpost() {
         var pathSlices = makeSlicedPath("trenchSSOutpost", 5);
 

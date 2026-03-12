@@ -1,6 +1,9 @@
 package frc.robot.supersystems;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Feet;
 import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.Meter;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Radians;
 
@@ -9,6 +12,7 @@ import java.util.function.Supplier;
 
 import org.ejml.simple.SimpleMatrix;
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
 import edu.wpi.first.math.InterpolatingMatrixTreeMap;
 import edu.wpi.first.math.Matrix;
@@ -28,6 +32,7 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooterpitch.ShooterPitch;
@@ -49,21 +54,34 @@ public class ShooterSupersystem extends SubsystemBase {
         public static final Distance turretYOffset = Inches.of(6.875); // positive Y is left
         public static final Distance turretZOffset = Inches.of(20.5); // positive Z is up
 
-        public static final Transform3d turretOffset = new Transform3d(turretXOffset, turretYOffset, turretZOffset, new Rotation3d());
+        public static final Transform3d turretOffset = new Transform3d(turretXOffset, turretYOffset, turretZOffset,
+                new Rotation3d());
 
         public static final double FLYWHEEL_RADIUS_METERS = 0.050;
     }
 
-    private void putMeasurement(double meters, double pitchDegrees, double rpm) {
+    private static final LoggedNetworkBoolean staticTurretMode = new LoggedNetworkBoolean("Tuning/TurretStaticMode",
+            false);
+
+    private void putMeasurement(Distance dist, double pitchDegrees, double rpm) {
         double pitchRad = Math.toRadians(pitchDegrees);
-        distanceToPitchAndRPM.put(meters, new Matrix<N2, N1>(new SimpleMatrix(new double[] { pitchRad, rpm })));
+        distanceToPitchAndRPM.put(dist.in(Meter), new Matrix<N2, N1>(new SimpleMatrix(new double[] { pitchRad, rpm })));
     }
 
     public ShooterSupersystem(Turret turretPivot, ShooterPitch turretPitch, Shooter shooter, Indexer indexer,
             Drive drive) {
 
-        putMeasurement(1, 11, 1200);
-        putMeasurement(2, 15, 1200);
+        putMeasurement(Feet.of(7), 20, 1300);
+        putMeasurement(Feet.of(8), 24.0, 1450);
+        putMeasurement(Feet.of(9), 28.0, 1485);
+        putMeasurement(Feet.of(10), 28.0, 1555);
+        putMeasurement(Feet.of(11), 28.0, 1630);
+        putMeasurement(Feet.of(13), 28.0, 1820);
+        putMeasurement(Feet.of(16), 28.0, 2060);
+        putMeasurement(Feet.of(16), 33, 1950);
+
+        putMeasurement(Feet.of(25), 33, 2225);
+        putMeasurement(Feet.of(40), 33, 2800);
 
         // todo: distance to pitch and rpm
 
@@ -74,6 +92,12 @@ public class ShooterSupersystem extends SubsystemBase {
         this.drive = drive;
 
         setDefaultCommand(defaultHoming());
+        // new Trigger(staticTurretMode)
+        // .onTrue(Commands.parallel(
+        // turretPivot.setAngle(Degrees.of(0)),
+        // runOnce(() -> setDefaultCommand(runOnce(Commands::none)))
+        // ))
+        // .onFalse(runOnce(() -> setDefaultCommand(defaultHoming())));
     }
 
     private Pair<Double, Double> getRPMAndPitch(double distance) {
@@ -90,7 +114,7 @@ public class ShooterSupersystem extends SubsystemBase {
 
         Logger.recordOutput("Shooter/exitVelocity", exitVelocity);
 
-        return horizontalDist / (exitVelocity * Math.cos(pitchRad));
+        return horizontalDist / (exitVelocity * Math.cos(Math.PI - pitchRad));
     }
 
     private Translation3d getTurretPosition() {
@@ -118,7 +142,7 @@ public class ShooterSupersystem extends SubsystemBase {
         Translation2d velocityOffset = new Translation2d(fieldSpeeds.vxMetersPerSecond, fieldSpeeds.vyMetersPerSecond)
                 .times(tof);
         Translation2d offsetTarget = target.toTranslation2d().minus(velocityOffset);
-            
+
         Logger.recordOutput("Shooter/offsetTarget", offsetTarget);
 
         Translation2d offsetFromTurret = offsetTarget.minus(turretPosition.toTranslation2d());
@@ -172,7 +196,10 @@ public class ShooterSupersystem extends SubsystemBase {
         Supplier<Angle> yaw = this::getLeadYaw;
         Supplier<Angle> pitch = this::getPitchAngle;
 
-        return Commands.parallel(turretPivot.followAngle(yaw),
-                turretPitch.followAngle(pitch));
+        return Commands.parallel(
+            turretPivot.followAngle(yaw),
+            turretPitch.followAngle(pitch),
+            run(() -> {})
+        );
     }
 }

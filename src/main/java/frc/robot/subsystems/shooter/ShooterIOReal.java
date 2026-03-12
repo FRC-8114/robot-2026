@@ -10,12 +10,14 @@ import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityTorqueCurrentFOC;
+import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Voltage;
 import frc.robot.RobotConstants;
 
 public class ShooterIOReal implements ShooterIO {
@@ -24,12 +26,9 @@ public class ShooterIOReal implements ShooterIO {
         static final int rightFlywheelMotorId = 36;
 
         static final Slot0Configs flywheelSlot0 = new Slot0Configs()
-                .withKS(0.001)
-                .withKV(0.032)
-                .withKA(0.01)
-                .withKP(9.78)
-                .withKI(0.0)
-                .withKD(0.0);
+                .withKS(0.29425)
+                .withKV(0.108203)
+                .withKP(0.18997);
 
         static final CurrentLimitsConfigs currentLimits = new CurrentLimitsConfigs()
                 .withSupplyCurrentLimit(80)
@@ -39,14 +38,14 @@ public class ShooterIOReal implements ShooterIO {
 
         static final TalonFXConfiguration flywheelMotorConfig = new TalonFXConfiguration()
                 .withSlot0(flywheelSlot0)
-                .withMotorOutput(new MotorOutputConfigs() .withInverted(InvertedValue.Clockwise_Positive))
+                .withMotorOutput(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive))
                 .withCurrentLimits(currentLimits);
     }
 
     private final TalonFX leftFlywheel = new TalonFX(Constants.leftFlywheelMotorId, RobotConstants.canBus);
     private final TalonFX rightFlywheel = new TalonFX(Constants.rightFlywheelMotorId, RobotConstants.canBus);
 
-    private final VelocityTorqueCurrentFOC velocityControl = new VelocityTorqueCurrentFOC(0).withSlot(0);
+    private final VelocityVoltage velocityControl = new VelocityVoltage(0).withSlot(0);
     private final VoltageOut voltageControl = new VoltageOut(0);
 
     public ShooterIOReal() {
@@ -60,7 +59,7 @@ public class ShooterIOReal implements ShooterIO {
         leftFlywheel.setControl(velocityControl.withVelocity(velocity));
     }
 
-    public void setVoltage(double volts) {
+    public void runVolts(Voltage volts) {
         leftFlywheel.setControl(voltageControl.withOutput(volts));
     }
 

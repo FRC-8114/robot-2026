@@ -1,6 +1,7 @@
 package frc.robot.subsystems.shooterpitch;
 
 import static edu.wpi.first.units.Units.Degree;
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
@@ -29,7 +30,7 @@ public class ShooterPitchIOReal implements ShooterPitchIO {
                 .withKS(0.55)
                 .withKV(0.032)
                 .withKA(0.011)
-                .withKP(100.78)
+                .withKP(120.78)
                 .withKG(0.4)
                 .withKI(0.0)
                 .withKD(0.0);
@@ -73,7 +74,7 @@ public class ShooterPitchIOReal implements ShooterPitchIO {
     }
 
     public void updateInputs(ShooterPitchInputs inputs) {
-        inputs.pitchPosition = turretPitchMotor.getPosition().getValue().in(Radians);
+        inputs.pitchPosition = turretPitchMotor.getPosition().getValue().in(Degrees);
         inputs.velocityRadsPerSec = turretPitchMotor.getVelocity().getValue().in(RadiansPerSecond);
         inputs.appliedVoltage = turretPitchMotor.getMotorVoltage().getValueAsDouble();
     }

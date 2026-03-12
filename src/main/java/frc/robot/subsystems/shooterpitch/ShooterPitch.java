@@ -2,7 +2,6 @@ package frc.robot.subsystems.shooterpitch;
 
 import static edu.wpi.first.units.Units.Degree;
 import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Volts;
 
 import java.util.function.Supplier;
@@ -38,8 +37,6 @@ public class ShooterPitch extends SubsystemBase {
                         (state) -> Logger.recordOutput("ShooterPitch/SysIdState", state.toString())),
                 new SysIdRoutine.Mechanism(
                         (voltage) -> pitchMotor.setVoltage(voltage.in(Volts)), null, this));
-
-        setDefaultCommand(followAngle(() -> Degrees.of(angle.get())));
     }
 
     public double getPitchPositionRads() {
@@ -53,7 +50,7 @@ public class ShooterPitch extends SubsystemBase {
     }
 
     public boolean isAtAngle(Angle target) {
-        return target.isNear(Radians.of(inputs.pitchPosition), ANGLE_TOLERANCE);
+        return target.isNear(Degrees.of(inputs.pitchPosition), ANGLE_TOLERANCE);
     }
 
     public Command setAngle(Angle pitchAngle) {

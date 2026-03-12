@@ -39,6 +39,7 @@ import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.indexer.IndexerIOReal;
 import frc.robot.subsystems.indexer.IndexerIOSim;
 import frc.robot.subsystems.intakepivot.IntakePivot;
+import frc.robot.subsystems.intakepivot.IntakePivotIOReal;
 import frc.robot.subsystems.intakepivot.IntakePivotIOSim;
 import frc.robot.subsystems.intakerollers.IntakeRollers;
 import frc.robot.subsystems.intakerollers.IntakeRollersIOReal;
@@ -77,6 +78,8 @@ public class RobotContainer {
 
         private final CommandXboxController controller = new CommandXboxController(0);
 
+        private static final Field2d dashboardField = new Field2d();
+
         public RobotContainer() {
                 switch (RobotConstants.robotMode) {
                         case REAL: {
@@ -100,7 +103,7 @@ public class RobotContainer {
                                 indexer = new Indexer(new IndexerIOReal());
                                 climber = new Climber(new ClimberIOReal());
 
-                                intakePivot = new IntakePivot(new IntakePivotIOSim());
+                                intakePivot = new IntakePivot(new IntakePivotIOReal());
                                 intakeRollers = new IntakeRollers(new IntakeRollersIOReal());
 
                                 turretPitch = new ShooterPitch(new ShooterPitchIOReal());
@@ -178,12 +181,14 @@ public class RobotContainer {
                 shooterSupersystem = new ShooterSupersystem(turretPivot, turretPitch, shooter, indexer, drive);
 
                 // post field2d to elastic
-                Field2d field = new Field2d();
-                field.setRobotPose(drive.getPose());
-                SmartDashboard.putData("RobotFieldPose", field);
+                SmartDashboard.putData("RobotFieldPose", dashboardField);
 
                 configureButtonBindings();
                 setupAutoChoices();
+        }
+
+        public void updateDashboardField() {
+                dashboardField.setRobotPose(drive.getPose());
         }
 
         public void enabledInit() {
@@ -199,6 +204,8 @@ public class RobotContainer {
         private void setupAutoChoices() {
                 autoChooser = new LoggedDashboardChooser<>("Auto Choices",
                                 AutoBuilder.buildAutoChooser());
+
+                autoChooser.addOption("MOI CALC", autos.TUNE_MOI());
 
                 // Real Autos
                 autoChooser.addOption("Same Side Trench (Depot Side)", autos.trenchSSDepot());
@@ -357,6 +364,32 @@ public class RobotContainer {
                 autoChooser.addOption(
                                 "Shooter SysId (Dynamic Reverse)",
                                 shooter.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+
+                autoChooser.addOption(
+                                "Turret Lane SysId (Quasistatic Forward)",
+                                indexer.sysIdQuasistaticTurret(SysIdRoutine.Direction.kForward));
+                autoChooser.addOption(
+                                "Turret Lane SysId (Quasistatic Reverse)",
+                                indexer.sysIdQuasistaticTurret(SysIdRoutine.Direction.kReverse));
+                autoChooser.addOption(
+                                "Turret Lane SysId (Dynamic Forward)",
+                                indexer.sysIdDynamicTurret(SysIdRoutine.Direction.kForward));
+                autoChooser.addOption(
+                                "Turret Lane SysId (Dynamic Reverse)",
+                                indexer.sysIdDynamicTurret(SysIdRoutine.Direction.kReverse));
+
+                autoChooser.addOption(
+                                "Hopper Lane SysId (Quasistatic Forward)",
+                                indexer.sysIdQuasistaticHopper(SysIdRoutine.Direction.kForward));
+                autoChooser.addOption(
+                                "Hopper Lane SysId (Quasistatic Reverse)",
+                                indexer.sysIdQuasistaticHopper(SysIdRoutine.Direction.kReverse));
+                autoChooser.addOption(
+                                "Hopper Lane SysId (Dynamic Forward)",
+                                indexer.sysIdDynamicHopper(SysIdRoutine.Direction.kForward));
+                autoChooser.addOption(
+                                "Hopper Lane SysId (Dynamic Reverse)",
+                                indexer.sysIdDynamicHopper(SysIdRoutine.Direction.kReverse));
         }
 
         private void configureButtonBindings() {
@@ -408,11 +441,14 @@ public class RobotContainer {
 
                 controller.y().whileTrue(indexer.feed());
 
-                controller.povUp().whileTrue(shooter.runFlywheelsVolts(Volts.of(4)));
+                controller.povUp().whileTrue(shooter.runFlywheelsTunableVelocity());
+                // controller.povUp().whileTrue(shooter.runFlywheelsFULL());
 
-                controller.leftTrigger().whileTrue(
-                                shooterSupersystem.shootAtTarget(
-                                                () -> controller.getRightTriggerAxis() > 0.5));
+                controller.povLeft().whileTrue(climber.stow());
+
+                // controller.leftTrigger().whileTrue(
+                // shooterSupersystem.shootAtTarget(
+                // () -> controller.getRightTriggerAxis() > 0.5));
 
         }
 

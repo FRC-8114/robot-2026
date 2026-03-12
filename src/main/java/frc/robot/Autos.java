@@ -78,16 +78,17 @@ public class Autos {
         var pathCommands = makeSlicedPathCommands(paths);
 
         return Commands.sequence(
-            resetPoseFromPath(paths.isEmpty() ? null : paths.get(0)),
-            builder.build(pathCommands)
-        );
+                resetPoseFromPath(paths.isEmpty() ? null : paths.get(0)),
+                builder.build(pathCommands));
     }
 
     private Command shootSequence() {
-        System.out.println("SHOOOOOTING!!!!!!!");
-        return Commands.waitUntil(() -> false);
+        return Commands.waitUntil(() -> {
+            System.out.println("SHOOOOOTING!!!!!!!");
+            return false;
+        });
     }
-    
+
     public Autos(IntakePivot intakePivot, IntakeRollers intakeRollers, Climber climber) {
         this.intakeRollers = intakeRollers;
         this.intakePivot = intakePivot;
@@ -96,50 +97,49 @@ public class Autos {
 
     public Command basicShoot() {
         return buildSlicedAuto("basicShoot", 3, pathSlices -> Commands.sequence(
-            pathSlices.get(0),
-            shootSequence()
-                .withTimeout(Seconds.of(6)),
-            pathSlices.get(1)
-        ));
+                pathSlices.get(0),
+                shootSequence()
+                        .withTimeout(Seconds.of(6)),
+                pathSlices.get(1)));
+    }
+
+    public Command TUNE_MOI() {
+        return buildSlicedAuto("CalibrateMOI", 1, pathSlices -> pathSlices.get(0));
     }
 
     public Command trenchSSDepot() {
         return buildSlicedAuto("trenchSSDepot", 3, pathSlices -> Commands.sequence(
-            intakePivot.deploy(),
-            Commands.race( // collect balls from alliance zone
-                intakeRollers.intake(),
-                pathSlices.get(0)
-            ),
-            shootSequence()
-                .withTimeout(Seconds.of(5)), // TODO: tune shoot time
-            Commands.parallel( // collect balls from depot while shooting
-                pathSlices.get(1), 
+                intakePivot.deploy(),
+                Commands.race( // collect balls from alliance zone
+                        intakeRollers.intake(),
+                        pathSlices.get(0)),
                 shootSequence()
-                    .withTimeout(Seconds.of(4)) // TODO: tune shoot time
-            ),
-            climber.deploy(),
-            pathSlices.get(2), // approach climb
-            climber.climb()
-        ));
+                        .withTimeout(Seconds.of(5)), // TODO: tune shoot time
+                Commands.parallel( // collect balls from depot while shooting
+                        pathSlices.get(1),
+                        shootSequence()
+                                .withTimeout(Seconds.of(4)) // TODO: tune shoot time
+                ),
+                climber.deploy(),
+                pathSlices.get(2), // approach climb
+                climber.climb()));
     }
 
     public Command trenchSSOutpost() {
         return buildSlicedAuto("trenchSSOutpost", 3, pathSlices -> Commands.sequence(
-            intakePivot.deploy(),
-            Commands.race( // collect balls from alliance zone
-                intakeRollers.intake(),
-                pathSlices.get(0)
-            ),
-            shootSequence()
-                .withTimeout(Seconds.of(0)), // TODO: tune shoot time
-            Commands.parallel( // collect balls from outpost while shooting
-                pathSlices.get(1), 
+                intakePivot.deploy(),
+                Commands.race( // collect balls from alliance zone
+                        intakeRollers.intake(),
+                        pathSlices.get(0)),
                 shootSequence()
-                    .withTimeout(Seconds.of(0)) // TODO: tune shoot time
-            ),
-            climber.deploy(),
-            pathSlices.get(2), // approach climb
-            climber.climb()
-        ));
+                        .withTimeout(Seconds.of(0)), // TODO: tune shoot time
+                Commands.parallel( // collect balls from outpost while shooting
+                        pathSlices.get(1),
+                        shootSequence()
+                                .withTimeout(Seconds.of(0)) // TODO: tune shoot time
+                ),
+                climber.deploy(),
+                pathSlices.get(2), // approach climb
+                climber.climb()));
     }
 }

@@ -25,7 +25,7 @@ public class IntakePivotIOReal implements IntakePivotIO {
     private static final double gearRatio = 11.8125;
 
     private static final Slot0Configs pidConfig = new Slot0Configs()
-        .withKS(0.001)
+        .withKS(0.9)
         .withKV(0.032)
         .withKA(0.01)
         .withKP(9.78)

@@ -3,11 +3,14 @@ package frc.robot.subsystems.intakepivot;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Rotations;
+import static edu.wpi.first.units.Units.Seconds;
+import static edu.wpi.first.units.Units.Volts;
 
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -36,9 +39,19 @@ public class IntakePivot extends SubsystemBase {
     private Trigger isDeployed = new Trigger(() -> Radians.of(inputs.positionRads).isNear(deployAngle, angleTolerance));
     private Trigger isStowed = new Trigger(() -> Radians.of(inputs.positionRads).isNear(stowAngle, angleTolerance));
 
+    public Command periodicPulse() {
+        return Commands.repeatingSequence(
+            run(() -> io.runVolts(Volts.of(2))),
+            Commands.waitTime(Seconds.of(0.25)),
+            deploy(),
+            Commands.waitTime(Seconds.of(1))
+        )
+            .finallyDo(this::deploy);  
+    }
+
     public Command deploy() {
         return run(() -> io.setTarget(deployAngle))
-            .until(isDeployed)
+            // .until(isDeployed)
             .withName("DeployIntake");
     }
 

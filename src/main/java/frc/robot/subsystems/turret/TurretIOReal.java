@@ -3,6 +3,8 @@ package frc.robot.subsystems.turret;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.ClosedLoopGeneralConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
@@ -33,8 +35,8 @@ public class TurretIOReal implements TurretIO {
         // the turret encoder which has the 21T gear
         public static final int encoder21TID = 34;
 
-        private static final double encoder19TOffset = -0.063720703125;
-        private static final double encoder21TOffset = -0.68896484375;
+        private static final double encoder19TOffset = -0.0888671875;
+        private static final double encoder21TOffset = -0.33447265625;
 
         public static final double RESEED_ERROR_THRESHOLD = Math.toRadians(4);
         public static final double STATIONARY_VELOCITY_THRESHOLD = Math.toRadians(5);
@@ -137,6 +139,7 @@ public class TurretIOReal implements TurretIO {
     }
 
     public void setTarget(Angle angle) {
+        Logger.recordOutput("Turret/Goal", Turret.clampAngle(angle));
         pivotMotor.setControl(control.withPosition(Turret.clampAngle(angle)));
     }
 

@@ -7,6 +7,8 @@ import static edu.wpi.first.units.Units.Volts;
 import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.Angle;
@@ -18,8 +20,8 @@ public class Turret extends SubsystemBase {
     public static class Constants {
         private static final Angle ANGLE_TOLERANCE = Degrees.of(1);
 
-        public static final Angle MIN_ANGLE = Radians.of(0);
-        public static final Angle MAX_ANGLE = Radians.of(1);
+        public static final Angle MIN_ANGLE = Radians.of(1.492563);
+        public static final Angle MAX_ANGLE = Radians.of(5.833729);
     }
 
     private final TurretIO pivotMotor;

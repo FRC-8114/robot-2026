@@ -20,8 +20,8 @@ public class Turret extends SubsystemBase {
     public static class Constants {
         private static final Angle ANGLE_TOLERANCE = Degrees.of(1);
 
-        public static final Angle MIN_ANGLE = Radians.of(-1.6490296535897926);
-        public static final Angle MAX_ANGLE = Radians.of(2.692136346410207);
+        public static final Angle MIN_ANGLE = Radians.of(0.40);
+        public static final Angle MAX_ANGLE = Radians.of(4.85);
     }
 
     private final TurretIO pivotMotor;
@@ -101,11 +101,11 @@ public class Turret extends SubsystemBase {
     }
 
     public Command setAngle(Angle angle) {
-        return run(() -> pivotMotor.setTarget(clampAngle(angle)));
+        return run(() -> pivotMotor.setTarget(angle));
     }
 
     public Command followAngle(Supplier<Angle> angle) {
-        return run(() -> pivotMotor.setTarget(clampAngle(angle.get())));
+        return run(() -> pivotMotor.setTarget(angle.get()));
     }
 
     private boolean isOutOfBounds() {

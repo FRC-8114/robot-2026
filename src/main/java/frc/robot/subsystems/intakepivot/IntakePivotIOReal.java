@@ -8,10 +8,12 @@ import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
@@ -25,30 +27,32 @@ public class IntakePivotIOReal implements IntakePivotIO {
     private static final double gearRatio = 11.8125;
 
     private static final Slot0Configs pidConfig = new Slot0Configs()
-        .withKS(0.9)
-        .withKV(0.032)
-        .withKA(0.01)
-        .withKP(9.78)
-        .withKI(0.0)
-        .withKD(0.0);
-    
+            .withGravityType(GravityTypeValue.Arm_Cosine)
+            .withKS(1.5)
+            .withKG(0.4)
+            .withKV(0.1)
+            .withKA(0.01)
+            .withKP(9.78);
+
     private static final MotionMagicConfigs mmConfig = new MotionMagicConfigs()
-        .withMotionMagicCruiseVelocity(10)
-        .withMotionMagicAcceleration(45)
-        .withMotionMagicJerk(0);
+            .withMotionMagicCruiseVelocity(10)
+            .withMotionMagicAcceleration(45);
 
     private static final TalonFXConfiguration motorConfig = new TalonFXConfiguration()
-        .withSlot0(pidConfig)
-        .withMotionMagic(mmConfig)
-        .withFeedback(new FeedbackConfigs()
-            .withSensorToMechanismRatio(gearRatio))
-        .withMotorOutput(new MotorOutputConfigs()
-            .withNeutralMode(NeutralModeValue.Brake)
-            .withInverted(InvertedValue.CounterClockwise_Positive));
+            .withSlot0(pidConfig)
+            .withMotionMagic(mmConfig)
+            .withSoftwareLimitSwitch(
+                    new SoftwareLimitSwitchConfigs().withForwardSoftLimitEnable(true).withForwardSoftLimitThreshold(IntakePivot.stowAngle)
+                            .withReverseSoftLimitEnable(true).withReverseSoftLimitThreshold(0))
+            .withFeedback(new FeedbackConfigs()
+                    .withSensorToMechanismRatio(gearRatio))
+            .withMotorOutput(new MotorOutputConfigs()
+                    .withNeutralMode(NeutralModeValue.Brake)
+                    .withInverted(InvertedValue.CounterClockwise_Positive));
 
     private static final TalonFX pivotMotor = new TalonFX(motorID, RobotConstants.canBus);
 
-    private static final MotionMagicVoltage control = new MotionMagicVoltage(0);
+    private static final MotionMagicVoltage control = new MotionMagicVoltage(IntakePivot.stowAngle);
     private static final VoltageOut controlVoltage = new VoltageOut(0).withEnableFOC(true);
 
     public IntakePivotIOReal() {

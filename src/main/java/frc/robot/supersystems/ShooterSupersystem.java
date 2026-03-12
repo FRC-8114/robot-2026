@@ -40,6 +40,7 @@ import frc.robot.subsystems.turretloader.TurretLoader;
 import frc.robot.FieldConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.indexer2.Indexer;
+import frc.robot.subsystems.intakepivot.IntakePivot;
 
 public class ShooterSupersystem extends SubsystemBase {
     private final Turret turretPivot;
@@ -48,6 +49,8 @@ public class ShooterSupersystem extends SubsystemBase {
     private final Indexer indexer;
     private final TurretLoader turretLoader;
     private final Drive drive;
+
+    private final IntakePivot intakePivot;
 
     private final InterpolatingMatrixTreeMap<Double, N2, N1> distanceToPitchAndRPM = new InterpolatingMatrixTreeMap<Double, N2, N1>();
 
@@ -71,7 +74,7 @@ public class ShooterSupersystem extends SubsystemBase {
     }
 
     public ShooterSupersystem(Turret turretPivot, ShooterPitch turretPitch, Shooter shooter, Indexer indexer, TurretLoader turretLoader,
-            Drive drive) {
+            Drive drive, IntakePivot intakePivot) {
 
         putMeasurement(Feet.of(7), 20, 1300);
         putMeasurement(Feet.of(8), 24.0, 1450);
@@ -92,6 +95,8 @@ public class ShooterSupersystem extends SubsystemBase {
         this.indexer = indexer;
         this.turretLoader = turretLoader;
         this.drive = drive;
+    
+        this.intakePivot = intakePivot;
 
         setDefaultCommand(defaultHoming());
     }
@@ -233,8 +238,11 @@ public class ShooterSupersystem extends SubsystemBase {
         Supplier<Angle> yaw = this::getLeadYaw;
         Supplier<Angle> pitch = this::getPitchAngle;
 
+        Trigger turretCanMove = new Trigger(() -> !staticTurretMode.get()) .and(intakePivot.isDeployed);
+
         return Commands.parallel(
             turretPivot.followAngle(yaw),
+                // .onlyIf(turretCanMove),
             turretPitch.followAngle(pitch),
             run(() -> {})
         );

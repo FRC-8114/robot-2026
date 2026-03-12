@@ -9,6 +9,7 @@ import static edu.wpi.first.units.Units.Volts;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -16,8 +17,8 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 public class IntakePivot extends SubsystemBase {
-    public static final Angle stowAngle = Rotations.of(0); // TODO: measure stow angle
-    private static final Angle deployAngle = Rotations.of(-0.0036019423);
+    public static final Angle stowAngle = Radians.of(1.98); // TODO: measure stow angle
+    private static final Angle deployAngle = Radians.of(0);
     private static final Angle angleTolerance = Degrees.of(3);
 
     private IntakePivotIO io;
@@ -41,7 +42,7 @@ public class IntakePivot extends SubsystemBase {
 
     public Command periodicPulse() {
         return Commands.repeatingSequence(
-            run(() -> io.runVolts(Volts.of(2))),
+            run(() -> io.runVolts(Volts.of(0.1))),
             Commands.waitTime(Seconds.of(0.25)),
             deploy(),
             Commands.waitTime(Seconds.of(1))
@@ -50,13 +51,11 @@ public class IntakePivot extends SubsystemBase {
     }
 
     public Command deploy() {
-        return run(() -> io.setTarget(deployAngle))
-            // .until(isDeployed)
-            .withName("DeployIntake");
+        return run(() -> io.runVolts(Volts.of(-2.5)));
     }
 
     public Command stow() {
-        return run(() -> io.setTarget(stowAngle))
+        return run(() -> io.runVolts(Volts.of(2.5)))
             .until(isStowed);
     }
 

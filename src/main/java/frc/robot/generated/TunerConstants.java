@@ -25,16 +25,16 @@ public class TunerConstants {
 
         private static final Slot0Configs driveGainsFR = new Slot0Configs()
                         .withKP(51.305).withKI(0).withKD(0)
-                        .withKS(5.9597).withKV(0.17317).withKA(2.3765);
+                        .withKS(5.9597).withKV(0).withKA(0);
         private static final Slot0Configs driveGainsFL = new Slot0Configs()
                         .withKP(57.509).withKD(0)
-                        .withKS(6.1404).withKV(0.097164).withKA(2.867);
+                        .withKS(6.1404).withKV(0).withKA(0);
         private static final Slot0Configs driveGainsRL = new Slot0Configs()
-                        .withKP(57.267).withKD(0)
-                        .withKS(5.821).withKV(0.3799).withKA(2.2338);
+                        .withKP(60).withKD(0)
+                        .withKS(6).withKV(0).withKA(0);
         private static final Slot0Configs driveGainsRR = new Slot0Configs()
                         .withKP(57.451).withKD(0)
-                        .withKS(5.816).withKV(0.26799).withKA(2.3107);
+                        .withKS(5.816).withKV(0).withKA(0);
 
         private static final Slot0Configs steerGainsFR = new Slot0Configs()
                         .withKP(73.8106)
@@ -105,7 +105,7 @@ public class TunerConstants {
 
         private static final double kDriveGearRatio = 6.026785714285714;
         private static final double kSteerGearRatio = 26.09090909090909;
-        private static final Distance kWheelRadius = Inches.of(4);
+        private static final Distance kWheelRadius = Inches.of(2);
 
         private static final boolean kInvertLeftSide = false;
         private static final boolean kInvertRightSide = true;

@@ -35,8 +35,8 @@ public class TurretIOReal implements TurretIO {
         // the turret encoder which has the 21T gear
         public static final int encoder21TID = 34;
 
-        private static final double encoder19TOffset = -0.0888671875;
-        private static final double encoder21TOffset = -0.33447265625;
+        private static final double encoder19TOffset = -0.9248046875;
+        private static final double encoder21TOffset = -0.677490234375;
 
         public static final double RESEED_ERROR_THRESHOLD = Math.toRadians(4);
         public static final double STATIONARY_VELOCITY_THRESHOLD = Math.toRadians(5);
@@ -45,12 +45,12 @@ public class TurretIOReal implements TurretIO {
 
         private static final MagnetSensorConfigs magnetConfig = new MagnetSensorConfigs()
                 .withMagnetOffset(encoder19TOffset)
-                .withSensorDirection(SensorDirectionValue.CounterClockwise_Positive)
+                .withSensorDirection(SensorDirectionValue.Clockwise_Positive)
                 .withAbsoluteSensorDiscontinuityPoint(1);
 
         private static final MagnetSensorConfigs encoder2MagnetConfigs = new MagnetSensorConfigs()
                 .withMagnetOffset(encoder21TOffset)
-                .withSensorDirection(SensorDirectionValue.CounterClockwise_Positive)
+                .withSensorDirection(SensorDirectionValue.Clockwise_Positive)
                 .withAbsoluteSensorDiscontinuityPoint(1);
 
         public static final CANcoderConfiguration encoder1Cfg = new CANcoderConfiguration()
@@ -138,7 +138,7 @@ public class TurretIOReal implements TurretIO {
     }
 
     public void setTarget(Angle angle) {
-        Logger.recordOutput("Turret/Goal", Turret.clampAngle(angle));
+        Logger.recordOutput("Turret/Goal", Turret.clampAngle(angle).in(Radians));
         pivotMotor.setControl(control.withPosition(Turret.clampAngle(angle)));
     }
 

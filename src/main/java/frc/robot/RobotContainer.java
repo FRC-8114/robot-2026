@@ -85,19 +85,16 @@ public class RobotContainer {
                                                 new ModuleIOTalonFX(TunerConstants.BackLeft),
                                                 new ModuleIOTalonFX(TunerConstants.BackRight));
 
-                                vision = Vision.fromCameraConstants(poseEstimation -> {
-                                        drive.addVisionMeasurement(poseEstimation.pose().toPose2d(),
-                                                        poseEstimation.timestamp(),
-                                                        poseEstimation.stddev());
-                                }, drive::getRawGyroRotation3d, drive::getRawGyroVelocityRadPerSec);
-
-                                Trigger camera_disabled = new Trigger(() -> RobotState.isDisabled());
-                                camera_disabled.whileTrue(Commands.runOnce(
-                                                () -> vision.setIMUMode(LimelightSettings.ImuMode.ExternalImu)));
-
-                                Trigger camera_enabled = new Trigger(() -> RobotState.isEnabled());
-                                camera_enabled.onTrue(Commands.runOnce(() -> vision
-                                                .setIMUMode(LimelightSettings.ImuMode.InternalImuExternalAssist)));
+                                vision = Vision.fromCameraConstants(
+                                                poseEstimation -> {
+                                                        drive.addVisionMeasurement(
+                                                                        poseEstimation.pose().toPose2d(),
+                                                                        poseEstimation.timestamp(),
+                                                                        poseEstimation.stddev());
+                                                },
+                                                poseEstimation -> drive.setPose(poseEstimation.pose().toPose2d()),
+                                                drive::getFieldGyroRotation3d,
+                                                drive::getRawGyroVelocityRadPerSec);
 
                                 turretPivot = new Turret(new TurretIOReal());
                                 indexer = new Indexer(new IndexerIOReal());
@@ -187,6 +184,14 @@ public class RobotContainer {
 
                 configureButtonBindings();
                 setupAutoChoices();
+        }
+
+        public void enabledInit() {
+                vision.setIMUMode(LimelightSettings.ImuMode.InternalImuExternalAssist);
+        }
+
+        public void disabledInit() {
+                vision.setIMUMode(LimelightSettings.ImuMode.ExternalImu);
         }
 
         private LoggedDashboardChooser<Command> autoChooser;

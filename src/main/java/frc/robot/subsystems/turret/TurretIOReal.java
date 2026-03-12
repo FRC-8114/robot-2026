@@ -122,7 +122,7 @@ public class TurretIOReal implements TurretIO {
     }
 
     private Angle seedAngleFromCRT(Angle crtAngle) {
-        return Radians.of(MathUtil.angleModulus(crtAngle.in(Radians) + Math.PI));
+        return Turret.normalizeAngle(Radians.of(crtAngle.in(Radians) + Math.PI));
     }
 
     private Angle getSeedAngle() {

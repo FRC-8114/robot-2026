@@ -40,9 +40,14 @@ public class Turret extends SubsystemBase {
 
     }
 
+    public static Angle normalizeAngle(Angle angle) {
+        return Radians.of(MathUtil.inputModulus(angle.in(Radians), 0.0, 2.0 * Math.PI));
+    }
+
     public static Angle clampAngle(Angle angle) {
+        double normalizedAngle = normalizeAngle(angle).in(Radians);
         return Radians.of(MathUtil.clamp(
-                MathUtil.angleModulus(angle.in(Radians)),
+                normalizedAngle,
                 Constants.MIN_ANGLE.in(Radians),
                 Constants.MAX_ANGLE.in(Radians)));
     }
@@ -59,7 +64,8 @@ public class Turret extends SubsystemBase {
     }
 
     public boolean isAtAngle(Angle target) {
-        double error = MathUtil.angleModulus(clampAngle(target).in(Radians) - getTurretPositionRads());
+        double error = clampAngle(target).in(Radians)
+                - normalizeAngle(Radians.of(getTurretPositionRads())).in(Radians);
         return Math.abs(error) <= Constants.ANGLE_TOLERANCE.in(Radians);
     }
 

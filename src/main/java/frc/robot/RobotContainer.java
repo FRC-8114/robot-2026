@@ -37,9 +37,9 @@ import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
-import frc.robot.subsystems.indexer2.Indexer;
-import frc.robot.subsystems.indexer2.IndexerIOReal;
-import frc.robot.subsystems.indexer2.IndexerIOSim;
+import frc.robot.subsystems.indexer.Indexer;
+import frc.robot.subsystems.indexer.IndexerIOReal;
+import frc.robot.subsystems.indexer.IndexerIOSim;
 import frc.robot.subsystems.intakepivot.IntakePivot;
 import frc.robot.subsystems.intakepivot.IntakePivotIOReal;
 import frc.robot.subsystems.intakepivot.IntakePivotIOSim;
@@ -60,6 +60,7 @@ import frc.robot.subsystems.turretloader.TurretLoaderIOReal;
 import frc.robot.subsystems.turretloader.TurretLoaderIOSim;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
+import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.supersystems.ShooterSupersystem;
 import frc.robot.util.FuelSim;
 import limelight.networktables.LimelightSettings;
@@ -127,16 +128,19 @@ public class RobotContainer {
                                                 new ModuleIOSim(TunerConstants.FrontRight),
                                                 new ModuleIOSim(TunerConstants.BackLeft),
                                                 new ModuleIOSim(TunerConstants.BackRight));
-                                // var simVisionIOs = new ArrayList<frc.robot.subsystems.vision.VisionIO>();
-                                // for (var cam : VisionConstants.cameras) {
-                                // simVisionIOs.add(new VisionIOPhotonVisionSim(cam, drive::getPose));
-                                // }
-                                // vision = new Vision(poseEstimation -> {
-                                // drive.addVisionMeasurement(poseEstimation.pose().toPose2d(),
-                                // poseEstimation.timestamp(),
-                                // poseEstimation.stddev());
-                                // }, drive::getRawGyroYaw, simVisionIOs);
-                                vision = null;
+                                var simVisionIOs = new ArrayList<frc.robot.subsystems.vision.VisionIO>();
+                                for (var cam : VisionConstants.cameras) {
+                                        simVisionIOs.add(new VisionIOPhotonVisionSim(cam, drive::getPose));
+                                }
+                                vision = new Vision(poseEstimation -> {
+                                        drive.addVisionMeasurement(
+                                                        poseEstimation.pose().toPose2d(),
+                                                        poseEstimation.timestamp(),
+                                                        poseEstimation.stddev());
+                                },
+                                                poseEstimation -> drive.setPose(poseEstimation.pose().toPose2d()),
+                                                drive::getFieldGyroRotation3d,
+                                                drive::getRawGyroVelocityRadPerSec, simVisionIOs);
 
                                 turretPivot = new Turret(new TurretIOSim());
                                 turretPitch = new ShooterPitch(new ShooterPitchIOSim());
@@ -144,7 +148,6 @@ public class RobotContainer {
                                 turretLoader = new TurretLoader(new TurretLoaderIOSim());
                                 shooter = new Shooter(new ShooterIOSim());
                                 climber = new Climber(new ClimberIOSim());
-
                                 intakePivot = new IntakePivot(new IntakePivotIOSim());
                                 intakeRollers = new IntakeRollers(new IntakeRollersIOSim());
 
@@ -453,7 +456,7 @@ public class RobotContainer {
                                         System.out.println(b);
 
                                         return b;
-                           
+
                                 }));
 
                 controller

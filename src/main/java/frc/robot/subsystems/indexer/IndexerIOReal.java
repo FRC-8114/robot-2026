@@ -1,4 +1,4 @@
-package frc.robot.subsystems.indexer2;
+package frc.robot.subsystems.indexer;
 
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Radians;

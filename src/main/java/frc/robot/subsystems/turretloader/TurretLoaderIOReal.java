@@ -18,27 +18,34 @@ import edu.wpi.first.units.measure.Voltage;
 import frc.robot.RobotConstants;
 
 public class TurretLoaderIOReal implements TurretLoaderIO {
-    private static final int motorID = 41;
+    private static class Constants {
+        private static final int turretLoaderMotorId = 42;
 
-    static final Slot0Configs pidConfig = new Slot0Configs()
-            .withKS(0.001)
-            .withKV(0.032)
-            .withKA(0.01)
-            .withKP(9.78)
-            .withKI(0.0)
-            .withKD(0.0);
+        static final Slot0Configs pidConfig = new Slot0Configs()
+                .withKS(0.001)
+                .withKV(0.032)
+                .withKA(0.01)
+                .withKP(9.78)
+                .withKI(0.0)
+                .withKD(0.0);
 
-    static final TalonFXConfiguration motorConfig = new TalonFXConfiguration()
-            .withMotorOutput(new MotorOutputConfigs()
-                .withInverted(InvertedValue.Clockwise_Positive))
-            .withFeedback(new FeedbackConfigs()
-                .withSensorToMechanismRatio(1.875))
-            .withSlot0(pidConfig);
+        static final TalonFXConfiguration motorConfig = new TalonFXConfiguration()
+                .withMotorOutput(new MotorOutputConfigs()
+                        .withInverted(InvertedValue.Clockwise_Positive))
+                .withFeedback(new FeedbackConfigs()
+                        .withSensorToMechanismRatio(1.875))
+                .withSlot0(pidConfig);
 
-    private final TalonFX laneMotor = new TalonFX(motorID, RobotConstants.canBus);
+    }
+
+    private final TalonFX laneMotor = new TalonFX(Constants.turretLoaderMotorId, RobotConstants.canBus);
 
     private final VelocityVoltage control = new VelocityVoltage(0);
     private final VoltageOut controlVoltage = new VoltageOut(0);
+
+    public TurretLoaderIOReal() {
+        laneMotor.getConfigurator().apply(Constants.motorConfig);
+    }
 
     public void runVolts(Voltage volts) {
         laneMotor.setControl(controlVoltage.withOutput(volts));

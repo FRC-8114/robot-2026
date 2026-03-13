@@ -61,7 +61,6 @@ public class ShooterPitchIOReal implements ShooterPitchIO {
 
     public ShooterPitchIOReal() {
         turretPitchMotor.getConfigurator().apply(Constants.pitchMotorCfg);
-
         turretPitchMotor.setPosition(ShooterPitch.Constants.MIN_ANGLE);
     }
 

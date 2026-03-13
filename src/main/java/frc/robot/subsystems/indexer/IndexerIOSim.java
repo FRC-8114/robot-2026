@@ -1,4 +1,4 @@
-package frc.robot.subsystems.indexer2;
+package frc.robot.subsystems.indexer;
 
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;

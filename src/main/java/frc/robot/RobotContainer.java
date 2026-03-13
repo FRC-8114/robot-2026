@@ -21,6 +21,7 @@ import com.pathplanner.lib.commands.PathfindingCommand;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -66,9 +67,13 @@ import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.supersystems.ShooterSupersystem;
 import frc.robot.util.FuelSim;
+import frc.robot.util.HubShiftUtil;
 import limelight.networktables.LimelightSettings;
 
 public class RobotContainer {
+        private static final double ALLIANCE_FLIP_WARNING_SECONDS = 5.0;
+        private static final double ALLIANCE_FLIP_RUMBLE_SECONDS = 0.5;
+
         private final Drive drive;
         private final Vision vision;
         private final Turret turretPivot;
@@ -216,8 +221,13 @@ public class RobotContainer {
                 vision.setIMUMode(LimelightSettings.ImuMode.InternalImuExternalAssist);
         }
 
+        public void teleopInit() {
+                HubShiftUtil.initialize();
+        }
+
         public void disabledInit() {
                 vision.setIMUMode(LimelightSettings.ImuMode.ExternalImu);
+                controller.getHID().setRumble(RumbleType.kBothRumble, 0.0);
         }
 
         private LoggedDashboardChooser<Command> autoChooser;
@@ -482,6 +492,19 @@ public class RobotContainer {
                                                 () -> controller.getRightTriggerAxis() > 0.5));
 
                 controller.y().onTrue(climber.doNext());
+
+                new Trigger(this::shouldWarnAllianceFlip).onTrue(
+                                Commands.startEnd(
+                                                () -> controller.getHID().setRumble(RumbleType.kBothRumble, 1.0),
+                                                () -> controller.getHID().setRumble(RumbleType.kBothRumble, 0.0))
+                                                .withTimeout(ALLIANCE_FLIP_RUMBLE_SECONDS)
+                                                .ignoringDisable(true));
+        }
+
+        private boolean shouldWarnAllianceFlip() {
+                return RobotState.isEnabled()
+                                && RobotState.isTeleop()
+                                && HubShiftUtil.isAllianceFlipImminent(ALLIANCE_FLIP_WARNING_SECONDS);
         }
 
         public void simulationPeriodic() {

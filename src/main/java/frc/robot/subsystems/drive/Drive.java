@@ -37,13 +37,13 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.RobotConstants;
 import frc.robot.RobotConstants.RobotMode;
 import frc.robot.generated.TunerConstants;
+import frc.robot.util.AllianceFlipUtil;
 import frc.robot.util.LocalADStarAK;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -135,7 +135,7 @@ public class Drive extends SubsystemBase {
                         new PIDConstants(HOLONOMIC_DRIVE_KP, HOLONOMIC_DRIVE_KI, HOLONOMIC_DRIVE_KD),
                         new PIDConstants(HOLONOMIC_TURN_KP, HOLONOMIC_TURN_KI, HOLONOMIC_TURN_KD)),
                 PP_CONFIG,
-                () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
+                AllianceFlipUtil::shouldFlip,
                 this);
 
         Pathfinding.setPathfinder(new LocalADStarAK());

@@ -14,5 +14,7 @@ public interface ClimberIO {
 
     void runVolts(Voltage volts);
 
+    void setPosition(double absoluteDrumRotations);
+
     void updateInputs(ClimberIOInputs inputs);
 }

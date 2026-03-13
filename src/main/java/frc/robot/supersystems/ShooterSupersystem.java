@@ -193,6 +193,7 @@ public class ShooterSupersystem extends SubsystemBase {
             Supplier<Angle> pitchAngle,
             Supplier<AngularVelocity> rpm) {
         return Commands.parallel(
+            run(() -> {}),
             turretPivot.followAngle(turretAngle),
             shooterPitch.followAngle(pitchAngle),
             shooter.runFlywheels(rpm),

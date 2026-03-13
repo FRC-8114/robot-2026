@@ -38,10 +38,8 @@ import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooterpitch.ShooterPitch;
 import frc.robot.subsystems.turret.Turret;
 import frc.robot.subsystems.turretloader.TurretLoader;
-import frc.robot.FieldConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.indexer.Indexer;
-import frc.robot.supersystems.ShotSolutionCalculator.TargetSelection;
 
 public class ShooterSupersystem extends SubsystemBase {
     private final Turret turretPivot;
@@ -126,7 +124,7 @@ public class ShooterSupersystem extends SubsystemBase {
     }
 
     private Translation3d getTarget(Translation3d turretPosition) {
-        TargetSelection targetSelection = ShotSolutionCalculator.getTargetSelection(turretPosition);
+        var targetSelection = ShotSolutionCalculator.getTargetSelection(turretPosition);
 
         Logger.recordOutput("Shooter/PassingShotActive", targetSelection.passingShotActive());
         Logger.recordOutput(
@@ -137,41 +135,6 @@ public class ShooterSupersystem extends SubsystemBase {
 
     private Translation3d getTarget() {
         return getTarget(getTurretPosition());
-    }
-
-    static Translation2d getFieldRelativeLeadTargetVector(
-            Translation2d turretPosition,
-            Translation2d targetPosition,
-            Translation2d fieldVelocity,
-            double timeOfFlight) {
-        Translation2d offsetTarget = targetPosition.minus(fieldVelocity.times(timeOfFlight));
-        return offsetTarget.minus(turretPosition);
-    }
-
-    static Translation2d getRobotRelativeTargetVector(
-            Translation2d fieldRelativeTargetVector,
-            Rotation2d robotHeading) {
-        return fieldRelativeTargetVector.rotateBy(robotHeading.unaryMinus());
-    }
-
-    static Angle getRobotRelativeYaw(Translation2d fieldRelativeTargetVector, Rotation2d robotHeading) {
-        if (fieldRelativeTargetVector.getNorm() < 1e-9) {
-            return Radians.zero();
-        }
-
-        Translation2d robotRelativeTargetVector = getRobotRelativeTargetVector(fieldRelativeTargetVector, robotHeading);
-        return Turret.normalizeAngle(Radians.of(robotRelativeTargetVector.getAngle().getRadians()));
-    }
-
-    static Angle getLeadYaw(
-            Translation2d turretPosition,
-            Translation2d targetPosition,
-            Rotation2d robotHeading,
-            Translation2d fieldVelocity,
-            double timeOfFlight) {
-        Translation2d fieldRelativeTargetVector = getFieldRelativeLeadTargetVector(turretPosition, targetPosition,
-                fieldVelocity, timeOfFlight);
-        return getRobotRelativeYaw(fieldRelativeTargetVector, robotHeading);
     }
 
     private Angle getLeadYaw() {
@@ -187,10 +150,14 @@ public class ShooterSupersystem extends SubsystemBase {
         Translation2d targetPosition = target.toTranslation2d();
         Translation2d turretPosition2d = turretPosition.toTranslation2d();
         Translation2d fieldVelocity = new Translation2d(fieldSpeeds.vxMetersPerSecond, fieldSpeeds.vyMetersPerSecond);
-        Translation2d fieldRelativeTargetVector = getFieldRelativeLeadTargetVector(turretPosition2d, targetPosition,
-                fieldVelocity, tof);
-        Translation2d robotRelativeTargetVector = getRobotRelativeTargetVector(fieldRelativeTargetVector, heading);
-        Angle turretAngle = getRobotRelativeYaw(fieldRelativeTargetVector, heading);
+        Translation2d fieldRelativeTargetVector = ShotSolutionCalculator.getFieldRelativeLeadTargetVector(
+                turretPosition2d,
+                targetPosition,
+                fieldVelocity,
+                tof);
+        Translation2d robotRelativeTargetVector =
+                ShotSolutionCalculator.getRobotRelativeTargetVector(fieldRelativeTargetVector, heading);
+        Angle turretAngle = ShotSolutionCalculator.getRobotRelativeYaw(fieldRelativeTargetVector, heading);
 
         Logger.recordOutput("Shooter/RobotHeadingRad", heading.getRadians());
         Logger.recordOutput("Shooter/TurretPosition", turretPosition2d);

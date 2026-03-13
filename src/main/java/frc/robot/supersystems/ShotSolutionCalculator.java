@@ -42,7 +42,7 @@ final class ShotSolutionCalculator {
     record TargetLayout(Translation3d hubTarget, Translation3d leftPassingTarget, Translation3d rightPassingTarget) {
     }
 
-    private record TargetSelection(Translation3d target, boolean passingShotActive) {
+    record TargetSelection(Translation3d target, boolean passingShotActive) {
     }
 
     private static final TargetLayout FIELD_TARGET_LAYOUT = new TargetLayout(
@@ -131,7 +131,11 @@ final class ShotSolutionCalculator {
                 * ShooterSupersystem.Constants.SPIN_TRANSFER_EFFICIENCY;
     }
 
-    private static TargetSelection getTargetSelection(Translation3d turretPosition, TargetLayout targetLayout) {
+    static TargetSelection getTargetSelection(Translation3d turretPosition) {
+        return getTargetSelection(turretPosition, FIELD_TARGET_LAYOUT);
+    }
+
+    static TargetSelection getTargetSelection(Translation3d turretPosition, TargetLayout targetLayout) {
         Translation3d allianceRelativeTurretPosition = AllianceFlipUtil.apply(turretPosition);
         boolean passingShotActive =
                 FieldPosition.getAllianceRelativeZone(allianceRelativeTurretPosition) != FieldPosition.Zone.ALLIANCE_ZONE;

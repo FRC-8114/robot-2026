@@ -5,7 +5,6 @@ import static edu.wpi.first.units.Units.Feet;
 import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meter;
 import static edu.wpi.first.units.Units.Radians;
-import static edu.wpi.first.units.Units.Seconds;
 
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
@@ -45,11 +44,13 @@ import frc.robot.util.AllianceFlipUtil;
 
 public class ShooterSupersystem extends SubsystemBase {
     private final Turret turretPivot;
-    private final ShooterPitch shooterPitch;
+    private final ShooterPitch turretPitch;
     private final Shooter shooter;
     private final Indexer indexer;
     private final TurretLoader turretLoader;
     private final Drive drive;
+
+    private final IntakePivot intakePivot;
 
     private final InterpolatingMatrixTreeMap<Double, N2, N1> distanceToPitchAndRPM = new InterpolatingMatrixTreeMap<Double, N2, N1>();
 
@@ -66,20 +67,17 @@ public class ShooterSupersystem extends SubsystemBase {
         public static final double SPIN_TRANSFER_EFFICIENCY = 0.75;
     }
 
-    private static final LoggedNetworkBoolean staticTurretMode = new LoggedNetworkBoolean("Tuning/TurretStaticMode", false);
+    private static final LoggedNetworkBoolean staticTurretMode = new LoggedNetworkBoolean("Tuning/TurretStaticMode",
+            false);
 
     private void putMeasurement(Distance dist, double pitchDegrees, double rpm) {
         double pitchRad = Degrees.of(pitchDegrees).in(Radians);
         distanceToPitchAndRPM.put(dist.in(Meter), new Matrix<N2, N1>(new SimpleMatrix(new double[] { pitchRad, rpm })));
     }
 
-    public ShooterSupersystem(
-            Turret turretPivot,
-            ShooterPitch shooterPitch,
-            Shooter shooter,
-            Indexer indexer,
-            TurretLoader turretLoader,
-            Drive drive) {
+    public ShooterSupersystem(Turret turretPivot, ShooterPitch turretPitch, Shooter shooter, Indexer indexer, TurretLoader turretLoader,
+            Drive drive, IntakePivot intakePivot) {
+
         putMeasurement(Feet.of(7), 20, 1300);
         putMeasurement(Feet.of(8), 24.0, 1450);
         putMeasurement(Feet.of(9), 28.0, 1485);
@@ -91,16 +89,18 @@ public class ShooterSupersystem extends SubsystemBase {
         putMeasurement(Feet.of(25), 33, 2225);
         putMeasurement(Feet.of(40), 33, 2800);
 
+        // todo: distance to pitch and rpm
+
         this.turretPivot = turretPivot;
-        this.shooterPitch = shooterPitch;
+        this.turretPitch = turretPitch;
         this.shooter = shooter;
         this.indexer = indexer;
         this.turretLoader = turretLoader;
         this.drive = drive;
+    
+        this.intakePivot = intakePivot;
 
         setDefaultCommand(defaultHoming());
-        new Trigger(staticTurretMode)
-            .whileTrue(turretPivot.setAngle(Degrees.of(180)));
     }
 
     private ShotParameters getShotParameters(double distance) {

@@ -59,10 +59,10 @@ public class Autos {
     }
 
     private Command shootSequence() {
-        return Commands.waitUntil(() -> {
-            System.out.println("SHOOOOOTING!!!!!!!");
-            return false;
-        });
+        return Commands.parallel(
+            Commands.print("SHOOOOOTING!!!!!!!"),
+            shooter.shootAtTarget()
+        );
     }
 
     public Command basicShoot() {
@@ -80,7 +80,7 @@ public class Autos {
     }
 
     public Command TUNE_MOI() {
-        var pathSlices = loadSlicedPaths("CalibrateMOI", 0);
+        var pathSlices = loadSlicedPaths("CalibrateMOI", 1);
 
         return Commands.sequence(
             resetOdomFromPath(pathSlices.get(0)),

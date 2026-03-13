@@ -26,6 +26,8 @@ public class ClimberIOSim implements ClimberIO {
         climberSim = new DCMotorSim(
                 LinearSystemId.createDCMotorSystem(CLIMBER_GEARBOX, CLIMBER_MOI, CLIMBER_GEAR_RATIO),
                 CLIMBER_GEARBOX);
+        
+        climberController.setSetpoint(0);
     }
 
     @Override
@@ -34,7 +36,7 @@ public class ClimberIOSim implements ClimberIO {
         appliedVolts = volts.in(Volts);
     }
 
-    public void doRotations(double rotations) {
+    public void setPosition(double rotations) {
         closedLoop = true;
         climberController.setSetpoint(rotations * 2.0 * Math.PI);
     }

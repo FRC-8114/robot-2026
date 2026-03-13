@@ -1,6 +1,8 @@
 package frc.robot.subsystems.climber;
 
-import static edu.wpi.first.units.Units.Volts;
+import java.util.Set;
+
+import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -8,75 +10,77 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Climber extends SubsystemBase {
-    private enum ClimbState {
-        DEPLOY,
-        CLIMB,
-        UNCLIMB,
-        STOW
-    }
-
     private static class Constants {
         // drum diameter: 0.787in
+        public static final double STOW_ROTATIONS = 0;
         public static final double DEPLOY_ROTATIONS = 3.023;
         public static final double CLIMB_ROTATIONS = 1.511;
 
         static final double rotationTolerance = 0.025;
     }
 
-    private ClimbState state;
+    private enum ClimbState {
+        STOW, DEPLOY, CLIMB, UNCLIMB
+    }
+    private ClimbState state = ClimbState.STOW;
 
-    private final ClimberIO climber;
+    private final ClimberIO io;
     private final ClimberIOInputsAutoLogged inputs = new ClimberIOInputsAutoLogged();
 
     public Climber(ClimberIO io) {
-        this.climber = io;
-
-        this.state = ClimbState.STOW;
+        this.io = io;
     }
 
-    private Command doRotationsDownCommand(double rotations) {
-        double startRotations = inputs.rotations;
-        return run(() -> climber.runVolts(Volts.of(-3)))
-            .until(() -> MathUtil.isNear(rotations, startRotations - inputs.rotations, Constants.rotationTolerance));
-    }
-    private Command doRotationsUpCommand(double rotations) {
-        double startRotations = inputs.rotations;
-        return run(() -> climber.runVolts(Volts.of(3)))
-            .until(() -> MathUtil.isNear(rotations, inputs.rotations - startRotations, Constants.rotationTolerance));
+    private Command goToRotations(double rot) {
+        return run(() -> io.setPosition(rot))
+            .until(() -> MathUtil.isNear(rot, inputs.rotations, Constants.rotationTolerance));
     }
 
     public Command deploy() {
-        state = ClimbState.DEPLOY;
-        return doRotationsUpCommand(Constants.DEPLOY_ROTATIONS);
+        return goToRotations(Constants.DEPLOY_ROTATIONS)
+            .andThen(runOnce(() -> {
+                this.state = ClimbState.DEPLOY;
+            }));
     }
 
     public Command climb() {
-        state = ClimbState.CLIMB;
-        return doRotationsDownCommand(Constants.CLIMB_ROTATIONS);
+        return goToRotations(Constants.CLIMB_ROTATIONS)
+            .andThen(runOnce(() -> {
+                this.state = ClimbState.CLIMB;
+            }));
     }
 
     public Command unclimb() {
-        state = ClimbState.UNCLIMB;
-        return doRotationsUpCommand(Constants.CLIMB_ROTATIONS);
+        return goToRotations(Constants.DEPLOY_ROTATIONS)
+            .andThen(runOnce(() -> {
+                this.state = ClimbState.UNCLIMB;
+            }));
     }
 
     public Command stow() {
-        state = ClimbState.STOW;
-        return doRotationsDownCommand(Constants.DEPLOY_ROTATIONS);
+        return goToRotations(Constants.STOW_ROTATIONS)
+            .andThen(runOnce(() -> {
+                this.state = ClimbState.STOW;
+            }));
     }
 
     public Command doNext() {
-        return switch (state) {
-            case DEPLOY -> climb();
-            case CLIMB -> unclimb();
-            case UNCLIMB -> stow();
-            case STOW -> deploy();
-            default -> Commands.none();
-        };
+        return Commands.defer(() -> {
+            return switch (state) {
+                case DEPLOY -> climb();
+                case CLIMB -> unclimb();
+                case UNCLIMB -> stow();
+                case STOW -> deploy();
+                default -> Commands.none();
+            };
+        }, Set.of(this));
     }
 
     @Override
     public void periodic() {
-        climber.updateInputs(inputs);
+        io.updateInputs(inputs);
+        Logger.processInputs("Climber", inputs);
+
+        Logger.recordOutput("Climber/ClimbState", state);
     }
 }

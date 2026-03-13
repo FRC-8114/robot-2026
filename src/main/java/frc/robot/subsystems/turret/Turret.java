@@ -7,8 +7,6 @@ import static edu.wpi.first.units.Units.Volts;
 import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
-import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
-import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.units.measure.Angle;

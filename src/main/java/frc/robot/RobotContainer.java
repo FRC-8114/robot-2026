@@ -203,8 +203,12 @@ public class RobotContainer {
                 CommandScheduler.getInstance().schedule(PathfindingCommand.warmupCommand().ignoringDisable(true));
 
                 shooterSupersystem = new ShooterSupersystem(
-                                turretPivot, turretPitch, shooter, indexer, turretLoader,
-                                drive, intakePivot);
+                                turretPivot,
+                                turretPitch,
+                                shooter,
+                                indexer,
+                                turretLoader,
+                                drive);
 
                 autos = new Autos(intakePivot, intakeRollers, climber, shooterSupersystem);
 
@@ -490,8 +494,7 @@ public class RobotContainer {
                 controller.leftTrigger().whileTrue(intakeRollers.intake());
 
                 controller.rightTrigger().whileTrue(
-                                shooterSupersystem.shootAtTarget(
-                                                () -> controller.getRightTriggerAxis() > 0.5));
+                                shooterSupersystem.shootAtTarget());
 
                 controller.y().onTrue(climber.doNext());
 

@@ -14,8 +14,8 @@ public class ShooterPitchIOSim implements ShooterPitchIO {
     private static final double GEAR_RATIO = 1.2;
     private static final double MOI = 0.01; // kg*m^2, estimate for pitch mechanism
 
-    private static final double KP = 5.0;
-    private static final double KD = 0.0;
+    private static final double KP = 2.0;
+    private static final double KD = 0.2;
 
     private final DCMotorSim sim;
     private final PIDController controller = new PIDController(KP, 0, KD);

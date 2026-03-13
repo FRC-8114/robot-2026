@@ -16,7 +16,7 @@ public class ShooterIOSim implements ShooterIO {
     private static final double GEAR_RATIO = 1.0;
     private static final double MOI = 0.001;
 
-    private static final double KP = 0.1;
+    private static final double KP = 3;
 
     private final DCMotorSim leftSim;
     private final DCMotorSim rightSim;
@@ -71,9 +71,11 @@ public class ShooterIOSim implements ShooterIO {
         rightSim.update(0.02);
 
         inputs.leftFlywheelRPMs = leftSim.getAngularVelocityRadPerSec() / (2.0 * Math.PI) * 60.0;
+        inputs.leftAppliedVoltage = leftVolts;
         inputs.leftCurrentAmps = Math.abs(leftSim.getCurrentDrawAmps());
 
         inputs.rightFlywheelRPMs = rightSim.getAngularVelocityRadPerSec() / (2.0 * Math.PI) * 60.0;
+        inputs.rightAppliedVoltage = rightVolts;
         inputs.rightCurrentAmps = Math.abs(rightSim.getCurrentDrawAmps());
     }
 }

@@ -6,6 +6,7 @@ import static edu.wpi.first.units.Units.Inches;
 import static edu.wpi.first.units.Units.Meter;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.Seconds;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -44,13 +45,11 @@ import frc.robot.subsystems.intakepivot.IntakePivot;
 
 public class ShooterSupersystem extends SubsystemBase {
     private final Turret turretPivot;
-    private final ShooterPitch turretPitch;
+    private final ShooterPitch shooterPitch;
     private final Shooter shooter;
     private final Indexer indexer;
     private final TurretLoader turretLoader;
     private final Drive drive;
-
-    private final IntakePivot intakePivot;
 
     private final InterpolatingMatrixTreeMap<Double, N2, N1> distanceToPitchAndRPM = new InterpolatingMatrixTreeMap<Double, N2, N1>();
 
@@ -65,17 +64,20 @@ public class ShooterSupersystem extends SubsystemBase {
         public static final double FLYWHEEL_RADIUS_METERS = 0.050;
     }
 
-    private static final LoggedNetworkBoolean staticTurretMode = new LoggedNetworkBoolean("Tuning/TurretStaticMode",
-            false);
+    private static final LoggedNetworkBoolean staticTurretMode = new LoggedNetworkBoolean("Tuning/TurretStaticMode", false);
 
     private void putMeasurement(Distance dist, double pitchDegrees, double rpm) {
         double pitchRad = Math.toRadians(pitchDegrees);
         distanceToPitchAndRPM.put(dist.in(Meter), new Matrix<N2, N1>(new SimpleMatrix(new double[] { pitchRad, rpm })));
     }
 
-    public ShooterSupersystem(Turret turretPivot, ShooterPitch turretPitch, Shooter shooter, Indexer indexer, TurretLoader turretLoader,
-            Drive drive, IntakePivot intakePivot) {
-
+    public ShooterSupersystem(
+            Turret turretPivot,
+            ShooterPitch shooterPitch,
+            Shooter shooter,
+            Indexer indexer,
+            TurretLoader turretLoader,
+            Drive drive) {
         putMeasurement(Feet.of(7), 20, 1300);
         putMeasurement(Feet.of(8), 24.0, 1450);
         putMeasurement(Feet.of(9), 28.0, 1485);
@@ -87,18 +89,16 @@ public class ShooterSupersystem extends SubsystemBase {
         putMeasurement(Feet.of(25), 33, 2225);
         putMeasurement(Feet.of(40), 33, 2800);
 
-        // todo: distance to pitch and rpm
-
         this.turretPivot = turretPivot;
-        this.turretPitch = turretPitch;
+        this.shooterPitch = shooterPitch;
         this.shooter = shooter;
         this.indexer = indexer;
         this.turretLoader = turretLoader;
         this.drive = drive;
-    
-        this.intakePivot = intakePivot;
 
         setDefaultCommand(defaultHoming());
+        new Trigger(staticTurretMode)
+            .whileTrue(turretPivot.setAngle(Degrees.of(180)));
     }
 
     private Pair<Double, Double> getRPMAndPitch(double distance) {
@@ -156,8 +156,8 @@ public class ShooterSupersystem extends SubsystemBase {
             Rotation2d robotHeading,
             Translation2d fieldVelocity,
             double timeOfFlight) {
-        Translation2d fieldRelativeTargetVector =
-                getFieldRelativeLeadTargetVector(turretPosition, targetPosition, fieldVelocity, timeOfFlight);
+        Translation2d fieldRelativeTargetVector = getFieldRelativeLeadTargetVector(turretPosition, targetPosition,
+                fieldVelocity, timeOfFlight);
         return getRobotRelativeYaw(fieldRelativeTargetVector, robotHeading);
     }
 
@@ -174,8 +174,8 @@ public class ShooterSupersystem extends SubsystemBase {
         Translation2d targetPosition = target.toTranslation2d();
         Translation2d turretPosition2d = turretPosition.toTranslation2d();
         Translation2d fieldVelocity = new Translation2d(fieldSpeeds.vxMetersPerSecond, fieldSpeeds.vyMetersPerSecond);
-        Translation2d fieldRelativeTargetVector =
-                getFieldRelativeLeadTargetVector(turretPosition2d, targetPosition, fieldVelocity, tof);
+        Translation2d fieldRelativeTargetVector = getFieldRelativeLeadTargetVector(turretPosition2d, targetPosition,
+                fieldVelocity, tof);
         Translation2d robotRelativeTargetVector = getRobotRelativeTargetVector(fieldRelativeTargetVector, heading);
         Angle turretAngle = getRobotRelativeYaw(fieldRelativeTargetVector, heading);
 
@@ -190,26 +190,21 @@ public class ShooterSupersystem extends SubsystemBase {
         return Turret.clampAngle(turretAngle);
     }
 
-    public boolean isReadyToFire(Angle turretAngle, Angle pitchAngle) {
-        return turretPivot.isAtAngle(turretAngle)
-                && turretPitch.isAtAngle(pitchAngle)
-                && shooter.atSpeed.getAsBoolean()
-                && turretLoader.atSpeed.getAsBoolean();
-    }
-
-    public Command shootWhenReady(Supplier<Angle> turretAngle, Supplier<Angle> pitchAngle, Supplier<AngularVelocity> rpm, BooleanSupplier fireTrigger) {
-        Trigger shouldFeed = new Trigger(() -> fireTrigger.getAsBoolean()
-                && isReadyToFire(turretAngle.get(), pitchAngle.get()));
-
+    public Command shootWhenReady(
+            Supplier<Angle> turretAngle,
+            Supplier<Angle> pitchAngle,
+            Supplier<AngularVelocity> rpm) {
         return Commands.parallel(
-                turretPivot.followAngle(turretAngle),
-                turretPitch.followAngle(pitchAngle),
-                shooter.runFlywheels(rpm),
-                turretLoader.feed(),
-                Commands.sequence(
-                    Commands.waitUntil(shouldFeed),
-                    indexer.feed()
-                ));
+            turretPivot.followAngle(turretAngle),
+            shooterPitch.followAngle(pitchAngle),
+            shooter.runFlywheels(rpm),
+            turretLoader.feed(),
+            Commands.print("SOO WE'RE RUNNING IN HERE"),
+            Commands.sequence(
+                Commands.waitTime(Seconds.of(0.2)), // wait for turretLane to speed up
+                indexer.feed()
+            )
+        );
     }
 
     private double getDistanceToTarget() {
@@ -226,24 +221,22 @@ public class ShooterSupersystem extends SubsystemBase {
         return RPM.of(getRPMAndPitch(distance).getFirst());
     }
 
-    public Command shootAtTarget(BooleanSupplier fireTrigger) {
-        Supplier<Angle> yaw = this::getLeadYaw;
-        Supplier<Angle> pitch = this::getPitchAngle;
-        Supplier<AngularVelocity> rpm = this::getShooterRPM;
-
-        return shootWhenReady(yaw, pitch, rpm, fireTrigger);
+    public Command shootAtTarget() {
+        return shootWhenReady(
+            this::getLeadYaw,
+            this::getPitchAngle,
+            this::getShooterRPM
+        );
     }
 
     public Command defaultHoming() {
         Supplier<Angle> yaw = this::getLeadYaw;
-        Supplier<Angle> pitch = this::getPitchAngle;
-
-        Trigger turretCanMove = new Trigger(() -> !staticTurretMode.get()) .and(intakePivot.isDeployed);
+        // Supplier<Angle> pitch = this::getPitchAngle;
 
         return Commands.parallel(
-            turretPivot.followAngle(yaw),
-                // .onlyIf(turretCanMove),
-            turretPitch.followAngle(pitch),
+            turretPivot.followAngle(yaw)
+                .unless(staticTurretMode),
+            shooterPitch.setAngle(ShooterPitch.Constants.MIN_ANGLE), // must fit under trench
             run(() -> {})
         );
     }

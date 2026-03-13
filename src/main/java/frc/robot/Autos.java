@@ -80,7 +80,7 @@ public class Autos {
     }
 
     public Command TUNE_MOI() {
-        var pathSlices = loadSlicedPaths("CalibrateMOI", 0);
+        var pathSlices = loadSlicedPaths("CalibrateMOI", 1);
 
         return Commands.sequence(
             resetOdomFromPath(pathSlices.get(0)),

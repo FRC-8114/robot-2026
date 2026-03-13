@@ -62,7 +62,7 @@ public class Autos {
     private Command shootSequence() {
         return Commands.parallel(
             Commands.print("SHOOOOOTING!!!!!!!"),
-            shooter.shootAtTarget()
+            shooter.shootAtTarget(() -> true)
         );
     }
 

@@ -4,24 +4,36 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.RPM;
+import static edu.wpi.first.units.Units.Volts;
+
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
+
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.FollowPathCommand;
 import com.pathplanner.lib.commands.PathfindingCommand;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
+import frc.robot.simulation.GamePieceTracker;
 import frc.robot.subsystems.climber.Climber;
 import frc.robot.subsystems.climber.ClimberIOReal;
 import frc.robot.subsystems.climber.ClimberIOSim;
@@ -54,9 +66,14 @@ import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.supersystems.ShooterSupersystem;
+import frc.robot.util.FuelSim;
+import frc.robot.util.HubShiftUtil;
 import limelight.networktables.LimelightSettings;
 
 public class RobotContainer {
+        private static final double ALLIANCE_FLIP_WARNING_SECONDS = 5.0;
+        private static final double ALLIANCE_FLIP_RUMBLE_SECONDS = 0.5;
+
         private final Drive drive;
         private final Vision vision;
         private final Turret turretPivot;
@@ -70,7 +87,7 @@ public class RobotContainer {
         private final IntakePivot intakePivot;
         private final IntakeRollers intakeRollers;
 
-        // private GamePieceTracker gamePieceTracker;
+        private GamePieceTracker gamePieceTracker;
 
         private final ShooterSupersystem shooterSupersystem;
         private final Autos autos;
@@ -119,12 +136,10 @@ public class RobotContainer {
                                                 new ModuleIOSim(TunerConstants.FrontRight),
                                                 new ModuleIOSim(TunerConstants.BackLeft),
                                                 new ModuleIOSim(TunerConstants.BackRight));
-
                                 var simVisionIOs = new ArrayList<frc.robot.subsystems.vision.VisionIO>();
                                 for (var cam : VisionConstants.cameras) {
                                         simVisionIOs.add(new VisionIOPhotonVisionSim(cam, drive::getPose));
                                 }
-
                                 vision = new Vision(poseEstimation -> {
                                         drive.addVisionMeasurement(
                                                         poseEstimation.pose().toPose2d(),
@@ -145,35 +160,35 @@ public class RobotContainer {
                                 intakeRollers = new IntakeRollers(new IntakeRollersIOSim());
 
                                 // FuelSim setup
-                                // var fuelSim = new FuelSim();
-                                // fuelSim.registerRobot(
-                                // 0.67945, 0.634619, 0.1143,
-                                // drive::getPose,
-                                // () -> {
-                                // var cs = drive.getChassisSpeeds();
-                                // var heading = drive.getPose().getRotation();
-                                // return new ChassisSpeeds(
-                                // cs.vxMetersPerSecond * heading.getCos()
-                                // - cs.vyMetersPerSecond * heading
-                                // .getSin(),
-                                // cs.vxMetersPerSecond * heading.getSin()
-                                // + cs.vyMetersPerSecond * heading
-                                // .getCos(),
-                                // cs.omegaRadiansPerSecond);
-                                // });
-                                // fuelSim.spawnStartingFuel();
+                                var fuelSim = new FuelSim();
+                                fuelSim.registerRobot(
+                                                0.67945, 0.634619, 0.1143,
+                                                drive::getPose,
+                                                () -> {
+                                                        var cs = drive.getChassisSpeeds();
+                                                        var heading = drive.getPose().getRotation();
+                                                        return new ChassisSpeeds(
+                                                                        cs.vxMetersPerSecond * heading.getCos()
+                                                                                        - cs.vyMetersPerSecond * heading
+                                                                                                        .getSin(),
+                                                                        cs.vxMetersPerSecond * heading.getSin()
+                                                                                        + cs.vyMetersPerSecond * heading
+                                                                                                        .getCos(),
+                                                                        cs.omegaRadiansPerSecond);
+                                                });
+                                fuelSim.spawnStartingFuel();
 
-                                // gamePieceTracker = new GamePieceTracker(
-                                // fuelSim, indexer, turretLoader, shooter, turretPitch, turretPivot,
-                                // drive);
+                                gamePieceTracker = new GamePieceTracker(
+                                                fuelSim, indexer, turretLoader, shooter, turretPitch, turretPivot,
+                                                drive);
 
-                                // fuelSim.registerIntake(
-                                // -0.336, 0.336, -0.2, 0.2,
-                                // () -> intakeRollers.getVelocity().gt(RPM.of(500)),
-                                // () -> gamePieceTracker.onIntake());
+                                fuelSim.registerIntake(
+                                                -0.336, 0.336, -0.2, 0.2,
+                                                () -> intakeRollers.getVelocity().gt(RPM.of(500)),
+                                                () -> gamePieceTracker.onIntake());
 
-                                // fuelSim.start();
-                                // fuelSim.enableAirResistance();
+                                fuelSim.start();
+                                fuelSim.enableAirResistance();
 
                                 break;
                         }
@@ -186,14 +201,10 @@ public class RobotContainer {
 
                 CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand().ignoringDisable(true));
                 CommandScheduler.getInstance().schedule(PathfindingCommand.warmupCommand().ignoringDisable(true));
-                
+
                 shooterSupersystem = new ShooterSupersystem(
-                        turretPivot,
-                        turretPitch,
-                        shooter,
-                        indexer,
-                        turretLoader,
-                        drive);
+                                turretPivot, turretPitch, shooter, indexer, turretLoader,
+                                drive, intakePivot);
 
                 autos = new Autos(intakePivot, intakeRollers, climber, shooterSupersystem);
 
@@ -211,8 +222,13 @@ public class RobotContainer {
                 vision.setIMUMode(LimelightSettings.ImuMode.InternalImuExternalAssist);
         }
 
+        public void teleopInit() {
+                HubShiftUtil.initialize();
+        }
+
         public void disabledInit() {
                 vision.setIMUMode(LimelightSettings.ImuMode.ExternalImu);
+                controller.getHID().setRumble(RumbleType.kBothRumble, 0.0);
         }
 
         private LoggedDashboardChooser<Command> autoChooser;
@@ -224,7 +240,8 @@ public class RobotContainer {
                 autoChooser.addOption("MOI CALC", autos.TUNE_MOI());
 
                 // Real Autos
-                autoChooser.addOption("Basic Shoot", autos.basicShoot());
+                // autoChooser.addOption("Same Side Trench (Depot Side)",
+                // autos.trenchSSDepot());
                 autoChooser.addOption("Same Side Trench (Outpost Side)", autos.trenchSSOutpost());
 
                 autoChooser.addOption(
@@ -444,44 +461,63 @@ public class RobotContainer {
                 // drive)
                 // .ignoringDisable(true));
 
+                var commandMap = new HashMap<Boolean, Command>();
+
+                commandMap.put(true, intakePivot.stow());
+                commandMap.put(false, intakePivot.deploy());
+
+                controller.b().onTrue(
+                                Commands.select(commandMap, () -> {
+                                        var b = intakePivot.isDeployed.getAsBoolean();
+
+                                        System.out.println(b);
+
+                                        return b;
+
+                                }));
+
                 controller
                                 .start()
                                 .onTrue(
-                                                Commands.runOnce(() -> {
-                                                        if (vision != null) {
-                                                                vision.seedPoseFromVision();
-                                                        }
-                                                })
+                                                Commands.runOnce(
+                                                                () -> {
+                                                                        if (vision != null) {
+                                                                                vision.seedPoseFromVision();
+                                                                        }
+                                                                })
                                                                 .ignoringDisable(true));
 
                 controller.leftTrigger().whileTrue(intakeRollers.intake());
 
-                controller.rightTrigger().whileTrue(shooterSupersystem.shootAtTarget());
-
-                // controller.rightTrigger().whileTrue(shooter.runFlywheels(() -> RPM.of(3000)));
+                controller.rightTrigger().whileTrue(
+                                shooterSupersystem.shootAtTarget(
+                                                () -> controller.getRightTriggerAxis() > 0.5));
 
                 controller.y().onTrue(climber.doNext());
 
-                var commandMap = new HashMap<Boolean, Command>();
-                commandMap.put(true, intakePivot.stow());
-                commandMap.put(false, intakePivot.deploy());
-                controller.b().onTrue(
-                        Commands.select(commandMap, () -> {
-                                var b = intakePivot.isDeployed.getAsBoolean();
-                                System.out.println(b);
-                                return b;
-                        }));
+                new Trigger(this::shouldWarnAllianceFlip).onTrue(
+                                Commands.startEnd(
+                                                () -> controller.getHID().setRumble(RumbleType.kBothRumble, 1.0),
+                                                () -> controller.getHID().setRumble(RumbleType.kBothRumble, 0.0))
+                                                .withTimeout(ALLIANCE_FLIP_RUMBLE_SECONDS)
+                                                .ignoringDisable(true));
+        }
+
+        private boolean shouldWarnAllianceFlip() {
+                return RobotState.isEnabled()
+                                && RobotState.isTeleop()
+                                && HubShiftUtil.isAllianceFlipImminent(ALLIANCE_FLIP_WARNING_SECONDS);
         }
 
         public void simulationPeriodic() {
-                // if (gamePieceTracker != null) {
-                //         gamePieceTracker.updateSim();
-                // }
+                if (gamePieceTracker != null) {
+                        gamePieceTracker.updateSim();
+                }
         }
 
-        // public GamePieceTracker getGamePieceTracker() {
-        //         return gamePieceTracker;
-        // }
+        public GamePieceTracker getGamePieceTracker() {
+                return gamePieceTracker;
+        }
 
         public Command getAutonomousCommand() {
                 return autoChooser.get();

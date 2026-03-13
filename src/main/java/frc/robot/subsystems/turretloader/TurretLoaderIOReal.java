@@ -4,16 +4,19 @@ import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Volts;
 
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import frc.robot.RobotConstants;
 
@@ -25,23 +28,28 @@ public class TurretLoaderIOReal implements TurretLoaderIO {
                 .withKS(0.001)
                 .withKV(0.032)
                 .withKA(0.01)
-                .withKP(9.78)
+                .withKP(10.78)
                 .withKI(0.0)
                 .withKD(0.0);
 
         static final TalonFXConfiguration motorConfig = new TalonFXConfiguration()
+                .withCurrentLimits(new CurrentLimitsConfigs()
+                    .withStatorCurrentLimit(90)
+                    .withStatorCurrentLimitEnable(true)
+                    .withSupplyCurrentLimit(80)
+                    .withSupplyCurrentLimitEnable(true))
                 .withMotorOutput(new MotorOutputConfigs()
                         .withInverted(InvertedValue.Clockwise_Positive))
                 .withFeedback(new FeedbackConfigs()
                         .withSensorToMechanismRatio(1.875))
                 .withSlot0(pidConfig);
-
     }
 
     private final TalonFX laneMotor = new TalonFX(Constants.turretLoaderMotorId, RobotConstants.canBus);
 
     private final VelocityVoltage control = new VelocityVoltage(0);
     private final VoltageOut controlVoltage = new VoltageOut(0);
+    private final TorqueCurrentFOC controlTorque = new TorqueCurrentFOC(0);
 
     public TurretLoaderIOReal() {
         laneMotor.getConfigurator().apply(Constants.motorConfig);
@@ -49,6 +57,10 @@ public class TurretLoaderIOReal implements TurretLoaderIO {
 
     public void runVolts(Voltage volts) {
         laneMotor.setControl(controlVoltage.withOutput(volts));
+    }
+
+    public void runTorqueCurrent(Current torque) {
+        laneMotor.setControl(controlTorque.withOutput(torque));
     }
 
     public void setVelocity(AngularVelocity velocity) {

@@ -29,6 +29,10 @@ public class IntakeRollersIOReal implements IntakeRollersIO {
         rollerMotor.setControl(controlVoltage.withOutput(volts));
     }
 
+    public void stopRollers() {
+        rollerMotor.stopMotor();
+    }
+
     @Override
     public void updateInputs(IntakeRollersInputs inputs) {
         inputs.velocityRPM = rollerMotor.getVelocity().getValue().in(RPM);

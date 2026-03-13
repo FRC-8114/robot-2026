@@ -16,7 +16,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 public class Turret extends SubsystemBase {
     public static class Constants {
-        private static final Angle ANGLE_TOLERANCE = Degrees.of(1);
+        private static final Angle ANGLE_TOLERANCE = Degrees.of(10);
 
         public static final Angle MIN_ANGLE = Degrees.of(40);
         public static final Angle MAX_ANGLE = Radians.of(4.85);

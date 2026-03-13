@@ -71,6 +71,7 @@ public class Autos {
 
         return Commands.sequence(
             resetOdomFromPath(pathSlices.get(0)),
+            intakePivot.deploy(),
             AutoBuilder.followPath(pathSlices.get(0)),
             shootSequence().withTimeout(Seconds.of(6)),
             AutoBuilder.followPath(pathSlices.get(1)),
@@ -94,22 +95,44 @@ public class Autos {
 
         return Commands.sequence(
             resetOdomFromPath(pathSlices.get(0)),
+            Commands.parallel(
+                intakePivot.deploy(),
+                Commands.sequence(
+                    Commands.race( // intake balls from alliance zone
+                        intakeRollers.intakeForever(),
+                        AutoBuilder.followPath(pathSlices.get(0))
+                    ),
+                    intakeRollers.stopIntake(),
+                    AutoBuilder.followPath(pathSlices.get(1)), // drive to shoot pose
+                    shootSequence() // shoot
+                        .withTimeout(Seconds.of(5)),
+                    AutoBuilder.followPath(pathSlices.get(2)), // go to outpost
+                    Commands.waitTime(Seconds.of(4)), // balls drop
+                    AutoBuilder.followPath(pathSlices.get(4)), // go to shoot pose
+                    shootSequence() // shoot
+                        .withTimeout(Seconds.of(5)),
+                    AutoBuilder.followPath(pathSlices.get(5)), // go to prepare climb
+                    climber.deploy(),
+                    AutoBuilder.followPath(pathSlices.get(6)),
+                    climber.climb()
+                )
+            )
+        );
+    }
+
+    public Command trenchSSDepot() {
+        var pathSlices = loadSlicedPaths("trenchSSDepot", 3);
+
+        return Commands.sequence(
+            resetOdomFromPath(pathSlices.get(0)),
             intakePivot.deploy(),
-            Commands.race( // intake balls from alliance zone
-                intakeRollers.intake(), // (stops when first path slice finishes)
+            Commands.race(
+                intakeRollers.intake(),
                 AutoBuilder.followPath(pathSlices.get(0))
             ),
-            AutoBuilder.followPath(pathSlices.get(1)), // drive to shoot pose
-            shootSequence() // shoot
-                .withTimeout(Seconds.of(5)),
-            AutoBuilder.followPath(pathSlices.get(2)), // go to outpost
-            Commands.waitTime(Seconds.of(4)), // balls drop
-            AutoBuilder.followPath(pathSlices.get(4)), // go to shoot pose
-            shootSequence() // shoot
-                .withTimeout(Seconds.of(5)),
-            AutoBuilder.followPath(pathSlices.get(5)), // go to prepare climb
-            climber.deploy(),
-            AutoBuilder.followPath(pathSlices.get(6))
+            AutoBuilder.followPath(pathSlices.get(1)),
+            shootSequence()
+                .withTimeout(Seconds.of(5))
         );
     }
 

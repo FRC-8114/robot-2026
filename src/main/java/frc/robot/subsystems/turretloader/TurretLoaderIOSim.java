@@ -8,7 +8,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
@@ -60,5 +60,11 @@ public class TurretLoaderIOSim implements TurretLoaderIO {
         inputs.motorPositionRads = motorSim.getAngularPositionRad();
         inputs.velocityRPM = motorSim.getAngularVelocityRadPerSec() / (2.0 * Math.PI) * 60.0;
         inputs.appliedVoltageVolts = appliedVolts;
+    }
+
+    @Override
+    public void runTorqueCurrent(Current torque) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'runTorqueCurrent'");
     }
 }

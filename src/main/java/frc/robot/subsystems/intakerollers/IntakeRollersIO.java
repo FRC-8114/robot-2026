@@ -14,5 +14,7 @@ public interface IntakeRollersIO {
 
     void runVolts(Voltage volts);
 
+    void stopRollers();
+
     void updateInputs(IntakeRollersInputs inputs);
 }

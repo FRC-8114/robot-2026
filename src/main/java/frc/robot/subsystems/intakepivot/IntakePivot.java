@@ -53,7 +53,7 @@ public class IntakePivot extends SubsystemBase {
     }
 
     public Command stow() {
-        return run(() -> io.runVolts(Volts.of(2.5)))
+        return run(() -> io.runVolts(Volts.of(4)))
             .until(isStowed);
     }
 

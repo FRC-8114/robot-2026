@@ -4,13 +4,10 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.RPM;
-import static edu.wpi.first.units.Units.Volts;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -18,7 +15,6 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.FollowPathCommand;
 import com.pathplanner.lib.commands.PathfindingCommand;
 
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -247,6 +243,7 @@ public class RobotContainer {
                 // autoChooser.addOption("Same Side Trench (Depot Side)",
                 // autos.trenchSSDepot());
                 autoChooser.addOption("Same Side Trench (Outpost Side)", autos.trenchSSOutpost());
+                autoChooser.addOption("Basic Shoot (left bump)", autos.basicShoot());
 
                 autoChooser.addOption(
                                 "Drive Wheel Radius Characterization",

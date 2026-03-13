@@ -3,6 +3,7 @@ package frc.robot.subsystems.turretloader;
 import org.littletonrobotics.junction.AutoLog;
 
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 
 public interface TurretLoaderIO {
@@ -14,6 +15,7 @@ public interface TurretLoaderIO {
     }
 
     void runVolts(Voltage volts);
+    void runTorqueCurrent(Current torque);
     void setVelocity(AngularVelocity velocity);
 
     void stopMotor();

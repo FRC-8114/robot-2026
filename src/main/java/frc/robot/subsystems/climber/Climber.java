@@ -16,7 +16,7 @@ public class Climber extends SubsystemBase {
         public static final double DEPLOY_ROTATIONS = 3.023;
         public static final double CLIMB_ROTATIONS = 1.511;
 
-        static final double rotationTolerance = 0.025;
+        static final double rotationTolerance = 0.03;
     }
 
     private enum ClimbState {
@@ -31,9 +31,9 @@ public class Climber extends SubsystemBase {
         this.io = io;
     }
 
-    private Command goToRotations(double rot) {
-        return run(() -> io.setPosition(rot))
-            .until(() -> MathUtil.isNear(rot, inputs.rotations, Constants.rotationTolerance));
+    private Command goToRotations(double goalRotations) {
+        return run(() -> io.setPosition(goalRotations))
+            .until(() -> MathUtil.isNear(goalRotations, inputs.rotations, Constants.rotationTolerance));
     }
 
     public Command deploy() {

@@ -10,6 +10,7 @@ public interface ClimberIO {
         public double rotations = 0.0;
         public double velocityRPM = 0.0;
         public double currentAmps = 0.0;
+        public double appliedVoltageVolts = 0.0;
     }
 
     void runVolts(Voltage volts);

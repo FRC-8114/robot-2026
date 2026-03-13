@@ -3,6 +3,7 @@ package frc.robot.subsystems.climber;
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Rotations;
+import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
@@ -27,12 +28,11 @@ public class ClimberIOReal implements ClimberIO {
                 .withKP(30)
                 .withKI(0)
                 .withKD(3);
-        private static final FeedbackConfigs fusedEncoderCfg = new FeedbackConfigs()
-                .withFeedbackSensorSource(FeedbackSensorSourceValue.FusedCANcoder)
-                .withRotorToSensorRatio(gearRatio);
+        private static final FeedbackConfigs feedbackConfig = new FeedbackConfigs()
+                .withSensorToMechanismRatio(gearRatio);
         public static final TalonFXConfiguration climbMotorCfg = new TalonFXConfiguration()
                 .withSlot0(climbMotorPIDs)
-                .withFeedback(fusedEncoderCfg);
+                .withFeedback(feedbackConfig);
     }
 
     private static final TalonFX climbMotor = new TalonFX(Constants.climbMotorID, RobotConstants.canBus);
@@ -57,6 +57,7 @@ public class ClimberIOReal implements ClimberIO {
     public void updateInputs(ClimberIOInputs inputs) {
         inputs.rotations = climbMotor.getPosition().getValue().in(Rotations);
         inputs.velocityRPM = climbMotor.getVelocity().getValue().in(RPM);
+        inputs.appliedVoltageVolts = climbMotor.getMotorVoltage().getValue().in(Volts);
         inputs.currentAmps = climbMotor.getSupplyCurrent().getValue().in(Amps);
     }
 }

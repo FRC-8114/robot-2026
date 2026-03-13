@@ -177,10 +177,9 @@ public class ShooterSupersystem extends SubsystemBase {
         return Commands.parallel(
             run(() -> {}),
             turretPivot.followAngle(turretAngle),
-            shooterPitch.followAngle(pitchAngle),
+            shooterPitch.followAngle(pitchAngle).unless(staticTurretMode),
             shooter.runFlywheels(rpm),
-            turretLoader.feed(),
-            Commands.print("SOO WE'RE RUNNING IN HERE"),
+            turretLoader.feedTorqueCurrent(),
             Commands.sequence(
                 Commands.waitTime(Seconds.of(0.2)), // wait for turretLane to speed up
                 indexer.feed()

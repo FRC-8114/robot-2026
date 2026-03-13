@@ -49,4 +49,10 @@ public class IntakeRollersIOSim implements IntakeRollersIO {
         inputs.appliedVoltageVolts = rollerAppliedVolts;
         inputs.rollerPositionRads = rollerSim.getAngularPositionRad();
     }
+
+    @Override
+    public void stopRollers() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'stopRollers'");
+    }
 }

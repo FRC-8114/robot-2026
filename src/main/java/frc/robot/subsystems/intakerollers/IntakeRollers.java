@@ -22,6 +22,13 @@ public class IntakeRollers extends SubsystemBase {
         this.io = io;
     }
 
+    public Command intakeForever() {
+        return run(() -> io.runVolts(Constants.intakeVoltage));
+    }
+    public Command stopIntake() {
+        return runOnce(() -> io.stopRollers());
+    }
+
     public Command intake() {
         return runEnd(
             () -> io.runVolts(Constants.intakeVoltage),

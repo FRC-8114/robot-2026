@@ -184,17 +184,18 @@ public class RobotContainer {
                                 throw new IllegalStateException("Unexpected value: " + RobotConstants.robotMode);
                 }
 
-                autos = new Autos(intakePivot, intakeRollers, climber);
                 CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand().ignoringDisable(true));
                 CommandScheduler.getInstance().schedule(PathfindingCommand.warmupCommand().ignoringDisable(true));
-
+                
                 shooterSupersystem = new ShooterSupersystem(
-                                turretPivot,
-                                turretPitch,
-                                shooter,
-                                indexer,
-                                turretLoader,
-                                drive);
+                        turretPivot,
+                        turretPitch,
+                        shooter,
+                        indexer,
+                        turretLoader,
+                        drive);
+
+                autos = new Autos(intakePivot, intakeRollers, climber, shooterSupersystem);
 
                 SmartDashboard.putData("RobotFieldPose", dashboardField); // post field2d to elastic
 

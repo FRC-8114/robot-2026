@@ -23,10 +23,11 @@ public class Autos {
     private ShooterSupersystem shooter;
     private Climber climber;
 
-    public Autos(IntakePivot intakePivot, IntakeRollers intakeRollers, Climber climber) {
+    public Autos(IntakePivot intakePivot, IntakeRollers intakeRollers, Climber climber, ShooterSupersystem shooter) {
         this.intakeRollers = intakeRollers;
         this.intakePivot = intakePivot;
         this.climber = climber;
+        this.shooter = shooter;
     }
 
     private static ArrayList<PathPlannerPath> loadSlicedPaths(String choreoTraj, Integer num_slices) {

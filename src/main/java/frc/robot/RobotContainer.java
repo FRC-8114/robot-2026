@@ -4,8 +4,6 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.RPM;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
@@ -24,7 +22,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
-import frc.robot.simulation.GamePieceTracker;
 import frc.robot.subsystems.climber.Climber;
 import frc.robot.subsystems.climber.ClimberIOReal;
 import frc.robot.subsystems.climber.ClimberIOSim;
@@ -73,7 +70,7 @@ public class RobotContainer {
         private final IntakePivot intakePivot;
         private final IntakeRollers intakeRollers;
 
-        private GamePieceTracker gamePieceTracker;
+        // private GamePieceTracker gamePieceTracker;
 
         private final ShooterSupersystem shooterSupersystem;
         private final Autos autos;

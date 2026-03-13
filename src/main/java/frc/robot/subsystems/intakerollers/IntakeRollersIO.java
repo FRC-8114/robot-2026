@@ -2,7 +2,6 @@ package frc.robot.subsystems.intakerollers;
 
 import org.littletonrobotics.junction.AutoLog;
 
-import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 
 public interface IntakeRollersIO {

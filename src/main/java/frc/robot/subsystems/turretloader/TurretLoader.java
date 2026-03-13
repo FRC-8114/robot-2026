@@ -2,8 +2,6 @@ package frc.robot.subsystems.turretloader;
 
 import static edu.wpi.first.units.Units.RPM;
 
-import java.util.function.BooleanSupplier;
-
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 

@@ -59,6 +59,7 @@ public class Autos {
     }
 
     private Command shootSequence() {
+        // return shooter.shootAtTarget();
         return Commands.waitUntil(() -> {
             System.out.println("SHOOOOOTING!!!!!!!");
             return false;

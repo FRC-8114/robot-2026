@@ -7,7 +7,6 @@ import static edu.wpi.first.units.Units.Volts;
 import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
-import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -26,7 +25,7 @@ public class ShooterPitch extends SubsystemBase {
     private final ShooterPitchInputsAutoLogged inputs = new ShooterPitchInputsAutoLogged();
     private final SysIdRoutine sysId;
 
-    private final LoggedNetworkNumber angle = new LoggedNetworkNumber("Tuning/ShooterPitch", Constants.MIN_ANGLE.in(Degrees));
+    // private final LoggedNetworkNumber angle = new LoggedNetworkNumber("Tuning/ShooterPitch", Constants.MIN_ANGLE.in(Degrees));
 
     public ShooterPitch(ShooterPitchIO pitchMotor) {
         this.pitchMotor = pitchMotor;

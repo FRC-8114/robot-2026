@@ -8,7 +8,6 @@ import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Seconds;
 
-import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import org.ejml.simple.SimpleMatrix;
@@ -41,7 +40,6 @@ import frc.robot.subsystems.turretloader.TurretLoader;
 import frc.robot.FieldConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.indexer.Indexer;
-import frc.robot.subsystems.intakepivot.IntakePivot;
 
 public class ShooterSupersystem extends SubsystemBase {
     private final Turret turretPivot;

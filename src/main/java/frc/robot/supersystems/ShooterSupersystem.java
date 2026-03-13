@@ -33,6 +33,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.util.AllianceFlipUtil;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooterpitch.ShooterPitch;
 import frc.robot.subsystems.turret.Turret;
@@ -40,6 +41,7 @@ import frc.robot.subsystems.turretloader.TurretLoader;
 import frc.robot.FieldConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.indexer.Indexer;
+import frc.robot.supersystems.ShotSolutionCalculator.TargetSelection;
 
 public class ShooterSupersystem extends SubsystemBase {
     private final Turret turretPivot;
@@ -55,11 +57,13 @@ public class ShooterSupersystem extends SubsystemBase {
         public static final Distance turretXOffset = Inches.of(-6.5); // negative X is back
         public static final Distance turretYOffset = Inches.of(6.875); // positive Y is left
         public static final Distance turretZOffset = Inches.of(20.5); // positive Z is up
+        public static final Distance passingShotClearance = Inches.of(18.0);
 
         public static final Transform3d turretOffset = new Transform3d(turretXOffset, turretYOffset, turretZOffset,
                 new Rotation3d());
 
         public static final double FLYWHEEL_RADIUS_METERS = 0.050;
+        public static final double SPIN_TRANSFER_EFFICIENCY = 0.75;
     }
 
     private static final LoggedNetworkBoolean staticTurretMode = new LoggedNetworkBoolean("Tuning/TurretStaticMode", false);
@@ -109,7 +113,8 @@ public class ShooterSupersystem extends SubsystemBase {
         var rpmAndPitch = getRPMAndPitch(horizontalDist);
         double rpm = rpmAndPitch.getFirst();
         double pitchRad = rpmAndPitch.getSecond();
-        double exitVelocity = (rpm * 2.0 * Math.PI * Constants.FLYWHEEL_RADIUS_METERS / 60.0) * 0.75;
+        double exitVelocity =
+                (rpm * 2.0 * Math.PI * Constants.FLYWHEEL_RADIUS_METERS / 60.0) * Constants.SPIN_TRANSFER_EFFICIENCY;
 
         Logger.recordOutput("Shooter/exitVelocity", exitVelocity);
 
@@ -120,8 +125,18 @@ public class ShooterSupersystem extends SubsystemBase {
         return new Pose3d(drive.getPose()).transformBy(Constants.turretOffset).getTranslation();
     }
 
+    private Translation3d getTarget(Translation3d turretPosition) {
+        TargetSelection targetSelection = ShotSolutionCalculator.getTargetSelection(turretPosition);
+
+        Logger.recordOutput("Shooter/PassingShotActive", targetSelection.passingShotActive());
+        Logger.recordOutput(
+                "Shooter/AllianceRelativeTargetPosition",
+                AllianceFlipUtil.apply(targetSelection.target()).toTranslation2d());
+        return targetSelection.target();
+    }
+
     private Translation3d getTarget() {
-        return FieldConstants.Hub.innerCenterPoint;
+        return getTarget(getTurretPosition());
     }
 
     static Translation2d getFieldRelativeLeadTargetVector(
@@ -164,8 +179,8 @@ public class ShooterSupersystem extends SubsystemBase {
         Rotation2d heading = drive.getPose().getRotation();
         ChassisSpeeds fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(robotSpeeds, heading);
 
-        Translation3d target = getTarget();
         Translation3d turretPosition = getTurretPosition();
+        Translation3d target = getTarget(turretPosition);
         double distance = target.toTranslation2d().getDistance(turretPosition.toTranslation2d());
 
         double tof = estimateTimeOfFlight(distance);

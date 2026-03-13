@@ -16,7 +16,7 @@ import edu.wpi.first.units.measure.Voltage;
 import frc.robot.RobotConstants;
 
 public class IndexerIOReal implements IndexerIO {
-    private static final int motorID = 41;
+    private static final int indexerMotorId = 41;
 
     static final Slot0Configs pidConfig = new Slot0Configs()
         .withKS(0.56491)
@@ -31,7 +31,7 @@ public class IndexerIOReal implements IndexerIO {
             .withSensorToMechanismRatio(14.4))
         .withSlot0(pidConfig);
 
-    private final TalonFX laneMotor = new TalonFX(motorID, RobotConstants.canBus);
+    private final TalonFX laneMotor = new TalonFX(indexerMotorId, RobotConstants.canBus);
 
     private final VelocityVoltage control = new VelocityVoltage(0);
     private final VoltageOut controlVoltage = new VoltageOut(0);

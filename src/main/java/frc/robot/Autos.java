@@ -59,11 +59,10 @@ public class Autos {
     }
 
     private Command shootSequence() {
-        // return shooter.shootAtTarget();
-        return Commands.waitUntil(() -> {
-            System.out.println("SHOOOOOTING!!!!!!!");
-            return false;
-        });
+        return Commands.parallel(
+            Commands.print("SHOOOOOTING!!!!!!!"),
+            shooter.shootAtTarget()
+        );
     }
 
     public Command basicShoot() {

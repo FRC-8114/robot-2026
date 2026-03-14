@@ -9,6 +9,7 @@ import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.TorqueCurrentFOC;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -34,9 +35,9 @@ public class TurretLoaderIOReal implements TurretLoaderIO {
 
         static final TalonFXConfiguration motorConfig = new TalonFXConfiguration()
                 .withCurrentLimits(new CurrentLimitsConfigs()
-                    .withStatorCurrentLimit(90)
+                    .withStatorCurrentLimit(70)
                     .withStatorCurrentLimitEnable(true)
-                    .withSupplyCurrentLimit(80)
+                    .withSupplyCurrentLimit(70)
                     .withSupplyCurrentLimitEnable(true))
                 .withMotorOutput(new MotorOutputConfigs()
                         .withInverted(InvertedValue.Clockwise_Positive))
@@ -50,6 +51,7 @@ public class TurretLoaderIOReal implements TurretLoaderIO {
     private final VelocityVoltage control = new VelocityVoltage(0);
     private final VoltageOut controlVoltage = new VoltageOut(0);
     private final TorqueCurrentFOC controlTorque = new TorqueCurrentFOC(0);
+    private final DutyCycleOut controlDutyCycle = new DutyCycleOut(1);
 
     public TurretLoaderIOReal() {
         laneMotor.getConfigurator().apply(Constants.motorConfig);
@@ -65,6 +67,10 @@ public class TurretLoaderIOReal implements TurretLoaderIO {
 
     public void setVelocity(AngularVelocity velocity) {
         laneMotor.setControl(control.withVelocity(velocity));
+    }
+
+    public void runDutyCycle() {
+        laneMotor.setControl(controlDutyCycle.withOutput(1));
     }
 
     public void stopMotor() {

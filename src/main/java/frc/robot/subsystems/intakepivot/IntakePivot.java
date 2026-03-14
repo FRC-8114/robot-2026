@@ -2,6 +2,7 @@ package frc.robot.subsystems.intakepivot;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.Rotations;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
@@ -15,9 +16,9 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 public class IntakePivot extends SubsystemBase {
-    public static final Angle stowAngle = Radians.of(1.98); // TODO: measure stow angle
-    private static final Angle deployAngle = Radians.of(0);
-    private static final Angle angleTolerance = Degrees.of(3);
+    public static final Angle stowAngle = Radians.of(1.98);
+    public static final Angle deployAngle = Rotations.of(0.05);
+    private static final Angle angleTolerance = Degrees.of(12);
 
     private IntakePivotIO io;
     private final IntakePivotInputsAutoLogged inputs = new IntakePivotInputsAutoLogged();

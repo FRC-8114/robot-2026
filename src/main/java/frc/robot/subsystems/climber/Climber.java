@@ -1,5 +1,7 @@
 package frc.robot.subsystems.climber;
 
+import static edu.wpi.first.units.Units.Volts;
+
 import java.util.Set;
 
 import org.littletonrobotics.junction.Logger;
@@ -62,6 +64,10 @@ public class Climber extends SubsystemBase {
             .andThen(runOnce(() -> {
                 this.state = ClimbState.STOW;
             }));
+    }
+
+    public Command move(boolean up) {
+        return runEnd(() -> io.runVolts(Volts.of(3.92).times(up ? -1 : 1)), () -> io.runVolts(Volts.of(0)));
     }
 
     public Command doNext() {

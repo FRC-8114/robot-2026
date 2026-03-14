@@ -3,6 +3,7 @@ package frc.robot.subsystems.shooterpitch;
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
@@ -49,7 +50,12 @@ public class ShooterPitchIOReal implements ShooterPitchIO {
                 .withSlot0(pitchMotorPIDs)
                 .withSoftwareLimitSwitch(limits)
                 .withMotionMagic(pitchMotionMagicConfigs)
-                .withFeedback(pitchFeedbackConfigs);
+                .withFeedback(pitchFeedbackConfigs)
+            .withCurrentLimits(new CurrentLimitsConfigs()
+                .withStatorCurrentLimit(80)
+                .withStatorCurrentLimitEnable(true)
+                .withSupplyCurrentLimitEnable(true)
+                .withSupplyCurrentLimit(40));
     }
 
     private final TalonFX turretPitchMotor = new TalonFX(Constants.turretPitchMotorId, RobotConstants.canBus);

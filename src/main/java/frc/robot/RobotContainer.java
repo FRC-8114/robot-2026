@@ -8,6 +8,7 @@ import static edu.wpi.first.units.Units.RPM;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Optional;
 
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -17,6 +18,8 @@ import com.pathplanner.lib.commands.PathfindingCommand;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -119,6 +122,7 @@ public class RobotContainer {
                                 turretLoader = new TurretLoader(new TurretLoaderIOReal());
 
                                 intakePivot = new IntakePivot(new IntakePivotIOReal());
+                                // intakePivot = new IntakePivot(new IntakePivotIOSim()); // TEMPORARY!!!!!!! TODO TODO TODO
                                 intakeRollers = new IntakeRollers(new IntakeRollersIOReal());
 
                                 turretPitch = new ShooterPitch(new ShooterPitchIOReal());
@@ -206,7 +210,7 @@ public class RobotContainer {
                                 turretLoader,
                                 drive);
 
-                autos = new Autos(intakePivot, intakeRollers, climber, shooterSupersystem);
+                autos = new Autos(intakePivot, intakeRollers, climber, shooterSupersystem, indexer);
 
                 SmartDashboard.putData("RobotFieldPose", dashboardField); // post field2d to elastic
 
@@ -214,8 +218,69 @@ public class RobotContainer {
                 setupAutoChoices();
         }
 
+        public boolean isHubActive() {
+                Optional<Alliance> alliance = DriverStation.getAlliance();
+                // If we have no alliance, we cannot be enabled, therefore no hub.
+                if (alliance.isEmpty()) {
+                        return false;
+                }
+                // Hub is always enabled in autonomous.
+                if (DriverStation.isAutonomousEnabled()) {
+                        return true;
+                }
+                // At this point, if we're not teleop enabled, there is no hub.
+                if (!DriverStation.isTeleopEnabled()) {
+                        return false;
+                }
+
+                // We're teleop enabled, compute.
+                double matchTime = DriverStation.getMatchTime();
+                String gameData = DriverStation.getGameSpecificMessage();
+                // If we have no game data, we cannot compute, assume hub is active, as its
+                // likely early in teleop.
+                if (gameData.isEmpty()) {
+                        return true;
+                }
+                boolean redInactiveFirst = false;
+                switch (gameData.charAt(0)) {
+                        case 'R' -> redInactiveFirst = true;
+                        case 'B' -> redInactiveFirst = false;
+                        default -> {
+                                // If we have invalid game data, assume hub is active.
+                                return true;
+                        }
+                }
+
+                // Shift was is active for blue if red won auto, or red if blue won auto.
+                boolean shift1Active = switch (alliance.get()) {
+                        case Red -> !redInactiveFirst;
+                        case Blue -> redInactiveFirst;
+                };
+
+                if (matchTime > 130) {
+                        // Transition shift, hub is active.
+                        return true;
+                } else if (matchTime > 105) {
+                        // Shift 1
+                        return shift1Active;
+                } else if (matchTime > 80) {
+                        // Shift 2
+                        return !shift1Active;
+                } else if (matchTime > 55) {
+                        // Shift 3
+                        return shift1Active;
+                } else if (matchTime > 30) {
+                        // Shift 4
+                        return !shift1Active;
+                } else {
+                        // End game, hub always active.
+                        return true;
+                }
+        }
+
         public void updateDashboardField() {
                 dashboardField.setRobotPose(drive.getPose());
+                SmartDashboard.putBoolean("HubShiftTeam", isHubActive());
         }
 
         public void enabledInit() {
@@ -244,6 +309,8 @@ public class RobotContainer {
                 // autos.trenchSSDepot());
                 autoChooser.addOption("Same Side Trench (Outpost Side)", autos.trenchSSOutpost());
                 autoChooser.addOption("Basic Shoot (left bump)", autos.basicShoot());
+
+                autoChooser.addOption("JUST SHOOT", autos.THE_LAMEST_AUTO_EVER());
 
                 autoChooser.addOption(
                                 "Drive Wheel Radius Characterization",
@@ -501,6 +568,9 @@ public class RobotContainer {
                                                 () -> controller.getHID().setRumble(RumbleType.kBothRumble, 0.0))
                                                 .withTimeout(ALLIANCE_FLIP_RUMBLE_SECONDS)
                                                 .ignoringDisable(true));
+
+                controller.povUp().whileTrue(climber.move(true));
+                controller.povDown().whileTrue(climber.move(false));
         }
 
         private boolean shouldWarnAllianceFlip() {

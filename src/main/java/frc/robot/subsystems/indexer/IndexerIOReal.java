@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Volts;
 
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -29,6 +30,11 @@ public class IndexerIOReal implements IndexerIO {
     static final TalonFXConfiguration motorConfig = new TalonFXConfiguration()
         .withFeedback(new FeedbackConfigs()
             .withSensorToMechanismRatio(14.4))
+        .withCurrentLimits(new CurrentLimitsConfigs()
+            .withStatorCurrentLimit(80)
+            .withStatorCurrentLimitEnable(true)
+            .withSupplyCurrentLimitEnable(true)
+            .withSupplyCurrentLimit(60))
         .withSlot0(pidConfig);
 
     private final TalonFX laneMotor = new TalonFX(indexerMotorId, RobotConstants.canBus);

@@ -17,8 +17,8 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 
 public class TurretLoader extends SubsystemBase {
     private static final AngularVelocity velocityTolerance = RPM.of(100);
-    private static final AngularVelocity turretLoaderVelocity = RPM.of(1600);
-    private static final Current turretLoaderTorqueCurrent = Amps.of(60);
+    private static final AngularVelocity turretLoaderVelocity = RPM.of(1300);
+    private static final Current turretLoaderTorqueCurrent = Amps.of(90);
     private static final Voltage turretLoaderVoltage = Volts.of(7);
 
     private final TurretLoaderIO io;
@@ -58,6 +58,13 @@ public class TurretLoader extends SubsystemBase {
     public Command feedTorqueCurrent() {
         return runEnd(
             () -> io.runTorqueCurrent(turretLoaderTorqueCurrent),
+            () -> io.stopMotor()
+        );
+    }
+
+    public Command feedDutyCycle() {
+        return runEnd(
+            () -> io.runDutyCycle(),
             () -> io.stopMotor()
         );
     }

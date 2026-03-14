@@ -1,5 +1,7 @@
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Seconds;
 
 import java.io.IOException;
@@ -12,6 +14,7 @@ import com.pathplanner.lib.util.FileVersionException;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.climber.Climber;
+import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.intakepivot.IntakePivot;
 import frc.robot.subsystems.intakerollers.IntakeRollers;
 import frc.robot.supersystems.ShooterSupersystem;
@@ -22,12 +25,14 @@ public class Autos {
 
     private ShooterSupersystem shooter;
     private Climber climber;
+    private Indexer indexer;
 
-    public Autos(IntakePivot intakePivot, IntakeRollers intakeRollers, Climber climber, ShooterSupersystem shooter) {
+    public Autos(IntakePivot intakePivot, IntakeRollers intakeRollers, Climber climber, ShooterSupersystem shooter, Indexer indexer) {
         this.intakeRollers = intakeRollers;
         this.intakePivot = intakePivot;
         this.climber = climber;
         this.shooter = shooter;
+        this.indexer = indexer;
     }
 
     private static ArrayList<PathPlannerPath> loadSlicedPaths(String choreoTraj, Integer num_slices) {
@@ -54,30 +59,33 @@ public class Autos {
 
     private static Command resetOdomFromPath(PathPlannerPath path) {
         return AutoBuilder.resetOdom(
-            path.getStartingHolonomicPose()
-                .orElse(path.getStartingDifferentialPose())
-        );
+                path.getStartingHolonomicPose()
+                        .orElse(path.getStartingDifferentialPose()));
     }
 
     private Command shootSequence() {
         return Commands.parallel(
-            Commands.print("SHOOOOOTING!!!!!!!"),
-            shooter.shootAtTarget()
-        );
+                Commands.print("SHOOOOOTING!!!!!!!"),
+                shooter.shootAtTarget());
     }
 
     public Command basicShoot() {
         var pathSlices = loadSlicedPaths("basicShoot", 3);
 
         return Commands.sequence(
-            resetOdomFromPath(pathSlices.get(0)),
-            intakePivot.deploy(),
-            AutoBuilder.followPath(pathSlices.get(0)),
-            shootSequence().withTimeout(Seconds.of(6)),
-            AutoBuilder.followPath(pathSlices.get(1)),
-            climber.deploy(),
-            AutoBuilder.followPath(pathSlices.get(2)),
-            climber.climb()
+                resetOdomFromPath(pathSlices.get(0)),
+                Commands.waitTime(Seconds.of(2)),
+                Commands.parallel(
+                        intakePivot.deploy(),
+                        Commands.sequence(
+                                AutoBuilder.followPath(pathSlices.get(0)),
+                                shootSequence().withTimeout(Seconds.of(6)),
+                                AutoBuilder.followPath(pathSlices.get(1)),
+                                climber.deploy(),
+                                AutoBuilder.followPath(pathSlices.get(2)),
+                                climber.climb()
+                            )
+                )
         );
     }
 
@@ -85,73 +93,84 @@ public class Autos {
         var pathSlices = loadSlicedPaths("CalibrateMOI", 1);
 
         return Commands.sequence(
-            resetOdomFromPath(pathSlices.get(0)),
-            AutoBuilder.followPath(pathSlices.get(0))
-        );
+                resetOdomFromPath(pathSlices.get(0)),
+                AutoBuilder.followPath(pathSlices.get(0)));
+    }
+
+    public Command THE_LAMEST_AUTO_EVER() {
+        return Commands.parallel(
+            intakePivot.deploy(),
+            Commands.waitTime(Seconds.of(2))
+                .andThen(Commands.parallel(
+                    shooter.shootWhenReadyNoIndexer(
+                        () -> Degrees.of(180),
+                        () -> Degrees.of(20.0),
+                        () -> RPM.of(1240)
+                    ),
+                    Commands.sequence(
+                        Commands.waitTime(Seconds.of(1)),
+                        indexer.feed()
+                    )
+                ))
+        ).withTimeout(7);
     }
 
     public Command trenchSSOutpost() {
         var pathSlices = loadSlicedPaths("trenchSSOutpost", 7);
 
         return Commands.sequence(
-            resetOdomFromPath(pathSlices.get(0)),
-            Commands.parallel(
-                intakePivot.deploy(),
-                Commands.sequence(
-                    Commands.race( // intake balls from alliance zone
-                        intakeRollers.intakeForever(),
-                        AutoBuilder.followPath(pathSlices.get(0))
-                    ),
-                    intakeRollers.stopIntake(),
-                    AutoBuilder.followPath(pathSlices.get(1)), // drive to shoot pose
-                    shootSequence() // shoot
-                        .withTimeout(Seconds.of(5)),
-                    AutoBuilder.followPath(pathSlices.get(2)), // go to outpost
-                    Commands.waitTime(Seconds.of(4)), // balls drop
-                    AutoBuilder.followPath(pathSlices.get(4)), // go to shoot pose
-                    shootSequence() // shoot
-                        .withTimeout(Seconds.of(5)),
-                    AutoBuilder.followPath(pathSlices.get(5)), // go to prepare climb
-                    climber.deploy(),
-                    AutoBuilder.followPath(pathSlices.get(6)),
-                    climber.climb()
-                )
-            )
-        );
+                resetOdomFromPath(pathSlices.get(0)),
+                Commands.parallel(
+                        intakePivot.deploy(),
+                        Commands.sequence(
+                                Commands.race( // intake balls from alliance zone
+                                        intakeRollers.intakeForever(),
+                                        AutoBuilder.followPath(pathSlices.get(0))),
+                                intakeRollers.stopIntake(),
+                                AutoBuilder.followPath(pathSlices.get(1)), // drive to shoot pose
+                                shootSequence() // shoot
+                                        .withTimeout(Seconds.of(5)),
+                                AutoBuilder.followPath(pathSlices.get(2)), // go to outpost
+                                Commands.waitTime(Seconds.of(4)), // balls drop
+                                AutoBuilder.followPath(pathSlices.get(4)), // go to shoot pose
+                                shootSequence() // shoot
+                                        .withTimeout(Seconds.of(5)),
+                                AutoBuilder.followPath(pathSlices.get(5)), // go to prepare climb
+                                climber.deploy(),
+                                AutoBuilder.followPath(pathSlices.get(6)),
+                                climber.climb())));
     }
 
     public Command trenchSSDepot() {
         var pathSlices = loadSlicedPaths("trenchSSDepot", 3);
 
         return Commands.sequence(
-            resetOdomFromPath(pathSlices.get(0)),
-            intakePivot.deploy(),
-            Commands.race(
-                intakeRollers.intake(),
-                AutoBuilder.followPath(pathSlices.get(0))
-            ),
-            AutoBuilder.followPath(pathSlices.get(1)),
-            shootSequence()
-                .withTimeout(Seconds.of(5))
-        );
+                resetOdomFromPath(pathSlices.get(0)),
+                intakePivot.deploy(),
+                Commands.race(
+                        intakeRollers.intake(),
+                        AutoBuilder.followPath(pathSlices.get(0))),
+                AutoBuilder.followPath(pathSlices.get(1)),
+                shootSequence()
+                        .withTimeout(Seconds.of(5)));
     }
 
     // public Command trenchSSDepot() {
-    //     return buildSlicedAuto("trenchSSDepot", 3, pathSlices -> Commands.sequence(
-    //             intakePivot.deploy(),
-    //             Commands.race( // collect balls from alliance zone
-    //                     intakeRollers.intake(),
-    //                     pathSlices.get(0)),
-    //             shootSequence()
-    //                     .withTimeout(Seconds.of(5)), // TODO: tune shoot time
-    //             Commands.parallel( // collect balls from depot while shooting
-    //                     pathSlices.get(1),
-    //                     shootSequence()
-    //                             .withTimeout(Seconds.of(4)) // TODO: tune shoot time
-    //             ),
-    //             climber.deploy(),
-    //             pathSlices.get(2), // approach climb
-    //             climber.climb()));
+    // return buildSlicedAuto("trenchSSDepot", 3, pathSlices -> Commands.sequence(
+    // intakePivot.deploy(),
+    // Commands.race( // collect balls from alliance zone
+    // intakeRollers.intake(),
+    // pathSlices.get(0)),
+    // shootSequence()
+    // .withTimeout(Seconds.of(5)), // TODO: tune shoot time
+    // Commands.parallel( // collect balls from depot while shooting
+    // pathSlices.get(1),
+    // shootSequence()
+    // .withTimeout(Seconds.of(4)) // TODO: tune shoot time
+    // ),
+    // climber.deploy(),
+    // pathSlices.get(2), // approach climb
+    // climber.climb()));
     // }
 
 }

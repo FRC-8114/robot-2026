@@ -7,6 +7,7 @@ import org.littletonrobotics.junction.Logger;
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.ClosedLoopGeneralConfigs;
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MagnetSensorConfigs;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
@@ -33,8 +34,8 @@ public class TurretIOReal implements TurretIO {
         // the turret encoder which has the 21T gear
         public static final int encoder21TID = 34;
 
-        private static final double encoder19TOffset = -0.9248046875;
-        private static final double encoder21TOffset = -0.677490234375;
+        private static final double encoder19TOffset = -0.643798828125;
+        private static final double encoder21TOffset = -0.661376953125;
 
         public static final double RESEED_ERROR_THRESHOLD = Math.toRadians(4);
         public static final double STATIONARY_VELOCITY_THRESHOLD = Math.toRadians(5);
@@ -63,7 +64,7 @@ public class TurretIOReal implements TurretIO {
                 .withKA(0)
                 .withKP(9.78)
                 .withKI(0.0)
-                .withKD(0.0);
+                .withKD(0.7);
 
         private static final MotionMagicConfigs pivotMotionMagicConfigs = new MotionMagicConfigs()
                 .withMotionMagicAcceleration(0.5)
@@ -80,6 +81,11 @@ public class TurretIOReal implements TurretIO {
                 .withClosedLoopGeneral(new ClosedLoopGeneralConfigs().withContinuousWrap(false))
                 .withMotionMagic(pivotMotionMagicConfigs)
                 .withSoftwareLimitSwitch(softwareLimits)
+                .withCurrentLimits(new CurrentLimitsConfigs()
+                    .withStatorCurrentLimit(80)
+                    .withStatorCurrentLimitEnable(true)
+                    .withSupplyCurrentLimitEnable(true)
+                    .withSupplyCurrentLimit(40))
                 .withFeedback(new FeedbackConfigs()
                         .withSensorToMechanismRatio(10)); // 10 rotations of the motor for 1 rotation of the turret
     }

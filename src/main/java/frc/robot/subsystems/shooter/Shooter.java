@@ -67,7 +67,6 @@ public class Shooter extends SubsystemBase {
     public Command runFlywheels(Supplier<AngularVelocity> target) {
         return runEnd(
                 () -> {
-                    System.out.println("TARGET VELOCITY: "+target.get());
                     targetVelocity = target.get();
                     io.setFlywheelVelocity(targetVelocity);
                 },

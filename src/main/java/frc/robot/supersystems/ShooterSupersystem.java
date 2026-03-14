@@ -32,7 +32,6 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.util.AllianceFlipUtil;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooterpitch.ShooterPitch;
@@ -64,11 +63,12 @@ public class ShooterSupersystem extends SubsystemBase {
         public static final double SPIN_TRANSFER_EFFICIENCY = 0.75;
     }
 
-    private static final LoggedNetworkBoolean staticTurretMode = new LoggedNetworkBoolean("Tuning/TurretStaticMode", false);
+    private static final LoggedNetworkBoolean staticTurretMode = new LoggedNetworkBoolean("Tuning/TurretStaticMode",
+            false);
 
     private void putMeasurement(Distance dist, double pitchDegrees, double rpm) {
         double pitchRad = Math.toRadians(pitchDegrees);
-        distanceToPitchAndRPM.put(dist.in(Meter), new Matrix<N2, N1>(new SimpleMatrix(new double[] { pitchRad, rpm })));
+        distanceToPitchAndRPM.put(dist.in(Meter) + 0.07, new Matrix<N2, N1>(new SimpleMatrix(new double[] { pitchRad, rpm })));
     }
 
     public ShooterSupersystem(
@@ -97,8 +97,8 @@ public class ShooterSupersystem extends SubsystemBase {
         this.drive = drive;
 
         setDefaultCommand(defaultHoming());
-        new Trigger(staticTurretMode)
-            .whileTrue(turretPivot.setAngle(Degrees.of(180)));
+        // new Trigger(staticTurretMode)
+        //         .whileTrue(turretPivot.setAngle(Degrees.of(180)));
     }
 
     private Pair<Double, Double> getRPMAndPitch(double distance) {
@@ -111,8 +111,8 @@ public class ShooterSupersystem extends SubsystemBase {
         var rpmAndPitch = getRPMAndPitch(horizontalDist);
         double rpm = rpmAndPitch.getFirst();
         double pitchRad = rpmAndPitch.getSecond();
-        double exitVelocity =
-                (rpm * 2.0 * Math.PI * Constants.FLYWHEEL_RADIUS_METERS / 60.0) * Constants.SPIN_TRANSFER_EFFICIENCY;
+        double exitVelocity = (rpm * 2.0 * Math.PI * Constants.FLYWHEEL_RADIUS_METERS / 60.0)
+                * Constants.SPIN_TRANSFER_EFFICIENCY;
 
         Logger.recordOutput("Shooter/exitVelocity", exitVelocity);
 
@@ -155,8 +155,8 @@ public class ShooterSupersystem extends SubsystemBase {
                 targetPosition,
                 fieldVelocity,
                 tof);
-        Translation2d robotRelativeTargetVector =
-                ShotSolutionCalculator.getRobotRelativeTargetVector(fieldRelativeTargetVector, heading);
+        Translation2d robotRelativeTargetVector = ShotSolutionCalculator
+                .getRobotRelativeTargetVector(fieldRelativeTargetVector, heading);
         Angle turretAngle = ShotSolutionCalculator.getRobotRelativeYaw(fieldRelativeTargetVector, heading);
 
         Logger.recordOutput("Shooter/RobotHeadingRad", heading.getRadians());
@@ -175,15 +175,27 @@ public class ShooterSupersystem extends SubsystemBase {
             Supplier<Angle> pitchAngle,
             Supplier<AngularVelocity> rpm) {
         return Commands.parallel(
-            run(() -> {}),
-            turretPivot.followAngle(turretAngle),
-            shooterPitch.followAngle(pitchAngle).unless(staticTurretMode),
-            shooter.runFlywheels(rpm),
-            turretLoader.feedTorqueCurrent(),
-            Commands.sequence(
-                Commands.waitTime(Seconds.of(0.2)), // wait for turretLane to speed up
-                indexer.feed()
-            )
+                run(() -> {
+                }),
+                turretPivot.followAngle(() -> staticTurretMode.getAsBoolean() ? Degrees.of(180) : turretAngle.get()),
+                shooterPitch.followAngle(pitchAngle),
+                shooter.runFlywheels(rpm),
+                turretLoader.feedDutyCycle(),
+                Commands.sequence(
+                        Commands.waitTime(Seconds.of(0.7)), // wait for turretLane to speed up
+                        indexer.feed()));
+    }
+
+    public Command shootWhenReadyNoIndexer(
+            Supplier<Angle> turretAngle,
+            Supplier<Angle> pitchAngle,
+            Supplier<AngularVelocity> rpm) {
+        return Commands.parallel(
+                run(() -> {}),
+                turretPivot.followAngle(() -> staticTurretMode.getAsBoolean() ? Degrees.of(180) : turretAngle.get()),
+                shooterPitch.followAngle(pitchAngle),
+                shooter.runFlywheels(rpm),
+                turretLoader.feedDutyCycle()
         );
     }
 
@@ -203,10 +215,9 @@ public class ShooterSupersystem extends SubsystemBase {
 
     public Command shootAtTarget() {
         return shootWhenReady(
-            this::getLeadYaw,
-            this::getPitchAngle,
-            this::getShooterRPM
-        );
+                this::getLeadYaw,
+                this::getPitchAngle,
+                this::getShooterRPM);
     }
 
     public Command defaultHoming() {
@@ -214,10 +225,9 @@ public class ShooterSupersystem extends SubsystemBase {
         // Supplier<Angle> pitch = this::getPitchAngle;
 
         return Commands.parallel(
-            turretPivot.followAngle(yaw)
-                .unless(staticTurretMode),
-            shooterPitch.setAngle(ShooterPitch.Constants.MIN_ANGLE), // must fit under trench
-            run(() -> {})
-        );
+                turretPivot.followAngle(() -> staticTurretMode.getAsBoolean() ? Degrees.of(180) : yaw.get()),
+                shooterPitch.setAngle(ShooterPitch.Constants.MIN_ANGLE), // must fit under trench
+                run(() -> {
+                }));
     }
 }

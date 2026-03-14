@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Volts;
 
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
 import com.ctre.phoenix6.configs.MotionMagicConfigs;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
@@ -43,9 +44,14 @@ public class IntakePivotIOReal implements IntakePivotIO {
             .withMotionMagic(mmConfig)
             .withSoftwareLimitSwitch(
                     new SoftwareLimitSwitchConfigs().withForwardSoftLimitEnable(true).withForwardSoftLimitThreshold(IntakePivot.stowAngle)
-                            .withReverseSoftLimitEnable(true).withReverseSoftLimitThreshold(0))
+                            .withReverseSoftLimitEnable(true).withReverseSoftLimitThreshold(IntakePivot.deployAngle))
             .withFeedback(new FeedbackConfigs()
                     .withSensorToMechanismRatio(gearRatio))
+            .withCurrentLimits(new CurrentLimitsConfigs()
+                .withStatorCurrentLimit(60)
+                .withStatorCurrentLimitEnable(true)
+                .withSupplyCurrentLimitEnable(true)
+                .withSupplyCurrentLimit(40))
             .withMotorOutput(new MotorOutputConfigs()
                     .withNeutralMode(NeutralModeValue.Brake)
                     .withInverted(InvertedValue.CounterClockwise_Positive));

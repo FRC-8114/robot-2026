@@ -37,16 +37,16 @@ public class TunerConstants {
                         .withKS(5.816).withKV(0).withKA(0);
 
         private static final Slot0Configs steerGainsFR = new Slot0Configs()
-                        .withKP(73.8106)
+                        .withKP(53.8106)
                         .withKS(0.97248).withKV(2.5713).withKA(0.10888);
         private static final Slot0Configs steerGainsFL = new Slot0Configs()
-                        .withKP(73.3704)
+                        .withKP(53.3704)
                         .withKS(0.98565).withKV(2.5723).withKA(0.1857);
         private static final Slot0Configs steerGainsRL = new Slot0Configs()
-                        .withKP(73.526)
+                        .withKP(53.526)
                         .withKS(0.94137).withKV(2.5717).withKA(0.15662);
         private static final Slot0Configs steerGainsRR = new Slot0Configs()
-                        .withKP(73.8482)
+                        .withKP(53.8482)
                         .withKS(0.98304).withKV(2.574).withKA(0.1756);
 
         // The closed-loop output type to use for the steer motors;
@@ -67,13 +67,15 @@ public class TunerConstants {
 
         // The stator current at which the wheels start to slip;
         // This needs to be tuned to your individual robot
-        private static final Current kSlipCurrent = Amps.of(120);
+        private static final Current kSlipCurrent = Amps.of(100);
 
         // Initial configs for the drive and steer motors and the azimuth encoder; these
         // cannot be null.
         // Some configs will be overwritten; check the `with*InitialConfigs()` API
         // documentation.
-        private static final TalonFXConfiguration driveInitialConfigs = new TalonFXConfiguration();
+        private static final TalonFXConfiguration driveInitialConfigs = new TalonFXConfiguration()
+                .withCurrentLimits(new CurrentLimitsConfigs()
+                        .withSupplyCurrentLimit(70));
         private static final TalonFXConfiguration steerInitialConfigs = new TalonFXConfiguration()
                         .withCurrentLimits(
                                         new CurrentLimitsConfigs()
@@ -82,7 +84,8 @@ public class TunerConstants {
                                                         // relatively low
                                                         // stator current limit to help avoid brownouts without
                                                         // impacting performance.
-                                                        .withStatorCurrentLimit(Amps.of(60))
+                                                        .withSupplyCurrentLimit(Amps.of(40))
+                                                        .withStatorCurrentLimit(Amps.of(40))
                                                         .withStatorCurrentLimitEnable(true));
         private static final CANcoderConfiguration encoderInitialConfigs = new CANcoderConfiguration();
         // Configs for the Pigeon 2; leave this null to skip applying Pigeon 2 configs

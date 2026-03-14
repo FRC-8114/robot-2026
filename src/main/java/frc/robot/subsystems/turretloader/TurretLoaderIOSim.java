@@ -67,4 +67,10 @@ public class TurretLoaderIOSim implements TurretLoaderIO {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'runTorqueCurrent'");
     }
+
+    @Override
+    public void runDutyCycle() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'runDutyCycle'");
+    }
 }

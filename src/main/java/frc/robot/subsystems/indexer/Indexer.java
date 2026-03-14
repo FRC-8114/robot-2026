@@ -14,7 +14,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 public class Indexer extends SubsystemBase {
     private static final AngularVelocity indexerVelocityTolerance = RPM.of(100);
 
-    private static final AngularVelocity indexerVelocity = RPM.of(1000);
+    private static final AngularVelocity indexerVelocity = RPM.of(900);
 
     private final IndexerIO io;
     private final IndexerInputsAutoLogged inputs = new IndexerInputsAutoLogged();

@@ -89,6 +89,22 @@ public class Autos {
         );
     }
 
+    public Command driveShoot() {
+        var pathSlices = loadSlicedPaths("driveShoot", 1);
+
+        return Commands.sequence(
+            resetOdomFromPath(pathSlices.get(0)),
+            Commands.waitTime(Seconds.of(1.5)),
+            Commands.parallel(
+                intakePivot.deploy(),
+                Commands.sequence(
+                    AutoBuilder.followPath(pathSlices.get(0)),
+                    shootSequence().withTimeout(Seconds.of(8))
+                )
+            )
+        );
+    }
+
     public Command TUNE_MOI() {
         var pathSlices = loadSlicedPaths("CalibrateMOI", 1);
 

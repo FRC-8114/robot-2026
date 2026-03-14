@@ -309,6 +309,7 @@ public class RobotContainer {
                 // autos.trenchSSDepot());
                 autoChooser.addOption("Same Side Trench (Outpost Side)", autos.trenchSSOutpost());
                 autoChooser.addOption("Basic Shoot (left bump)", autos.basicShoot());
+                autoChooser.addOption("Basic Shoot (USE THIS ONE) (Center)", autos.driveShoot());
 
                 autoChooser.addOption("JUST SHOOT", autos.THE_LAMEST_AUTO_EVER());
 
